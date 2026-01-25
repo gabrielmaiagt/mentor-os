@@ -20,9 +20,9 @@ import {
 import { Card, CardHeader, CardContent, Badge, Button, Modal } from '../../components/ui';
 import { OfferMinedCard } from '../../components/mining';
 import { useToast } from '../../components/ui/Toast';
-import { MENTEE_STAGES, getStageConfig } from '../../types';
+import { MENTEE_STAGES, getStageConfig, DEFAULT_ONBOARDING_TEMPLATE } from '../../types';
 import { mockOffersMined, calculateMiningSummary } from '../../lib/mockMiningData';
-import type { Mentee, MenteeStage, Call, Task, OfferMined, OfferStatus } from '../../types';
+import type { Mentee, MenteeStage, Call, Task, OfferMined, OfferStatus, OnboardingProgress } from '../../types';
 import './MenteeProfile.css';
 
 // Mock data - all mentees for lookup by ID
@@ -164,7 +164,7 @@ const mockTasks: Task[] = [
 // Updated stage journey to include MINING
 const stageJourney: MenteeStage[] = ['ONBOARDING', 'MINING', 'OFFER', 'CREATIVES', 'TRAFFIC', 'OPTIMIZATION', 'SCALING'];
 
-type TabType = 'overview' | 'mining' | 'calls' | 'tasks';
+type TabType = 'overview' | 'onboarding' | 'mining' | 'calls' | 'tasks';
 
 export const MenteeProfilePage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -177,6 +177,13 @@ export const MenteeProfilePage: React.FC = () => {
     const [activeTab, setActiveTab] = useState<TabType>('overview');
     const [showTaskModal, setShowTaskModal] = useState(false);
     const [showCallModal, setShowCallModal] = useState(false);
+
+    // Onboarding Data (Mock retrieval)
+    const onboardingProgress: OnboardingProgress | null = useMemo(() => {
+        // In a real app, this would come from the API/Database
+        const saved = localStorage.getItem(`onboarding_${mentee.id}`);
+        return saved ? JSON.parse(saved) : null;
+    }, [mentee.id]);
 
     // Mining state
     const [offers, setOffers] = useState<OfferMined[]>(mockOffersMined);
@@ -342,6 +349,13 @@ export const MenteeProfilePage: React.FC = () => {
                     Visão Geral
                 </button>
                 <button
+                    className={`mentee-tab ${activeTab === 'onboarding' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('onboarding')}
+                >
+                    <FileText size={14} />
+                    Onboarding
+                </button>
+                <button
                     className={`mentee-tab ${activeTab === 'mining' ? 'active' : ''} ${isMiningStage ? 'highlight' : ''}`}
                     onClick={() => setActiveTab('mining')}
                 >
@@ -460,6 +474,81 @@ export const MenteeProfilePage: React.FC = () => {
                             </CardContent>
                         </Card>
                     </div>
+                </div>
+            )}
+
+            {activeTab === 'onboarding' && (
+                <div className="onboarding-tab-content">
+                    <Card padding="md">
+                        <CardHeader
+                            title="Progresso do Onboarding"
+                            action={
+                                onboardingProgress ? (
+                                    <Badge variant="info">
+                                        {onboardingProgress.xpEarned} XP Acumulado
+                                    </Badge>
+                                ) : <Badge variant="warning">Não iniciado</Badge>
+                            }
+                        />
+                        <CardContent>
+                            {!onboardingProgress ? (
+                                <div className="text-secondary text-center py-8">
+                                    O mentorado ainda não iniciou o onboarding.
+                                </div>
+                            ) : (
+                                <div className="onboarding-review-list">
+                                    {DEFAULT_ONBOARDING_TEMPLATE.map((step, index) => {
+                                        const isCompleted = onboardingProgress.completedSteps.includes(step.id);
+                                        const data = onboardingProgress.stepData?.[step.id];
+
+                                        return (
+                                            <div key={step.id} className={`onboarding-review-item ${isCompleted ? 'completed' : ''}`}>
+                                                <div className="review-header">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className={`step-number ${isCompleted ? 'bg-success' : 'bg-secondary'}`}>
+                                                            {isCompleted ? <CheckCircle size={14} /> : index + 1}
+                                                        </div>
+                                                        <span className={isCompleted ? 'font-medium' : 'text-secondary'}>
+                                                            {step.title}
+                                                        </span>
+                                                    </div>
+                                                    {isCompleted && <Badge variant="success" size="sm">Concluído</Badge>}
+                                                </div>
+
+                                                {/* Show Form Data if available */}
+                                                {data && step.contentType === 'FORM' && (
+                                                    <div className="review-data mt-4 p-4 bg-secondary rounded-md">
+                                                        <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                                                            <FileText size={14} /> Respostas do Formulário
+                                                        </h4>
+                                                        <div className="grid gap-4">
+                                                            {Object.entries(data).map(([key, value]) => {
+                                                                // Find field label if possible
+                                                                const field = step.formFields?.find(f => f.name === key);
+                                                                const label = field?.label || key;
+
+                                                                // Handle boolean/checkbox
+                                                                const displayValue = typeof value === 'boolean'
+                                                                    ? (value ? 'Sim' : 'Não')
+                                                                    : String(value);
+
+                                                                return (
+                                                                    <div key={key} className="review-field">
+                                                                        <span className="text-xs text-tertiary block mb-1">{label}</span>
+                                                                        <span className="text-sm text-primary font-medium">{displayValue}</span>
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
                 </div>
             )}
 
