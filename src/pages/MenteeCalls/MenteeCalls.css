@@ -100,6 +100,49 @@
     gap: var(--space-2);
 }
 
+/* Schedule Modal */
+.schedule-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.schedule-form .form-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.schedule-form .form-field label {
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+    color: var(--text-secondary);
+}
+
+.schedule-form .form-field input,
+.schedule-form .form-field select {
+    padding: var(--space-3);
+    font-family: var(--font-family);
+    font-size: var(--text-sm);
+    color: var(--text-primary);
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+}
+
+.schedule-form .form-field input:focus,
+.schedule-form .form-field select:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+}
+
+.schedule-form .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+}
+
+/* Responsive */
 @media (max-width: 1024px) {
     .calls-grid {
         grid-template-columns: 1fr;

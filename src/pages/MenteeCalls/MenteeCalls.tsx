@@ -1,6 +1,7 @@
-import React from 'react';
-import { Card, Button } from '../../components/ui';
-import { Calendar, Clock, Video, MessageSquare } from 'lucide-react';
+import React, { useState } from 'react';
+import { Card, Button, Modal } from '../../components/ui';
+import { useToast } from '../../components/ui/Toast';
+import { Calendar, Clock, Video, MessageSquare, Plus } from 'lucide-react';
 import './MenteeCalls.css';
 
 const mockCalls: any[] = [
@@ -26,6 +27,24 @@ const mockCalls: any[] = [
 ];
 
 export const MenteeCallsPage: React.FC = () => {
+    const toast = useToast();
+    const [showScheduleModal, setShowScheduleModal] = useState(false);
+    const [scheduleData, setScheduleData] = useState({
+        type: 'ONBOARDING',
+        date: '',
+        time: '10:00'
+    });
+
+    const handleSchedule = () => {
+        if (!scheduleData.date) {
+            toast.error('Selecione uma data para a call');
+            return;
+        }
+
+        toast.success('Solicitação enviada!', 'O mentor confirmará o horário em breve.');
+        setShowScheduleModal(false);
+    };
+
     const formatDate = (date: Date) => {
         return new Intl.DateTimeFormat('pt-BR', {
             day: '2-digit',
@@ -39,8 +58,13 @@ export const MenteeCallsPage: React.FC = () => {
     return (
         <div className="mentee-calls">
             <div className="calls-header">
-                <h1>Minhas Calls</h1>
-                <p>Acompanhe e agende suas sessões de mentoria</p>
+                <div>
+                    <h1>Minhas Calls</h1>
+                    <p>Acompanhe e agende suas sessões de mentoria</p>
+                </div>
+                <Button variant="primary" icon={<Plus size={16} />} onClick={() => setShowScheduleModal(true)}>
+                    Agendar Nova Call
+                </Button>
             </div>
 
             <div className="calls-grid">
@@ -96,6 +120,53 @@ export const MenteeCallsPage: React.FC = () => {
                 </div>
 
             </div>
+
+            {/* Schedule Modal */}
+            <Modal
+                isOpen={showScheduleModal}
+                onClose={() => setShowScheduleModal(false)}
+                title="Agendar Call"
+                footer={
+                    <>
+                        <Button variant="ghost" onClick={() => setShowScheduleModal(false)}>Cancelar</Button>
+                        <Button variant="primary" onClick={handleSchedule}>Solicitar Agendamento</Button>
+                    </>
+                }
+            >
+                <div className="schedule-form">
+                    <div className="form-field">
+                        <label>Tipo de Call</label>
+                        <select
+                            value={scheduleData.type}
+                            onChange={e => setScheduleData({ ...scheduleData, type: e.target.value })}
+                        >
+                            <option value="ONBOARDING">Onboarding (Inicial)</option>
+                            <option value="STRATEGY">Estratégia</option>
+                            <option value="REVIEW">Revisão de Campanhas</option>
+                            <option value="DOUBTS">Tira-dúvidas</option>
+                        </select>
+                    </div>
+                    <div className="form-row">
+                        <div className="form-field">
+                            <label>Data Sugerida</label>
+                            <input
+                                type="date"
+                                min={new Date().toISOString().split('T')[0]}
+                                value={scheduleData.date}
+                                onChange={e => setScheduleData({ ...scheduleData, date: e.target.value })}
+                            />
+                        </div>
+                        <div className="form-field">
+                            <label>Horário</label>
+                            <input
+                                type="time"
+                                value={scheduleData.time}
+                                onChange={e => setScheduleData({ ...scheduleData, time: e.target.value })}
+                            />
+                        </div>
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 };
