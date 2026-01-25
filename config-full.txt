@@ -1,0 +1,37 @@
+﻿node.exe : - 
+Downloading 
+configuration data of 
+your Firebase WEB app
+No C:\Users\Gabri\AppD
+ata\Roaming\npm\fireba
+se.ps1:24 caractere:5
++     & "node$exe"  "$
+basedir/node_modules/f
+irebase-tools/lib/bin/
+fireb ...
++     ~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~~~~~
+    + CategoryInfo    
+          : NotSpeci  
+  fied: (- Download   
+ ing c...irebase W    
+EB app:String) []    
+, RemoteException
+    + FullyQualifiedE 
+   rrorId : NativeCo  
+  mmandError
+ 
+Ô£ö Downloading 
+configuration data of 
+your Firebase WEB app
+{
+  "projectId": "mentoros-app",
+  "storageBucket": "mentoros-app.firebasestorage.app",
+  "apiKey": "AIzaSyBWFWL1x8d3DDUDl8c5Cc2bSYD9KFkeWck",
+  "authDomain": "mentoros-app.firebaseapp.com",
+  "messagingSenderId": "746245767069",
+  "projectNumber": "746245767069",
+  "version": "2"
+}

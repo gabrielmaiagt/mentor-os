@@ -1,0 +1,108 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check if user is a mentor
+    function isMentor() {
+      return isAuthenticated() && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'mentor';
+    }
+    
+    // Helper function to check if user is a mentee
+    function isMentee() {
+      return isAuthenticated() && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'mentee';
+    }
+    
+    // Helper function to check if mentee owns this mentee doc
+    function isMenteeOwner(menteeId) {
+      return isMentee() && 
+             exists(/databases/$(database)/documents/mentees/$(menteeId)) &&
+             get(/databases/$(database)/documents/mentees/$(menteeId)).data.userId == request.auth.uid;
+    }
+
+    // Users collection
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (isMentor() || request.auth.uid == userId);
+      allow write: if isMentor() || request.auth.uid == userId;
+    }
+
+    // Leads collection - mentor only
+    match /leads/{leadId} {
+      allow read, write: if isMentor();
+    }
+
+    // Deals collection - mentor only
+    match /deals/{dealId} {
+      allow read, write: if isMentor();
+    }
+
+    // Payments collection - mentor only
+    match /payments/{paymentId} {
+      allow read, write: if isMentor();
+    }
+
+    // Mentees collection
+    match /mentees/{menteeId} {
+      // Mentors can read/write all mentees
+      // Mentees can only read their own document
+      allow read: if isMentor() || isMenteeOwner(menteeId);
+      allow write: if isMentor();
+      
+      // =============================================
+      // OFFERS MINED SUBCOLLECTION (MINING MODULE)
+      // =============================================
+      match /offersMined/{offerId} {
+        // Mentors can read/write all mined offers
+        allow read, write: if isMentor();
+        
+        // Mentees can only read/write their own mined offers
+        allow read, write: if isMenteeOwner(menteeId);
+      }
+      
+      // Mining Summary document
+      match /miningSummary/{docId} {
+        allow read: if isMentor() || isMenteeOwner(menteeId);
+        allow write: if isMentor() || isMenteeOwner(menteeId);
+      }
+    }
+
+    // Calls collection
+    match /calls/{callId} {
+      // Mentors can read/write all calls
+      // Mentees can only read calls where they are the mentee
+      allow read: if isMentor() || 
+                     (isMentee() && exists(/databases/$(database)/documents/mentees/$(resource.data.menteeId)) &&
+                      get(/databases/$(database)/documents/mentees/$(resource.data.menteeId)).data.userId == request.auth.uid);
+      allow write: if isMentor();
+    }
+
+    // Tasks collection
+    match /tasks/{taskId} {
+      // Mentors can read/write all tasks
+      // Mentees can read tasks where they are the owner
+      allow read: if isMentor() || 
+                     (isMentee() && resource.data.ownerRole == 'MENTEE' && resource.data.ownerId == request.auth.uid);
+      allow write: if isMentor() ||
+                      (isMentee() && resource.data.ownerRole == 'MENTEE' && resource.data.ownerId == request.auth.uid);
+    }
+
+    // Updates collection - mentees can create, mentors can read/write
+    match /updates/{updateId} {
+      allow read: if isMentor() || 
+                     (isMentee() && resource.data.submittedByUserId == request.auth.uid);
+      allow create: if isMentee() && request.resource.data.submittedByUserId == request.auth.uid;
+      allow update, delete: if isMentor();
+    }
+
+    // Templates collection - mentor only
+    match /templates/{templateId} {
+      allow read, write: if isMentor();
+    }
+  }
+}

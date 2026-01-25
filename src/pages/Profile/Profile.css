@@ -1,0 +1,101 @@
+.profile-page {
+    padding: var(--space-8);
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.profile-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-6);
+    margin-bottom: var(--space-10);
+}
+
+.profile-avatar-large {
+    width: 100px;
+    height: 100px;
+    border-radius: var(--radius-full);
+    background: linear-gradient(135deg, var(--accent-base), var(--accent-dark));
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--text-4xl);
+    font-weight: 700;
+    box-shadow: var(--shadow-lg);
+}
+
+.profile-title-info h1 {
+    font-size: var(--text-3xl);
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: var(--space-2);
+}
+
+.profile-badges {
+    display: flex;
+    gap: var(--space-2);
+}
+
+.profile-grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: var(--space-6);
+}
+
+.section-title {
+    font-size: var(--text-lg);
+    font-weight: 600;
+    margin-bottom: var(--space-6);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.info-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+}
+
+.info-item {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-4);
+    color: var(--text-secondary);
+}
+
+.info-item svg {
+    margin-top: 2px;
+}
+
+.info-label {
+    display: block;
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-tertiary);
+    margin-bottom: 2px;
+}
+
+.info-value {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.settings-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+@media (max-width: 768px) {
+    .profile-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .profile-header {
+        flex-direction: column;
+        text-align: center;
+    }
+}

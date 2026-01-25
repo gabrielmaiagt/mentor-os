@@ -1,0 +1,141 @@
+.tour-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 9999;
+    pointer-events: none;
+    /* Let clicks pass through generally, but catch them on tooltip */
+}
+
+.tour-spotlight {
+    position: absolute;
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.75);
+    border-radius: var(--radius-md);
+    transition: all 0.3s ease-in-out;
+    pointer-events: none;
+    z-index: 10000;
+}
+
+/* Pulsing effect on the spotlight border to draw attention */
+.tour-spotlight::after {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: -4px;
+    right: -4px;
+    bottom: -4px;
+    border: 2px solid var(--accent-primary);
+    border-radius: calc(var(--radius-md) + 4px);
+    animation: pulse-border 2s infinite;
+}
+
+@keyframes pulse-border {
+    0% {
+        box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.4);
+    }
+
+    70% {
+        box-shadow: 0 0 0 10px rgba(139, 92, 246, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(139, 92, 246, 0);
+    }
+}
+
+.tour-tooltip {
+    position: absolute;
+    width: 320px;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xl);
+    padding: var(--space-4);
+    z-index: 10001;
+    pointer-events: auto;
+    /* Re-enable clicks for the tooltip buttons */
+    transition: all 0.3s ease-in-out;
+
+    /* Transform to center horizontally relative to position point */
+    transform: translateX(-50%);
+    margin-top: 16px;
+    /* Space from target */
+}
+
+/* Adjustments based on placement preference */
+/* Note: The simple positioning logic in TSX defaults to bottom-center. 
+   These classes are ready if we implement smarter positioning later. */
+.tour-tooltip.placement-top {
+    transform: translate(-50%, -100%);
+    margin-top: -16px;
+}
+
+.tour-tooltip.placement-left {
+    transform: translate(-100%, -50%);
+    margin-left: -16px;
+    margin-top: 0;
+}
+
+.tour-tooltip.placement-right {
+    transform: translate(0, -50%);
+    margin-left: 16px;
+    margin-top: 0;
+}
+
+.tour-close-btn {
+    position: absolute;
+    top: var(--space-2);
+    right: var(--space-2);
+    background: transparent;
+    border: none;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tour-close-btn:hover {
+    color: var(--text-primary);
+    background-color: var(--bg-secondary);
+}
+
+.tour-content {
+    margin-bottom: var(--space-4);
+}
+
+.tour-title {
+    font-size: var(--text-base);
+    font-weight: var(--font-bold);
+    color: var(--text-primary);
+    margin: 0 0 var(--space-2);
+    padding-right: var(--space-6);
+}
+
+.tour-text {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin: 0;
+}
+
+.tour-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.tour-progress {
+    font-size: var(--text-xs);
+    color: var(--text-tertiary);
+    font-weight: var(--font-medium);
+}
+
+.tour-actions {
+    display: flex;
+    gap: var(--space-2);
+}

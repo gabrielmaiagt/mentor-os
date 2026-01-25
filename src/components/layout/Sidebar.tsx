@@ -1,0 +1,98 @@
+import React from 'react';
+import { NavLink } from 'react-router-dom';
+import {
+    LayoutDashboard,
+    Zap,
+    Users,
+    UserCircle,
+    Calendar,
+    DollarSign,
+    FileText,
+    Target,
+    Crosshair,
+    Home
+} from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
+import './Sidebar.css';
+
+interface NavItem {
+    path: string;
+    label: string;
+    icon: React.ReactNode;
+    roles?: Array<'mentor' | 'mentee'>;
+}
+
+const mentorNavItems: NavItem[] = [
+    { path: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
+    { path: '/execution', label: 'Execução', icon: <Zap size={20} /> },
+    { path: '/crm', label: 'CRM', icon: <Target size={20} /> },
+    { path: '/mentees', label: 'Mentorados', icon: <Users size={20} /> },
+    { path: '/calendar', label: 'Calendário', icon: <Calendar size={20} /> },
+    { path: '/finance', label: 'Financeiro', icon: <DollarSign size={20} /> },
+    { path: '/templates', label: 'Templates', icon: <FileText size={20} /> },
+    { path: '/onboarding-editor', label: 'Onboarding', icon: <UserCircle size={20} /> },
+];
+
+const menteeNavItems: NavItem[] = [
+    { path: '/me', label: 'Minha Jornada', icon: <Home size={20} /> },
+    { path: '/me/calls', label: 'Minhas Calls', icon: <Calendar size={20} /> },
+    { path: '/profile', label: 'Meu Perfil', icon: <UserCircle size={20} /> },
+];
+
+export const Sidebar: React.FC = () => {
+    const { user, signOut } = useAuth();
+
+    const navItems = user?.role === 'mentee' ? menteeNavItems : mentorNavItems;
+
+    return (
+        <aside className="sidebar">
+            <div className="sidebar-header">
+                <div className="sidebar-logo">
+                    <Crosshair size={28} className="sidebar-logo-icon" />
+                    <span className="sidebar-logo-text">MentorOS</span>
+                </div>
+            </div>
+
+            <nav className="sidebar-nav">
+                <ul className="sidebar-nav-list">
+                    {navItems.map((item) => (
+                        <li key={item.path}>
+                            <NavLink
+                                to={item.path}
+                                className={({ isActive }) =>
+                                    `sidebar-nav-item ${isActive ? 'active' : ''}`
+                                }
+                            >
+                                <span className="sidebar-nav-icon">{item.icon}</span>
+                                <span className="sidebar-nav-label">{item.label}</span>
+                            </NavLink>
+                        </li>
+                    ))}
+                </ul>
+            </nav>
+
+            <div className="sidebar-footer">
+                <div className="sidebar-user">
+                    <div className="sidebar-user-avatar">
+                        {user?.displayName?.charAt(0).toUpperCase() || 'U'}
+                    </div>
+                    <div className="sidebar-user-info">
+                        <span className="sidebar-user-name">{user?.displayName || 'Usuário'}</span>
+                        <span className="sidebar-user-role">
+                            {user?.role === 'mentor' ? 'Mentor' : 'Mentorado'}
+                        </span>
+                    </div>
+                </div>
+                <button
+                    className="sidebar-logout-btn"
+                    onClick={signOut}
+                    title="Sair"
+                >
+                    Sair
+                </button>
+            </div>
+        </aside>
+    );
+};
+
+export default Sidebar;
