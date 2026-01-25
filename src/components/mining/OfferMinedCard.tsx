@@ -1,5 +1,5 @@
 import React from 'react';
-import { ExternalLink, Plus, Edit, Trash2 } from 'lucide-react';
+import { ExternalLink, Clock, Edit, Trash2 } from 'lucide-react';
 import { Card, Badge, Button } from '../ui';
 import { getOfferStatusConfig } from '../../types';
 import type { OfferMined, OfferStatus } from '../../types';
@@ -108,13 +108,13 @@ export const OfferMinedCard: React.FC<OfferMinedCardProps> = ({
                 <Button
                     variant="secondary"
                     size="sm"
-                    className="increment-btn"
+                    className="update-metrics-btn"
                     onClick={(e) => {
                         e.stopPropagation();
-                        onIncrementAds(offer.id);
+                        onIncrementAds(offer.id); // Reutilizando o prop para abrir o modal de histórico
                     }}
                 >
-                    <Plus size={14} /> +1
+                    <Clock size={14} /> Atualizar
                 </Button>
 
                 <Button

@@ -58,6 +58,14 @@ export const MenteeHomePage: React.FC = () => {
     });
     const [isTourOpen, setIsTourOpen] = useState(false);
 
+    // History Update Modal state
+    const [showHistoryModal, setShowHistoryModal] = useState(false);
+    const [updatingHistoryOffer, setUpdatingHistoryOffer] = useState<OfferMined | null>(null);
+    const [historyFormData, setHistoryFormData] = useState({
+        count: 0,
+        date: new Date().toISOString().split('T')[0]
+    });
+
     // Form state
     const [formData, setFormData] = useState({
         name: '',
@@ -127,29 +135,47 @@ export const MenteeHomePage: React.FC = () => {
             return b.lastTouchedAt.getTime() - a.lastTouchedAt.getTime();
         });
 
-    const handleIncrementAds = (offerId: string) => {
-        const today = new Date().toISOString().split('T')[0];
-        setOffers(prev => prev.map(o => {
-            if (o.id === offerId) {
-                const newAdHistory = [...(o.adHistory || [])];
-                const existingEntry = newAdHistory.find(h => h.date === today);
+    const handleOpenHistoryModal = (offer: OfferMined) => {
+        setUpdatingHistoryOffer(offer);
+        setHistoryFormData({
+            count: offer.adCount,
+            date: new Date().toISOString().split('T')[0]
+        });
+        setShowHistoryModal(true);
+    };
 
-                if (existingEntry) {
-                    existingEntry.count = o.adCount + 1;
+    const handleUpdateAdHistory = () => {
+        if (!updatingHistoryOffer) return;
+
+        setOffers(prev => prev.map(o => {
+            if (o.id === updatingHistoryOffer.id) {
+                const newAdHistory = [...(o.adHistory || [])];
+                const existingIndex = newAdHistory.findIndex(h => h.date === historyFormData.date);
+
+                if (existingIndex >= 0) {
+                    newAdHistory[existingIndex] = { ...newAdHistory[existingIndex], count: historyFormData.count };
                 } else {
-                    newAdHistory.push({ date: today, count: o.adCount + 1 });
+                    newAdHistory.push({ date: historyFormData.date, count: historyFormData.count });
+                    // Sort by date
+                    newAdHistory.sort((a, b) => a.date.localeCompare(b.date));
                 }
+
+                // If updating today or a future date, or if it's the latest entry, update adCount
+                const isLatest = newAdHistory[newAdHistory.length - 1].date === historyFormData.date;
 
                 return {
                     ...o,
-                    adCount: o.adCount + 1,
+                    adCount: isLatest ? historyFormData.count : o.adCount,
                     adHistory: newAdHistory,
                     lastTouchedAt: new Date()
                 };
             }
             return o;
         }));
-        toast.success('+1 anúncio registrado!');
+
+        setShowHistoryModal(false);
+        setUpdatingHistoryOffer(null);
+        toast.success('Métrica atualizada!');
     };
 
     const handleChangeStatus = (offerId: string, status: OfferStatus) => {
@@ -390,7 +416,7 @@ export const MenteeHomePage: React.FC = () => {
                         <OfferMinedCard
                             key={offer.id}
                             offer={offer}
-                            onIncrementAds={handleIncrementAds}
+                            onIncrementAds={() => handleOpenHistoryModal(offer)}
                             onEdit={handleEdit}
                             onChangeStatus={handleChangeStatus}
                         />
@@ -490,6 +516,48 @@ export const MenteeHomePage: React.FC = () => {
                             rows={3}
                             value={formData.notes}
                             onChange={e => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                        />
+                    </div>
+                </div>
+            </Modal>
+
+            {/* Update History Modal */}
+            <Modal
+                isOpen={showHistoryModal}
+                onClose={() => setShowHistoryModal(false)}
+                title="Atualizar Métricas"
+                size="sm"
+                footer={
+                    <>
+                        <Button variant="ghost" onClick={() => setShowHistoryModal(false)}>
+                            Cancelar
+                        </Button>
+                        <Button variant="primary" onClick={handleUpdateAdHistory}>
+                            Salvar
+                        </Button>
+                    </>
+                }
+            >
+                <div className="offer-form">
+                    <p className="text-secondary text-sm mb-4">
+                        Atualizando: <strong>{updatingHistoryOffer?.name}</strong>
+                    </p>
+                    <div className="form-field">
+                        <label>Data da medição</label>
+                        <input
+                            type="date"
+                            value={historyFormData.date}
+                            max={new Date().toISOString().split('T')[0]}
+                            onChange={e => setHistoryFormData(prev => ({ ...prev, date: e.target.value }))}
+                        />
+                    </div>
+                    <div className="form-field">
+                        <label>Quantidade de anúncios</label>
+                        <input
+                            type="number"
+                            min="0"
+                            value={historyFormData.count}
+                            onChange={e => setHistoryFormData(prev => ({ ...prev, count: parseInt(e.target.value) || 0 }))}
                         />
                     </div>
                 </div>

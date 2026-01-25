@@ -3,7 +3,7 @@ import { Card, Button } from '../../components/ui';
 import { Calendar, Clock, Video, MessageSquare } from 'lucide-react';
 import './MenteeCalls.css';
 
-const mockCalls = [
+const mockCalls: any[] = [
     {
         id: 'c1',
         title: 'Revisão Semanal de Mineração',
@@ -11,7 +11,8 @@ const mockCalls = [
         duration: '45 min',
         mentor: 'Gabriel (Mentor)',
         status: 'SCHEDULED',
-        link: 'https://meet.google.com/abc-defg-hij'
+        link: 'https://meet.google.com/abc-defg-hij',
+        recordingUrl: undefined
     },
     {
         id: 'c2',
@@ -20,7 +21,7 @@ const mockCalls = [
         duration: '60 min',
         mentor: 'Gabriel (Mentor)',
         status: 'COMPLETED',
-        recording: 'https://loom.com/share/...'
+        recordingUrl: 'https://loom.com/share/...'
     }
 ];
 
@@ -78,8 +79,14 @@ export const MenteeCallsPage: React.FC = () => {
                                     <span className="call-date">{formatDate(call.date)}</span>
                                 </div>
                                 <div className="call-past-actions">
-                                    {call.recording && (
-                                        <Button variant="secondary" size="sm">Ver Gravação</Button>
+                                    {call.recordingUrl && (
+                                        <Button
+                                            variant="secondary"
+                                            size="sm"
+                                            onClick={() => window.open(call.recordingUrl, '_blank')}
+                                        >
+                                            Ver Gravação
+                                        </Button>
                                     )}
                                     <Button variant="ghost" size="sm" icon={<MessageSquare size={14} />}>Notas</Button>
                                 </div>
@@ -88,23 +95,6 @@ export const MenteeCallsPage: React.FC = () => {
                     </div>
                 </div>
 
-                <aside className="calls-sidebar">
-                    <Card padding="lg" className="schedule-info">
-                        <h3>Precisa de uma call extra?</h3>
-                        <p>Seus créditos de call extra: <strong>1 disponível</strong></p>
-                        <Button variant="primary" fullWidth className="mt-4">
-                            Solicitar Call Extra
-                        </Button>
-                    </Card>
-
-                    <Card padding="lg" className="availability-info mt-6">
-                        <h3>Dúvida rápida?</h3>
-                        <p>O suporte via WhatsApp está disponível das 09h às 18h.</p>
-                        <Button variant="ghost" fullWidth className="mt-4">
-                            Chamar no Whats
-                        </Button>
-                    </Card>
-                </aside>
             </div>
         </div>
     );

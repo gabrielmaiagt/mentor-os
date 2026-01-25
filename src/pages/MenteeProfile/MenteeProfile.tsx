@@ -533,6 +533,12 @@ export const MenteeProfilePage: React.FC = () => {
                                             </Badge>
                                         </div>
                                         {call.summary && <p className="call-summary">{call.summary}</p>}
+                                        {call.recordingUrl && (
+                                            <div className="call-recording">
+                                                <Play size={12} />
+                                                <a href={call.recordingUrl} target="_blank" rel="noopener noreferrer">Ver Gravação</a>
+                                            </div>
+                                        )}
                                     </div>
                                 ))}
                             </div>
@@ -626,6 +632,10 @@ export const MenteeProfilePage: React.FC = () => {
                             <option value="60">60 minutos</option>
                             <option value="90">90 minutos</option>
                         </select>
+                    </div>
+                    <div className="form-field">
+                        <label>Link da Gravação (Loom, YouTube, etc)</label>
+                        <input type="url" placeholder="https://..." />
                     </div>
                 </div>
             </Modal>
