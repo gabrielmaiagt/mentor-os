@@ -51,8 +51,11 @@ export const MenteeHomePage: React.FC = () => {
     const [filterStatus, setFilterStatus] = useState<OfferStatus | 'ALL'>('ALL');
     const [sortBy, setSortBy] = useState<'adCount' | 'lastTouchedAt'>('adCount');
 
-    // Onboarding state
-    const [onboardingProgress, setOnboardingProgress] = useState<OnboardingProgress>(mockOnboardingProgress);
+    // Onboarding state - Initialize from localStorage if available
+    const [onboardingProgress, setOnboardingProgress] = useState<OnboardingProgress>(() => {
+        const saved = localStorage.getItem(`onboarding_m1`); // Usando id mock m1
+        return saved ? JSON.parse(saved) : mockOnboardingProgress;
+    });
     const [isTourOpen, setIsTourOpen] = useState(false);
 
     // Form state
@@ -61,8 +64,14 @@ export const MenteeHomePage: React.FC = () => {
         url: '',
         adCount: 1,
         platform: 'META' as OfferPlatform,
+        angles: '', // Palavras-chave como string separada por vírgula no formulário
         notes: '',
     });
+
+    // Save onboarding to localStorage whenever it changes
+    React.useEffect(() => {
+        localStorage.setItem(`onboarding_m1`, JSON.stringify(onboardingProgress));
+    }, [onboardingProgress]);
 
     const stageConfig = getStageConfig(MENTEE_STAGES, mentee.currentStage);
     const summary = calculateMiningSummary(offers);
@@ -119,11 +128,27 @@ export const MenteeHomePage: React.FC = () => {
         });
 
     const handleIncrementAds = (offerId: string) => {
-        setOffers(prev => prev.map(o =>
-            o.id === offerId
-                ? { ...o, adCount: o.adCount + 1, lastTouchedAt: new Date() }
-                : o
-        ));
+        const today = new Date().toISOString().split('T')[0];
+        setOffers(prev => prev.map(o => {
+            if (o.id === offerId) {
+                const newAdHistory = [...(o.adHistory || [])];
+                const existingEntry = newAdHistory.find(h => h.date === today);
+
+                if (existingEntry) {
+                    existingEntry.count = o.adCount + 1;
+                } else {
+                    newAdHistory.push({ date: today, count: o.adCount + 1 });
+                }
+
+                return {
+                    ...o,
+                    adCount: o.adCount + 1,
+                    adHistory: newAdHistory,
+                    lastTouchedAt: new Date()
+                };
+            }
+            return o;
+        }));
         toast.success('+1 anúncio registrado!');
     };
 
@@ -143,6 +168,7 @@ export const MenteeHomePage: React.FC = () => {
             url: offer.url,
             adCount: offer.adCount,
             platform: offer.platform || 'META',
+            angles: offer.angles?.join(', ') || '',
             notes: offer.notes || '',
         });
         setShowAddModal(true);
@@ -154,6 +180,8 @@ export const MenteeHomePage: React.FC = () => {
             return;
         }
 
+        const angleArray = formData.angles.split(',').map(s => s.trim()).filter(Boolean);
+
         if (editingOffer) {
             // Edit existing
             setOffers(prev => prev.map(o =>
@@ -164,6 +192,7 @@ export const MenteeHomePage: React.FC = () => {
                         url: formData.url,
                         adCount: formData.adCount,
                         platform: formData.platform,
+                        angles: angleArray,
                         notes: formData.notes,
                         lastTouchedAt: new Date(),
                         updatedAt: new Date(),
@@ -173,14 +202,17 @@ export const MenteeHomePage: React.FC = () => {
             toast.success('Oferta atualizada!');
         } else {
             // Create new
+            const today = new Date().toISOString().split('T')[0];
             const newOffer: OfferMined = {
                 id: `om${Date.now()}`,
                 name: formData.name,
                 url: formData.url,
                 adCount: formData.adCount,
                 platform: formData.platform,
+                angles: angleArray,
                 notes: formData.notes,
                 status: 'CANDIDATE',
+                adHistory: [{ date: today, count: formData.adCount }],
                 createdAt: new Date(),
                 updatedAt: new Date(),
                 lastTouchedAt: new Date(),
@@ -192,7 +224,7 @@ export const MenteeHomePage: React.FC = () => {
 
         setShowAddModal(false);
         setEditingOffer(null);
-        setFormData({ name: '', url: '', adCount: 1, platform: 'META', notes: '' });
+        setFormData({ name: '', url: '', adCount: 1, platform: 'META', angles: '', notes: '' });
     };
 
     const formatDate = (date: Date) => {
@@ -294,7 +326,7 @@ export const MenteeHomePage: React.FC = () => {
                         icon={<Plus size={16} />}
                         onClick={() => {
                             setEditingOffer(null);
-                            setFormData({ name: '', url: '', adCount: 1, platform: 'META', notes: '' });
+                            setFormData({ name: '', url: '', adCount: 1, platform: 'META', angles: '', notes: '' });
                             setShowAddModal(true);
                         }}
                     >
@@ -439,6 +471,16 @@ export const MenteeHomePage: React.FC = () => {
                                 ))}
                             </select>
                         </div>
+                    </div>
+
+                    <div className="form-field">
+                        <label>Palavras-chave (ângulos)</label>
+                        <input
+                            type="text"
+                            placeholder="Ex: prova social, renda extra, desconto (separe por vírgula)"
+                            value={formData.angles}
+                            onChange={e => setFormData(prev => ({ ...prev, angles: e.target.value }))}
+                        />
                     </div>
 
                     <div className="form-field">

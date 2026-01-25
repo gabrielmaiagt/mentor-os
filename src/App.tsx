@@ -48,6 +48,11 @@ function App() {
             {/* Public route */}
             <Route path="/login" element={<LoginPage />} />
 
+            {/* Protected universal routes (Mentor & Mentee) */}
+            <Route element={<Shell requireAuth allowedRoles={['mentor', 'mentee']} />}>
+              <Route path="/profile" element={<ProfilePage />} />
+            </Route>
+
             {/* Protected mentor routes */}
             <Route element={<Shell requireAuth allowedRoles={['mentor']} />}>
               <Route path="/dashboard" element={<DashboardPage />} />
@@ -57,10 +62,9 @@ function App() {
               <Route path="/mentees" element={<MenteesPage />} />
               <Route path="/mentee/:id" element={<MenteeProfilePage />} />
               <Route path="/calendar" element={<CalendarPage />} />
-              <Route path="/finance" element={<FinancePage />} /> {/* Connected FinancePage */}
+              <Route path="/finance" element={<FinancePage />} />
               <Route path="/templates" element={<TemplatesPage />} />
               <Route path="/onboarding-editor" element={<OnboardingEditorPage />} />
-              <Route path="/profile" element={<ProfilePage />} />
             </Route>
 
             {/* Protected mentee routes */}
@@ -68,7 +72,6 @@ function App() {
               <Route path="/me" element={<MenteeHomePage />} />
               <Route path="/me/calls" element={<MenteeCallsPage />} />
               <Route path="/me/how-it-works" element={<MenteeHowItWorksPage />} />
-              <Route path="/profile" element={<ProfilePage />} />
             </Route>
 
             {/* Default redirect */}

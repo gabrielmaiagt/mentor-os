@@ -3,6 +3,11 @@
 export type OfferStatus = 'CANDIDATE' | 'TESTING' | 'DISCARDED' | 'WINNER';
 export type OfferPlatform = 'META' | 'TIKTOK' | 'YOUTUBE' | 'GOOGLE' | 'OTHER';
 
+export interface AdHistoryEntry {
+    date: string; // ISO string for the day (e.g., 2024-01-25)
+    count: number;
+}
+
 export interface OfferMined {
     id: string;
     name: string;
@@ -13,6 +18,7 @@ export interface OfferMined {
     notes?: string;
     notesMentor?: string; // Mentor's internal notes
     status: OfferStatus;
+    adHistory: AdHistoryEntry[]; // History of ad counts over time
     createdAt: Date;
     updatedAt: Date;
     lastTouchedAt: Date;

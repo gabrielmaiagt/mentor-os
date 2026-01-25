@@ -82,9 +82,26 @@ export const OfferMinedCard: React.FC<OfferMinedCardProps> = ({
             <div className="offer-meta">
                 <span className="offer-platform">{offer.platform || 'META'}</span>
                 <span className="offer-updated">
-                    {daysSinceUpdate === 0 ? 'Hoje' : `${daysSinceUpdate}d atrás`}
+                    {daysSinceUpdate === 0 ? 'Atualizado hoje' : `Há ${daysSinceUpdate}d`}
                 </span>
             </div>
+
+            {/* Ad Count History */}
+            {offer.adHistory && offer.adHistory.length > 0 && (
+                <div className="offer-history">
+                    <span className="history-title">Métricas:</span>
+                    <div className="history-entries">
+                        {offer.adHistory.slice(-5).reverse().map((entry, i) => (
+                            <div key={i} className="history-entry">
+                                <span className="history-date">
+                                    {entry.date.split('-').reverse().slice(0, 2).join('/')}
+                                </span>
+                                <span className="history-count">{entry.count}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* Actions */}
             <div className="offer-actions">

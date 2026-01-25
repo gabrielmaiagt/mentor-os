@@ -158,3 +158,42 @@
 .offer-mined-card.status-discarded {
     opacity: 0.7;
 }
+
+/* History */
+.offer-history {
+    font-size: var(--text-xs);
+    background-color: rgba(255, 255, 255, 0.03);
+    padding: var(--space-2);
+    border-radius: var(--radius-sm);
+    border: 1px dashed var(--border-subtle);
+}
+
+.history-title {
+    color: var(--text-tertiary);
+    margin-bottom: var(--space-1);
+    display: block;
+    font-weight: var(--font-medium);
+}
+
+.history-entries {
+    display: flex;
+    gap: var(--space-3);
+    overflow-x: auto;
+}
+
+.history-entry {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 32px;
+}
+
+.history-date {
+    color: var(--text-tertiary);
+    font-size: 10px;
+}
+
+.history-count {
+    color: var(--text-primary);
+    font-weight: var(--font-semibold);
+}
