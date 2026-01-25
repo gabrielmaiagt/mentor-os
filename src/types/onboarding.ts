@@ -131,20 +131,24 @@ export const DEFAULT_ONBOARDING_TEMPLATE: OnboardingStep[] = [
     {
         id: 'ob3',
         order: 3,
-        title: 'Configure o WhatsApp',
-        description: 'Adicione o número do mentor para receber updates',
-        contentType: 'ACTION',
-        estimatedMinutes: 2,
+        title: 'Confirmar WhatsApp',
+        description: 'Confirme seu número para receber updates do mentor',
+        contentType: 'FORM',
+        estimatedMinutes: 1,
         isRequired: true,
         xpReward: 25,
-        actionLabel: 'Adicionar contato',
+        actionLabel: 'Confirmar número',
+        formFields: [
+            { name: 'whatsapp', label: 'Seu WhatsApp com DDD', type: 'text', placeholder: '11 99999-9999', required: true }
+        ]
     },
     {
         id: 'ob4',
         order: 4,
         title: 'Agende sua Call de Onboarding',
         description: 'Escolha o melhor horário para nossa primeira call',
-        contentType: 'ACTION',
+        contentType: 'LINK',
+        contentUrl: '/me/calls',
         estimatedMinutes: 3,
         isRequired: true,
         xpReward: 50,

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     CheckCircle2,
     Circle,
@@ -32,6 +33,7 @@ export const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({
     onSkipStep,
 }) => {
     const toast = useToast();
+    const navigate = useNavigate();
     const [expandedStep, setExpandedStep] = useState<string | null>(null);
     const [showFormModal, setShowFormModal] = useState(false);
     const [activeFormStep, setActiveFormStep] = useState<OnboardingStep | null>(null);
@@ -94,13 +96,27 @@ export const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({
             }
         } else if (step.contentType === 'LINK') {
             if (step.contentUrl) {
-                window.open(step.contentUrl, '_blank');
+                if (step.contentUrl.startsWith('/')) {
+                    navigate(step.contentUrl);
+                } else {
+                    window.open(step.contentUrl, '_blank');
+                }
             }
             // Mark as done after opening
             onCompleteStep(step.id);
             toast.success('+' + step.xpReward + ' XP!', step.title);
         } else if (step.contentType === 'ACTION') {
             // Handle specific actions
+            if (step.contentUrl) {
+                window.open(step.contentUrl, '_blank');
+            }
+
+            // For 'Agendar Call', we might want to navigate to the calendar or modal
+            if (step.title.includes('Agendar Call')) {
+                // In a real app we might open the calendar modal here
+                // For now, just a toast is fine or redirect
+            }
+
             onCompleteStep(step.id);
             toast.success('+' + step.xpReward + ' XP!', step.title);
         }
