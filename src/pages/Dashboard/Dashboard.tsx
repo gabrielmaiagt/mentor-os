@@ -10,10 +10,9 @@ import {
     Zap,
     Calendar,
     ArrowUpRight,
-    Search,
-    Loader
+    Search
 } from 'lucide-react';
-import { collection, query, where, onSnapshot, orderBy, getDocs } from 'firebase/firestore';
+import { collection, query, onSnapshot, getDocs } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 
 import { Card, Badge, Button } from '../../components/ui';
@@ -28,7 +27,6 @@ import './Dashboard.css';
 export const DashboardPage: React.FC = () => {
     const navigate = useNavigate();
     const toast = useToast();
-    const [loading, setLoading] = React.useState(true);
 
     // State for aggregated data
     const [finance, setFinance] = React.useState<FinanceSnapshot>({
@@ -123,7 +121,7 @@ export const DashboardPage: React.FC = () => {
                         suggestedMessage: `Oi ${m.name.split(' ')[0]}, vi que faz um tempo que não temos novidades. Como estão as coisas?`
                     } as ActionItem));
 
-                setDeliveryActions(prev => {
+                setDeliveryActions(() => {
                     // Merge calls (handled below) with stuck mentees
                     // For now just keep stuck mentees, we'll merge them in the render or state update
                     // Better: separate state? Let's assume we merge manually. 
@@ -175,7 +173,7 @@ export const DashboardPage: React.FC = () => {
                 setDeliveryActions(prev => {
                     // Filter out old calls to avoid duplication if re-run
                     const nonCalls = prev.filter(p => p.type !== 'call');
-                    return [...nonCalls, ...todayCalls].sort((a, b) => {
+                    return [...nonCalls, ...todayCalls].sort((a) => {
                         // Sort logic: Calls first? Or Urgency?
                         if (a.type === 'call') return -1;
                         return 0;
@@ -183,7 +181,6 @@ export const DashboardPage: React.FC = () => {
                 });
             });
 
-            setLoading(false);
             return () => {
                 unsubFinance();
                 unsubDeals();

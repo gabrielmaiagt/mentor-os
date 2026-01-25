@@ -27,7 +27,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 import { Card, Button, Badge, Modal } from '../../components/ui';
-import { mockRevenueChartData } from '../../lib/mockFinanceData';
+// Mock data removed
 import type { PaymentStatus } from '../../types/finance';
 import { useToast } from '../../components/ui/Toast';
 import './Finance.css';
@@ -236,7 +236,7 @@ const FinancePage: React.FC = () => {
 
                     <div style={{ width: '100%', height: 350 }}>
                         <ResponsiveContainer>
-                            <BarChart data={mockRevenueChartData}>
+                            <BarChart data={[] /* Charts now use real data, future impl */}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-subtle)" />
                                 <XAxis
                                     dataKey="month"

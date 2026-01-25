@@ -4,16 +4,16 @@ import { useToast } from '../../components/ui/Toast';
 import { CheckSquare, Clock, Plus } from 'lucide-react';
 import './MenteeTasks.css';
 
-import { collection, query, where, onSnapshot, addDoc, updateDoc, doc, getDocs } from 'firebase/firestore';
-import { db, auth } from '../../lib/firebase';
-import { Loader } from 'lucide-react';
+import { collection, query, onSnapshot, addDoc, updateDoc, doc } from 'firebase/firestore';
+import { db } from '../../lib/firebase';
+// Loader removed
 
 export const MenteeTasksPage: React.FC = () => {
     const toast = useToast();
     const [filter, setFilter] = useState<'ALL' | 'TODO' | 'DONE'>('ALL');
     const [showAddModal, setShowAddModal] = useState(false);
     const [tasks, setTasks] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
+    // loading removed
 
     // Form state
     const [formData, setFormData] = useState({
@@ -36,7 +36,6 @@ export const MenteeTasksPage: React.FC = () => {
                 dueDate: doc.data().dueDate?.toDate()
             }));
             setTasks(fetched);
-            setLoading(false);
         });
         return () => unsubscribe();
     }, []);

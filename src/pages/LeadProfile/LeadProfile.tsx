@@ -16,8 +16,8 @@ import {
     Loader
 } from 'lucide-react';
 import { useParams } from 'react-router-dom';
-import { collection, query, where, getDocs, doc, updateDoc, addDoc } from 'firebase/firestore';
-import { db, auth } from '../../lib/firebase';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from '../../lib/firebase';
 import { Card, CardHeader, CardContent, Badge, Button, Modal } from '../../components/ui';
 import { useToast } from '../../components/ui/Toast';
 import { LEAD_STAGES, DEAL_STAGES, getStageConfig } from '../../types';
@@ -58,7 +58,7 @@ export const LeadProfilePage: React.FC = () => {
                     // Simulate Lead data from Deal
                     setLead({
                         id: dealData.leadId,
-                        name: dealData.leadName,
+                        name: dealData.leadName || 'Desconhecido',
                         whatsapp: dealData.leadWhatsapp || '',
                         email: '', // Not in deal yet
                         source: 'Indefinido',

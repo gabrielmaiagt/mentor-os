@@ -18,7 +18,7 @@ import { useToast } from '../../components/ui/Toast';
 import { MENTEE_STAGES, getStageConfig, OFFER_PLATFORMS, DEFAULT_ONBOARDING_TEMPLATE, FIRST_LOGIN_TOUR } from '../../types';
 import { db, auth } from '../../lib/firebase';
 import { collection, query, where, onSnapshot, addDoc, updateDoc, doc, getDocs } from 'firebase/firestore';
-import type { OfferMined, OfferStatus, MenteeStage, OfferPlatform, OnboardingProgress, Mentee } from '../../types';
+import type { OfferMined, OfferStatus, OfferPlatform, OnboardingProgress, Mentee } from '../../types';
 import './MenteeHome.css';
 
 // Helper to calculate summary from real data

@@ -4,8 +4,8 @@ import { useToast } from '../../components/ui/Toast';
 import { Calendar, Clock, Video, MessageSquare, Plus } from 'lucide-react';
 import './MenteeCalls.css';
 
-import { collection, query, where, onSnapshot, addDoc } from 'firebase/firestore';
-import { db, auth } from '../../lib/firebase';
+import { collection, query, onSnapshot, addDoc } from 'firebase/firestore';
+import { db } from '../../lib/firebase';
 import { Loader } from 'lucide-react';
 
 export const MenteeCallsPage: React.FC = () => {

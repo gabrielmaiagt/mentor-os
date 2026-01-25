@@ -16,7 +16,7 @@ import {
 import { Card, Badge, Button } from '../../components/ui';
 import { useToast } from '../../components/ui/Toast';
 import type { ActionItem } from '../../types';
-import { collection, query, where, onSnapshot, getDocs } from 'firebase/firestore';
+import { collection, query, getDocs } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { Loader } from 'lucide-react';
 
