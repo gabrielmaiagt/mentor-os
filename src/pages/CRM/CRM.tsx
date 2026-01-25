@@ -43,17 +43,17 @@ export const CRMPage: React.FC = () => {
     }, []);
 
     // Helper to create Mentee if not exists
-    const ensureMenteeExists = async (deal: Deal) => {
+    const ensureMenteeExists = async (deal: Deal): Promise<string | null> => {
         // Check if mentee already exists for this deal or lead
         // We can check by linkedDealId
         const q = query(collection(db, 'mentees'), where('linkedDealId', '==', deal.id));
         const snapshot = await getDocs(q);
 
-        if (!snapshot.empty) return; // Already exists
+        if (!snapshot.empty) return snapshot.docs[0].id; // Already exists
 
         // Create new Mentee
         try {
-            await addDoc(collection(db, 'mentees'), {
+            const docRef = await addDoc(collection(db, 'mentees'), {
                 name: deal.leadName,
                 whatsapp: deal.leadWhatsapp || '',
                 email: deal.email || '', // Now using the deal's email
@@ -69,9 +69,11 @@ export const CRMPage: React.FC = () => {
                 updatedAt: new Date()
             });
             toast.success('Mentorado criado automaticamente!');
+            return docRef.id;
         } catch (error) {
             console.error("Error creating mentee from deal:", error);
             toast.error("Erro ao criar mentorado vinculado.");
+            return null;
         }
     };
 
@@ -488,8 +490,24 @@ export const CRMPage: React.FC = () => {
                                     updatedAt: new Date(),
                                     paymentDate: new Date()
                                 });
-                                await ensureMenteeExists(updatedDeal);
-                                toast.success('Venda Confirmada!', 'Mentorado criado e acesso liberado.');
+
+                                const menteeId = await ensureMenteeExists(updatedDeal);
+
+                                // Create Finance Transaction
+                                await addDoc(collection(db, 'transactions'), {
+                                    menteeId: menteeId || 'legacy_or_error',
+                                    menteeName: updatedDeal.leadName,
+                                    amount: Number(amountInput),
+                                    status: 'PAID',
+                                    dueDate: new Date(),
+                                    paidAt: new Date(),
+                                    method: 'PIX', // Default for CRM sales
+                                    description: `Venda CRM - ${updatedDeal.offerName}`,
+                                    createdAt: new Date(),
+                                    updatedAt: new Date()
+                                });
+
+                                toast.success('Venda Confirmada!', 'Mentorado e Transação criados.');
                                 setClosingDeal(null);
                             } catch (e) {
                                 console.error(e);
