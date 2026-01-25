@@ -195,7 +195,7 @@ export const FIRST_LOGIN_TOUR: TourStep[] = [
         target: '.onboarding-checklist',
         title: 'Checklist de Onboarding',
         content: 'Complete todas as etapas para desbloquear a próxima fase. Cada item vale XP!',
-        placement: 'left',
+        placement: 'top',
     },
 ];
 

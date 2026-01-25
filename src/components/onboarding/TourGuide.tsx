@@ -35,13 +35,37 @@ export const TourGuide: React.FC<TourGuideProps> = ({
             setTargetRect(rect);
 
             // Calculate tooltip position based on placement
-            // Ideally we'd use floating-ui or similar, but simplified here
+            // Calculate tooltip position based on placement
             const scrollY = window.scrollY;
             const scrollX = window.scrollX;
+            const centerX = rect.left + scrollX + (rect.width / 2);
+            const centerY = rect.top + scrollY + (rect.height / 2);
 
-            // Default center if calculations fail
-            let top = rect.bottom + scrollY + 10;
-            let left = rect.left + scrollX + (rect.width / 2);
+            let top = 0;
+            let left = 0;
+
+            switch (currentStep.placement) {
+                case 'top':
+                    top = rect.top + scrollY;
+                    left = centerX;
+                    break;
+                case 'bottom':
+                    top = rect.bottom + scrollY;
+                    left = centerX;
+                    break;
+                case 'left':
+                    top = centerY;
+                    left = rect.left + scrollX;
+                    break;
+                case 'right':
+                    top = centerY;
+                    left = rect.right + scrollX;
+                    break;
+                default: // center or fallback
+                    top = centerY;
+                    left = centerX;
+                    break;
+            }
 
             setPosition({ top, left });
 

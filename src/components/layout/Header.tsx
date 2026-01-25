@@ -92,7 +92,6 @@ export const Header: React.FC = () => {
                     onClick={handleNotificationClick}
                 >
                     <Bell size={20} />
-                    <span className="header-notification-badge">3</span>
                 </button>
 
                 <div className="header-user-dropdown" ref={menuRef}>

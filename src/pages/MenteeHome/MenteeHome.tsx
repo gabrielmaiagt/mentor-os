@@ -46,7 +46,7 @@ const mockOnboardingProgress: OnboardingProgress = {
 export const MenteeHomePage: React.FC = () => {
     const toast = useToast();
     const navigate = useNavigate();
-    const [mentee] = useState(mockCurrentMentee);
+    const [mentee, setMentee] = useState(mockCurrentMentee);
     const [offers, setOffers] = useState<OfferMined[]>(mockOffersMined);
     const [showAddModal, setShowAddModal] = useState(false);
     const [editingOffer, setEditingOffer] = useState<OfferMined | null>(null);
@@ -58,6 +58,16 @@ export const MenteeHomePage: React.FC = () => {
         const saved = localStorage.getItem(`onboarding_m1`); // Usando id mock m1
         return saved ? JSON.parse(saved) : mockOnboardingProgress;
     });
+
+    // Calculate visible progress
+    const calculatedProgress = React.useMemo(() => {
+        if (mentee.currentStage !== 'ONBOARDING') return mentee.stageProgress;
+
+        const completedCount = onboardingProgress.completedSteps.length;
+        const totalSteps = DEFAULT_ONBOARDING_TEMPLATE.length;
+        return Math.round((completedCount / totalSteps) * 100);
+    }, [mentee.currentStage, mentee.stageProgress, onboardingProgress.completedSteps]);
+
     const [isTourOpen, setIsTourOpen] = useState(false);
 
 
@@ -86,7 +96,28 @@ export const MenteeHomePage: React.FC = () => {
     // Save onboarding to localStorage whenever it changes
     React.useEffect(() => {
         localStorage.setItem(`onboarding_m1`, JSON.stringify(onboardingProgress));
-    }, [onboardingProgress]);
+
+        // Check for onboarding completion to advance stage
+        if (mentee.currentStage === 'ONBOARDING') {
+            const completedCount = onboardingProgress.completedSteps.length;
+            const totalSteps = DEFAULT_ONBOARDING_TEMPLATE.length;
+
+            if (completedCount === totalSteps) {
+                // Advance to MINING
+                toast.success('Parabéns! Você concluiu o Onboarding! 🚀', 'Bem-vindo à fase de Mineração.');
+
+                // Small delay for effect
+                setTimeout(() => {
+                    setMentee(prev => ({
+                        ...prev,
+                        currentStage: 'MINING',
+                        stageProgress: 0,
+                        weeklyGoal: 'Encontrar 10 produtos candidatos'
+                    }));
+                }, 1500);
+            }
+        }
+    }, [onboardingProgress, mentee.currentStage]);
 
     const stageConfig = getStageConfig(MENTEE_STAGES, mentee.currentStage);
     const summary = calculateMiningSummary(offers);
@@ -293,12 +324,12 @@ export const MenteeHomePage: React.FC = () => {
                         <TrendingUp size={20} />
                         <span>Progresso na etapa</span>
                     </div>
-                    <span className="stage-progress-percent">{mentee.stageProgress}%</span>
+                    <span className="stage-progress-percent">{calculatedProgress}%</span>
                 </div>
                 <div className="stage-progress-bar">
                     <div
                         className="stage-progress-fill"
-                        style={{ width: `${mentee.stageProgress}%`, backgroundColor: stageConfig?.color }}
+                        style={{ width: `${calculatedProgress}%`, backgroundColor: stageConfig?.color }}
                     />
                 </div>
                 {mentee.weeklyGoal && (
