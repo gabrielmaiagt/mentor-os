@@ -21,9 +21,12 @@ import {
     Filter,
     ArrowUpRight,
     Search,
-    Plus
+    Plus,
+    ChevronLeft,
+    ChevronRight,
+    Calendar as CalendarIcon
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, subMonths, startOfMonth, endOfMonth, isWithinInterval, addMonths, isSameMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 import { Card, Button, Badge, Modal } from '../../components/ui';
@@ -46,6 +49,7 @@ const FinancePage: React.FC = () => {
     const [transactions, setTransactions] = useState<any[]>([]);
     const [mentees, setMentees] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [selectedDate, setSelectedDate] = useState(new Date());
 
     // Fetch Transactions
     useEffect(() => {
@@ -75,27 +79,56 @@ const FinancePage: React.FC = () => {
         return () => unsubscribe();
     }, []);
 
-    // Calculate Real Stats
+    // Calculate Real Stats based on Selected Date
     const stats = useMemo(() => {
-        const total = transactions.filter(t => t.status === 'PAID').reduce((sum, t) => sum + t.amount, 0);
+        const startOfSelectedMonth = startOfMonth(selectedDate);
+        const endOfSelectedMonth = endOfMonth(selectedDate);
+        const startOfPreviousMonth = startOfMonth(subMonths(selectedDate, 1));
+        const endOfPreviousMonth = endOfMonth(subMonths(selectedDate, 1));
 
-        const now = new Date();
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        const monthly = transactions
-            .filter(t => t.status === 'PAID' && t.paidAt >= startOfMonth)
+        // 1. Monthly Revenue (Paid in Selected Month)
+        const monthlyRevenue = transactions
+            .filter(t => t.status === 'PAID' && t.paidAt && isWithinInterval(t.paidAt, { start: startOfSelectedMonth, end: endOfSelectedMonth }))
             .reduce((sum, t) => sum + t.amount, 0);
 
-        const pending = transactions.filter(t => t.status === 'PENDING').reduce((sum, t) => sum + t.amount, 0);
-        const overdue = transactions.filter(t => t.status === 'OVERDUE').reduce((sum, t) => sum + t.amount, 0);
+        // 2. Previous Month Revenue (for comparison)
+        const previousMonthRevenue = transactions
+            .filter(t => t.status === 'PAID' && t.paidAt && isWithinInterval(t.paidAt, { start: startOfPreviousMonth, end: endOfPreviousMonth }))
+            .reduce((sum, t) => sum + t.amount, 0);
+
+        // Growth Calculation
+        const growth = previousMonthRevenue === 0 ? 0 : ((monthlyRevenue - previousMonthRevenue) / previousMonthRevenue) * 100;
+
+        // 3. Pending Revenue (Due in Selected Month AND Status Pending)
+        const pendingRevenue = transactions
+            .filter(t => t.status === 'PENDING' && t.dueDate && isWithinInterval(t.dueDate, { start: startOfSelectedMonth, end: endOfSelectedMonth }))
+            .reduce((sum, t) => sum + t.amount, 0);
+
+        // 4. Projected (Realized + Pending for this month)
+        const projectedRevenue = monthlyRevenue + pendingRevenue;
+
+        // 5. Total Revenue (Lifetime) - Unaffected by date filter
+        const totalRevenue = transactions.filter(t => t.status === 'PAID').reduce((sum, t) => sum + t.amount, 0);
+
+        // 6. Overdue (Global Alert - Accumulative)
+        // We generally want to see ALL overdue bills, regardless of month selected, OR only those that became overdue in that month. 
+        // User asked for "3 faturas vencidas" context. Usually this is "Current Actionable".
+        // Let's keep Overdue as GLOBAL (Current Status) for now, as it's a "Risk" indicator.
+        const overdueTransactions = transactions.filter(t => t.status === 'OVERDUE');
+        const overdueRevenue = overdueTransactions.reduce((sum, t) => sum + t.amount, 0);
+        const overdueCount = overdueTransactions.length;
 
         return {
-            totalRevenue: total,
-            monthlyRevenue: monthly,
-            projectedRevenue: monthly + pending, // Simple projection
-            pendingRevenue: pending,
-            overdueRevenue: overdue
+            totalRevenue,
+            monthlyRevenue,
+            projectedRevenue,
+            pendingRevenue,
+            overdueRevenue,
+            overdueCount,
+            growth,
+            previousMonthRevenue
         };
-    }, [transactions]);
+    }, [transactions, selectedDate]);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [viewAll, setViewAll] = useState(false);
@@ -107,37 +140,85 @@ const FinancePage: React.FC = () => {
         amount: '',
         status: 'PAID' as PaymentStatus,
         method: 'PIX',
-        dueDate: new Date().toISOString().split('T')[0]
+        dueDate: new Date().toISOString().split('T')[0],
+        isRecurrent: false,
+        installments: 1
     });
 
     const handleAddTransaction = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
             const selectedMentee = mentees.find(m => m.id === newTx.menteeId);
-            await addDoc(collection(db, 'transactions'), {
-                menteeId: newTx.menteeId,
-                menteeName: selectedMentee?.name || 'Desconhecido',
-                description: 'Transação Manual',
-                amount: Number(newTx.amount),
-                status: newTx.status,
-                method: newTx.method,
-                dueDate: new Date(newTx.dueDate),
-                paidAt: newTx.status === 'PAID' ? new Date() : null,
-                createdAt: new Date(),
-                createdBy: auth.currentUser?.uid
-            });
+            const numInstallments = newTx.isRecurrent ? Number(newTx.installments) : 1;
+            const baseAmount = Number(newTx.amount);
+            // Let's assume user inputs the value of EACH installment if recurring? Or Total?
+            // "Venda de 1000 reais em 2x" -> 2x 500.
+            // "Mensalidade de 500 reais" -> Recurrent -> 1x 500.
+            // Let's assume user enters the TOTAL amount and we divide if installments > 1.
+            // CAUTION: If status is PAID, are ALL paid? No. Usually only 1st is paid if it's a credit sale.
+            // But if method is 'PIX' and status 'PAID', maybe it's full payment.
+            // If "Parcelado", usually future ones are Pending.
+            // Let's keep it simple: Create N transactions. Data entry will be explicit.
+            // If user enters 1000 and 2x, we create 2 of 500.
+
+            // Actually, for "Installments", usually we want 1st PAID (maybe) and others PENDING.
+            // BUT simpler logic: All inherit the status selected? No, if "Overdue", all overdue?
+            // Let's assume Status applies to the FIRST installment, others are PENDING by default unless specified.
+            // Simplification: All PENDING unless 1st is PAID.
+
+            const amountPerInstallment = numInstallments > 1 ? baseAmount / numInstallments : baseAmount;
+
+            for (let i = 0; i < numInstallments; i++) {
+                const dueDate = new Date(newTx.dueDate);
+                dueDate.setMonth(dueDate.getMonth() + i);
+
+                // Status: Only 1st follows selection if PAID? Or all?
+                // If I mark as PAID, usually I mean "I received this". If 6x, I didn't receive all.
+                // Logic: If > 1 installment, force others to PENDING.
+                const currentStatus = (i === 0) ? newTx.status : 'PENDING';
+
+                await addDoc(collection(db, 'transactions'), {
+                    menteeId: newTx.menteeId,
+                    menteeName: selectedMentee?.name || 'Desconhecido',
+                    description: numInstallments > 1
+                        ? `Parcela ${i + 1}/${numInstallments} - Manual`
+                        : 'Transação Manual',
+                    amount: amountPerInstallment,
+                    status: currentStatus,
+                    method: newTx.method,
+                    dueDate: dueDate,
+                    paidAt: currentStatus === 'PAID' ? new Date() : null,
+                    createdAt: new Date(),
+                    createdBy: auth.currentUser?.uid
+                });
+            }
+
             setIsModalOpen(false);
-            toast.success('Transação adicionada!');
-            setNewTx({ menteeId: '', amount: '', status: 'PAID', method: 'PIX', dueDate: new Date().toISOString().split('T')[0] });
+            toast.success(`${numInstallments} transação(ões) gerada(s)!`);
+            setNewTx({
+                menteeId: '', amount: '', status: 'PAID', method: 'PIX',
+                dueDate: new Date().toISOString().split('T')[0],
+                isRecurrent: false, installments: 1
+            });
         } catch (error) {
             console.error("Error adding transaction:", error);
             toast.error("Erro ao adicionar transação");
         }
     };
 
-    // Filter and Sort
+    // Filter and Sort Transactions
     const filteredTransactions = transactions
-        .filter(t => !showOnlyPending || t.status === 'PENDING')
+        .filter(t => {
+            // Filter by Date (Due Date in selected month) for list view?
+            // Usually the list shows relevant transactions for the month.
+            // Let's filter by Due Date falling in the selected month OR Paid Date falling in selected month.
+            // A simple approach is: Show transactions "relevant" to this month.
+            if (showOnlyPending) return t.status === 'PENDING';
+
+            const relevantDate = t.status === 'PAID' ? t.paidAt : t.dueDate;
+            if (!relevantDate) return false;
+            return isSameMonth(relevantDate, selectedDate);
+        })
         .sort((a, b) => b.dueDate.getTime() - a.dueDate.getTime());
 
     const displayedTransactions = viewAll ? filteredTransactions : filteredTransactions.slice(0, 5);
@@ -166,21 +247,35 @@ const FinancePage: React.FC = () => {
         <div className="finance-page">
             {/* Header */}
             <div className="finance-header">
-                <div>
+                <div className="flex flex-col gap-1">
                     <h1>Financeiro</h1>
                     <p>Visão geral do faturamento e fluxo de caixa</p>
                 </div>
+
+                <div className="flex items-center gap-4 bg-secondary p-1 rounded-lg border border-subtle">
+                    <Button variant="ghost" size="sm" onClick={() => setSelectedDate(prev => subMonths(prev, 1))}>
+                        <ChevronLeft size={18} />
+                    </Button>
+                    <div className="flex items-center gap-2 px-2 font-medium min-w-[140px] justify-center">
+                        <CalendarIcon size={16} className="text-muted" />
+                        {format(selectedDate, "MMMM 'de' yyyy", { locale: ptBR })}
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={() => setSelectedDate(prev => addMonths(prev, 1))}>
+                        <ChevronRight size={18} />
+                    </Button>
+                </div>
+
                 <div className="finance-actions">
                     <Button
                         variant="secondary"
                         icon={<Filter size={16} />}
                         onClick={() => {
                             setShowOnlyPending(!showOnlyPending);
-                            toast.info(showOnlyPending ? 'Mostrando todas' : 'Filtrando pendentes');
+                            toast.info(showOnlyPending ? 'Mostrando mês atual' : 'Filtrando pendentes (Geral)');
                         }}
                         className={showOnlyPending ? 'bg-secondary-hover border-accent' : ''}
                     >
-                        {showOnlyPending ? 'Ver Todas' : 'Filtrar Pendentes'}
+                        {showOnlyPending ? 'Ver Mês' : 'Ver Pendentes'}
                     </Button>
                     <Button variant="primary" icon={<Plus size={16} />} onClick={() => setIsModalOpen(true)}>
                         Nova Transação
@@ -193,9 +288,9 @@ const FinancePage: React.FC = () => {
                 <Card padding="md" className="finance-stat-card">
                     <span className="finance-stat-title">Receita Total (LTV)</span>
                     <span className="finance-stat-value">{formatCurrency(stats.totalRevenue)}</span>
-                    <div className="finance-stat-meta positive">
-                        <TrendingUp size={14} />
-                        <span>+12% vs mês anterior</span>
+                    <div className={`finance-stat-meta ${stats.growth >= 0 ? 'positive' : 'negative'}`}>
+                        <TrendingUp size={14} className={stats.growth < 0 ? 'rotate-180' : ''} />
+                        <span>{stats.growth >= 0 ? '+' : ''}{stats.growth.toFixed(1)}% vs anterior</span>
                     </div>
                 </Card>
 
@@ -221,7 +316,7 @@ const FinancePage: React.FC = () => {
                     <span className="finance-stat-value">{formatCurrency(stats.overdueRevenue)}</span>
                     <div className="finance-stat-meta negative">
                         <AlertTriangle size={14} />
-                        <span>3 faturas vencidas</span>
+                        <span>{stats.overdueCount} faturas vencidas</span>
                     </div>
                 </Card>
             </div>
@@ -377,6 +472,39 @@ const FinancePage: React.FC = () => {
                             />
                         </div>
                     </div>
+
+                    <div className="form-group mb-2">
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="checkbox"
+                                id="isRecurrent"
+                                className="w-4 h-4"
+                                checked={newTx.isRecurrent}
+                                onChange={e => setNewTx({ ...newTx, isRecurrent: e.target.checked })}
+                            />
+                            <label htmlFor="isRecurrent" className="text-sm text-primary cursor-pointer select-none">
+                                É parcelado / recorrente?
+                            </label>
+                        </div>
+                    </div>
+
+                    {newTx.isRecurrent && (
+                        <div className="form-group">
+                            <label>Número de Parcelas</label>
+                            <input
+                                type="number"
+                                min="2"
+                                max="24"
+                                className="input-field"
+                                value={newTx.installments}
+                                onChange={e => setNewTx({ ...newTx, installments: Number(e.target.value) })}
+                            />
+                            <p className="text-xs text-secondary mt-1">
+                                O valor total será dividido por {newTx.installments}. As parcelas subsequentes serão criadas como PENDENTE mensais.
+                            </p>
+                        </div>
+                    )}
+
                     <div className="form-row-2">
                         <div className="form-group">
                             <label>Status</label>
