@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Card, Badge, Button } from '../../components/ui';
+import { Card, Badge, Button, Modal } from '../../components/ui';
+import { useToast } from '../../components/ui/Toast';
 import { CheckSquare, Clock, Plus } from 'lucide-react';
 import './MenteeTasks.css';
 
@@ -40,7 +41,17 @@ const mockTasks = [
 ];
 
 export const MenteeTasksPage: React.FC = () => {
+    const toast = useToast();
     const [filter, setFilter] = useState<'ALL' | 'TODO' | 'DONE'>('ALL');
+    const [showAddModal, setShowAddModal] = useState(false);
+
+    // Form state
+    const [formData, setFormData] = useState({
+        title: '',
+        description: '',
+        dueDate: new Date().toISOString().split('T')[0],
+        priority: 'MEDIUM'
+    });
 
     const filteredTasks = mockTasks.filter(task => {
         if (filter === 'ALL') return true;
@@ -65,7 +76,7 @@ export const MenteeTasksPage: React.FC = () => {
                     <h1>Minhas Tarefas</h1>
                     <p>Gerencie suas entregas e pendências</p>
                 </div>
-                <Button variant="primary" icon={<Plus size={16} />}>
+                <Button variant="primary" icon={<Plus size={16} />} onClick={() => setShowAddModal(true)}>
                     Nova Tarefa
                 </Button>
             </div>
@@ -140,6 +151,65 @@ export const MenteeTasksPage: React.FC = () => {
                     </div>
                 )}
             </div>
+
+            {/* Add Task Modal */}
+            <Modal
+                isOpen={showAddModal}
+                onClose={() => setShowAddModal(false)}
+                title="Nova Tarefa"
+                footer={
+                    <>
+                        <Button variant="ghost" onClick={() => setShowAddModal(false)}>Cancelar</Button>
+                        <Button variant="primary" onClick={() => {
+                            toast.success('Tarefa criada com sucesso!');
+                            setShowAddModal(false);
+                            // Aqui adicionaria ao state em uma app real
+                        }}>Criar Tarefa</Button>
+                    </>
+                }
+            >
+                <div className="task-form">
+                    <div className="form-field">
+                        <label>Título *</label>
+                        <input
+                            type="text"
+                            placeholder="O que precisa ser feito?"
+                            value={formData.title}
+                            onChange={e => setFormData({ ...formData, title: e.target.value })}
+                        />
+                    </div>
+                    <div className="form-field">
+                        <label>Descrição</label>
+                        <textarea
+                            rows={3}
+                            placeholder="Detalhes da tarefa..."
+                            value={formData.description}
+                            onChange={e => setFormData({ ...formData, description: e.target.value })}
+                        />
+                    </div>
+                    <div className="form-row">
+                        <div className="form-field">
+                            <label>Prazo</label>
+                            <input
+                                type="date"
+                                value={formData.dueDate}
+                                onChange={e => setFormData({ ...formData, dueDate: e.target.value })}
+                            />
+                        </div>
+                        <div className="form-field">
+                            <label>Prioridade</label>
+                            <select
+                                value={formData.priority}
+                                onChange={e => setFormData({ ...formData, priority: e.target.value })}
+                            >
+                                <option value="LOW">Baixa</option>
+                                <option value="MEDIUM">Média</option>
+                                <option value="HIGH">Alta</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 };

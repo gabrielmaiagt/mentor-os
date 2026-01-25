@@ -36,6 +36,7 @@ export const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({
     const [showFormModal, setShowFormModal] = useState(false);
     const [activeFormStep, setActiveFormStep] = useState<OnboardingStep | null>(null);
     const [formData, setFormData] = useState<Record<string, any>>({});
+    const [viewingVideoStep, setViewingVideoStep] = useState<string | null>(null);
 
     const getStepStatus = (step: OnboardingStep): OnboardingStepStatus => {
         if (progress.completedSteps.includes(step.id)) return 'DONE';
@@ -87,7 +88,11 @@ export const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({
             setActiveFormStep(step);
             setFormData({});
             setShowFormModal(true);
-        } else if (step.contentType === 'VIDEO' || step.contentType === 'LINK') {
+        } else if (step.contentType === 'VIDEO') {
+            if (step.contentUrl) {
+                setViewingVideoStep(step.id);
+            }
+        } else if (step.contentType === 'LINK') {
             if (step.contentUrl) {
                 window.open(step.contentUrl, '_blank');
             }
@@ -99,6 +104,12 @@ export const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({
             onCompleteStep(step.id);
             toast.success('+' + step.xpReward + ' XP!', step.title);
         }
+    };
+
+    const handleFinishVideo = (step: OnboardingStep) => {
+        setViewingVideoStep(null);
+        onCompleteStep(step.id);
+        toast.success('+' + step.xpReward + ' XP!', step.title);
     };
 
     const handleSubmitForm = () => {
@@ -200,32 +211,56 @@ export const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({
                             {isExpanded && status !== 'LOCKED' && (
                                 <div className="onboarding-step-content">
                                     <p className="onboarding-step-description">{step.description}</p>
-                                    <div className="onboarding-step-actions">
-                                        {status === 'DONE' ? (
-                                            <Badge variant="success">
-                                                <CheckCircle2 size={14} /> Concluído
-                                            </Badge>
-                                        ) : (
-                                            <>
-                                                <Button
-                                                    variant="primary"
-                                                    size="sm"
-                                                    onClick={() => handleStartStep(step)}
-                                                >
-                                                    {step.actionLabel || 'Começar'}
-                                                </Button>
-                                                {!step.isRequired && (
+
+                                    {viewingVideoStep === step.id && step.contentType === 'VIDEO' && step.contentUrl && (
+                                        <div className="video-embed-container mb-4">
+                                            <iframe
+                                                src={step.contentUrl.replace('watch?v=', 'embed/').replace('loom.com/share', 'loom.com/embed')}
+                                                title={step.title}
+                                                frameBorder="0"
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                allowFullScreen
+                                                style={{ width: '100%', height: '300px', borderRadius: '8px' }}
+                                            ></iframe>
+                                            <Button
+                                                variant="primary"
+                                                fullWidth
+                                                className="mt-2"
+                                                onClick={() => handleFinishVideo(step)}
+                                            >
+                                                Concluir Vídeo
+                                            </Button>
+                                        </div>
+                                    )}
+
+                                    {!viewingVideoStep && (
+                                        <div className="onboarding-step-actions">
+                                            {status === 'DONE' ? (
+                                                <Badge variant="success">
+                                                    <CheckCircle2 size={14} /> Concluído
+                                                </Badge>
+                                            ) : (
+                                                <>
                                                     <Button
-                                                        variant="ghost"
+                                                        variant="primary"
                                                         size="sm"
-                                                        onClick={() => onSkipStep(step.id)}
+                                                        onClick={() => handleStartStep(step)}
                                                     >
-                                                        Pular
+                                                        {step.contentType === 'VIDEO' ? 'Assistir Vídeo' : (step.actionLabel || 'Começar')}
                                                     </Button>
-                                                )}
-                                            </>
-                                        )}
-                                    </div>
+                                                    {!step.isRequired && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => onSkipStep(step.id)}
+                                                        >
+                                                            Pular
+                                                        </Button>
+                                                    )}
+                                                </>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>
