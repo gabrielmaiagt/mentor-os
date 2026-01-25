@@ -1,14 +1,10 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
     ChevronLeft,
     ChevronRight,
     Plus,
     Clock,
-    User,
-    Video,
-    Phone,
-    MoreVertical
+    Video
 } from 'lucide-react';
 import { Card, Badge, Button, Modal } from '../../components/ui';
 import { useToast } from '../../components/ui/Toast';
@@ -59,10 +55,8 @@ const weekDays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 const hours = Array.from({ length: 12 }, (_, i) => i + 8); // 8h to 19h
 
 export const CalendarPage: React.FC = () => {
-    const navigate = useNavigate();
     const toast = useToast();
     const [currentDate, setCurrentDate] = useState(new Date());
-    const [view, setView] = useState<'week' | 'day'>('week');
     const [showNewCallModal, setShowNewCallModal] = useState(false);
 
     // Get week dates

@@ -1,19 +1,15 @@
 import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
     ArrowLeft,
     Phone,
     Mail,
     MessageSquare,
     Copy,
-    Clock,
     Calendar,
-    DollarSign,
-    Target,
     Edit,
     Trash2,
     Plus,
-    ChevronRight,
     AlertTriangle,
     CheckCircle,
     Flame
@@ -21,7 +17,7 @@ import {
 import { Card, CardHeader, CardContent, Badge, Button, Modal } from '../../components/ui';
 import { useToast } from '../../components/ui/Toast';
 import { LEAD_STAGES, DEAL_STAGES, getStageConfig } from '../../types';
-import type { Lead, Deal, LeadStage, DealStage } from '../../types';
+import type { Lead, Deal } from '../../types';
 import './LeadProfile.css';
 
 // Mock data
@@ -66,7 +62,6 @@ const mockTimeline = [
 ];
 
 export const LeadProfilePage: React.FC = () => {
-    const { id } = useParams();
     const navigate = useNavigate();
     const toast = useToast();
     const [lead] = useState(mockLead);

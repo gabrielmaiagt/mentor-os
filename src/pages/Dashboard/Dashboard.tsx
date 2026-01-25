@@ -1,11 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     DollarSign,
-    TrendingUp,
-    Users,
     AlertTriangle,
-    Clock,
     MessageSquare,
     Phone,
     Copy,
@@ -18,9 +15,9 @@ import {
 
 import { Card, Badge, Button } from '../../components/ui';
 import { useToast } from '../../components/ui/Toast';
-import { formatDistanceToNow, isAfter, subHours, format } from 'date-fns';
+import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import type { ActionItem, FinanceSnapshot, Deal, Lead, Mentee, Task } from '../../types';
+import type { ActionItem, FinanceSnapshot } from '../../types';
 import './Dashboard.css';
 
 // Mock data for demonstration

@@ -95,6 +95,7 @@ export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElemen
     hint?: string;
     options: Array<{ value: string; label: string }>;
     fullWidth?: boolean;
+    placeholder?: string;
 }
 
 export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(

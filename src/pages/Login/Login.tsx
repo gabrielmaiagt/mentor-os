@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Navigate, Link } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { Crosshair, Mail, Lock, User, Loader2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '../../components/ui';
@@ -7,7 +7,6 @@ import './Login.css';
 
 export const LoginPage: React.FC = () => {
     const { user, signIn, signUp, loading } = useAuth();
-    const navigate = useNavigate();
 
     const [isSignUp, setIsSignUp] = useState(false);
     const [email, setEmail] = useState('');

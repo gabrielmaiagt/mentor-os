@@ -2,15 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Plus,
-    DollarSign,
     Clock,
-    Copy,
-    MessageSquare,
-    ChevronRight,
-    MoreVertical,
-    ArrowRight,
     CheckCircle,
-    XCircle,
     Flame
 } from 'lucide-react';
 import { Card, Badge, Button, Modal } from '../../components/ui';

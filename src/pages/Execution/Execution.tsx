@@ -8,11 +8,9 @@ import {
     Check,
     Clock,
     RotateCcw,
-    Phone,
     User,
     DollarSign,
     AlertTriangle,
-    X,
     ExternalLink
 } from 'lucide-react';
 import { Card, Badge, Button } from '../../components/ui';

@@ -28,9 +28,10 @@ Fico no aguardo pra saber se consigo te ajudar de verdade.`,
         title: 'Pitch de Venda (High Ticket)',
         category: 'SALES',
         intensity: 'HARD',
-        text: `{nome}, analisei suas respostas. A mentoria funciona assim:
+        content: `{nome}, analisei suas respostas. A mentoria funciona assim:
 - 6 meses de acompanhamento
 - Calls quinzenais
+- Acesso ao meu WhatsApp pessoal
 - Acesso ao meu WhatsApp pessoal
 
 O investimento é de {valor} à vista ou 12x no cartão.
@@ -45,7 +46,7 @@ Faz sentido darmos esse passo agora?`,
         title: 'Follow-up (Vácuo 24h)',
         category: 'SALES',
         intensity: 'MEDIUM',
-        text: `Oi {nome}, imaginou que a correria deve estar grande aí.
+        content: `Oi {nome}, imaginou que a correria deve estar grande aí.
 Só pra eu me organizar aqui: esse assunto ainda é prioridade pra você ou posso encerrar seu processo de aplicação por enquanto?`,
         description: 'Recuperação de lead que parou de responder.',
         createdAt: now,
@@ -59,7 +60,7 @@ Só pra eu me organizar aqui: esse assunto ainda é prioridade pra você ou poss
         title: 'Boas-vindas (Pós-compra)',
         category: 'DELIVERY',
         intensity: 'SOFT',
-        text: `Parabéns {nome}! 🚀
+        content: `Parabéns {nome}! 🚀
 Seja muito bem-vindo à Mentoria.
 O primeiro passo agora é preencher o formulário: {link_diagnostico}
 
@@ -76,7 +77,7 @@ Assim que preencher, agendaremos nossa Call de Kickoff.`,
         title: 'Cobrança Amigável (Atraso)',
         category: 'FINANCE',
         intensity: 'MEDIUM',
-        text: `Oi {nome}, tudo certo?
+        content: `Oi {nome}, tudo certo?
 Vi aqui que o sistema não identificou o pagamento da parcela {numero_parcela}.
 Aconteceu alguma coisa com o link ou cartão?
 Segue o link atualizado caso precise: {link_pagamento}`,
@@ -92,7 +93,7 @@ Segue o link atualizado caso precise: {link_pagamento}`,
         title: 'Resumo do Contrato',
         category: 'LEGAL',
         intensity: 'HARD',
-        text: `Olá {nome}, confirmando os termos acordados:
+        content: `Olá {nome}, confirmando os termos acordados:
 1. Duração: 6 meses
 2. Garantia: 7 dias incondicional
 3. Multa de cancelamento: 20% do valor restante

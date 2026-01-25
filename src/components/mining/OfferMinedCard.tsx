@@ -1,5 +1,5 @@
 import React from 'react';
-import { ExternalLink, Plus, Edit, ChevronDown, Trash2 } from 'lucide-react';
+import { ExternalLink, Plus, Edit, Trash2 } from 'lucide-react';
 import { Card, Badge, Button } from '../ui';
 import { getOfferStatusConfig } from '../../types';
 import type { OfferMined, OfferStatus } from '../../types';

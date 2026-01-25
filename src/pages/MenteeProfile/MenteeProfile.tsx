@@ -15,8 +15,7 @@ import {
     ChevronRight,
     FileText,
     Play,
-    Search,
-    ExternalLink
+    Search
 } from 'lucide-react';
 import { Card, CardHeader, CardContent, Badge, Button, Modal } from '../../components/ui';
 import { OfferMinedCard } from '../../components/mining';
@@ -183,7 +182,6 @@ export const MenteeProfilePage: React.FC = () => {
     const [offers, setOffers] = useState<OfferMined[]>(mockOffersMined);
     const miningSummary = useMemo(() => calculateMiningSummary(offers), [offers]);
 
-    const stageConfig = getStageConfig(MENTEE_STAGES, mentee.currentStage);
     const currentStageIndex = stageJourney.indexOf(mentee.currentStage);
     const menteeCalls = mockCalls.filter(c => c.menteeId === mentee.id);
     const menteeTasks = mockTasks.filter(t => t.ownerId === mentee.id);
