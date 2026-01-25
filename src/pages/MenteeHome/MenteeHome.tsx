@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     Target,
     Calendar,
@@ -44,6 +45,7 @@ const mockOnboardingProgress: OnboardingProgress = {
 
 export const MenteeHomePage: React.FC = () => {
     const toast = useToast();
+    const navigate = useNavigate();
     const [mentee] = useState(mockCurrentMentee);
     const [offers, setOffers] = useState<OfferMined[]>(mockOffersMined);
     const [showAddModal, setShowAddModal] = useState(false);
@@ -592,7 +594,10 @@ export const MenteeHomePage: React.FC = () => {
                         </div>
                     ))}
                     <div className="mt-4 text-center">
-                        <Button variant="ghost" size="sm" onClick={() => toast.info('Redirecionando para quadro completo...')}>Ver quadro completo</Button>
+                        <Button variant="ghost" size="sm" onClick={() => {
+                            setShowTasksModal(false);
+                            navigate('/me/tasks');
+                        }}>Ver quadro completo</Button>
                     </div>
                 </div>
             </Modal>

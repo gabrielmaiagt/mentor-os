@@ -20,6 +20,7 @@ import FinancePage from './pages/Finance';
 import TemplatesPage from './pages/Templates';
 import ProfilePage from './pages/Profile';
 import MenteeCallsPage from './pages/MenteeCalls';
+import MenteeTasksPage from './pages/MenteeTasks';
 
 // Placeholder pages for remaining routes
 const PlaceholderPage: React.FC<{ title: string }> = ({ title }) => (
@@ -71,6 +72,7 @@ function App() {
             <Route element={<Shell requireAuth allowedRoles={['mentee']} />}>
               <Route path="/me" element={<MenteeHomePage />} />
               <Route path="/me/calls" element={<MenteeCallsPage />} />
+              <Route path="/me/tasks" element={<MenteeTasksPage />} />
               <Route path="/me/how-it-works" element={<MenteeHowItWorksPage />} />
             </Route>
 
