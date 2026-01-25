@@ -88,7 +88,12 @@ export const MenteeCallsPage: React.FC = () => {
                                     <Button variant="primary" onClick={() => window.open(call.link)}>
                                         Acessar Sala
                                     </Button>
-                                    <Button variant="ghost">Reagendar</Button>
+                                    <Button variant="ghost" onClick={() => {
+                                        toast.info('Reagendando call', 'Escolha um novo horário.');
+                                        setShowScheduleModal(true);
+                                    }}>
+                                        Reagendar
+                                    </Button>
                                 </div>
                             </Card>
                         ))}
