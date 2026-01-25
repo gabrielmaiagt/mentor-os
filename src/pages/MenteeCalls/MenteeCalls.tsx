@@ -4,45 +4,66 @@ import { useToast } from '../../components/ui/Toast';
 import { Calendar, Clock, Video, MessageSquare, Plus } from 'lucide-react';
 import './MenteeCalls.css';
 
-const mockCalls: any[] = [
-    {
-        id: 'c1',
-        title: 'Revisão Semanal de Mineração',
-        date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // In 2 days
-        duration: '45 min',
-        mentor: 'Gabriel (Mentor)',
-        status: 'SCHEDULED',
-        link: 'https://meet.google.com/abc-defg-hij',
-        recordingUrl: undefined
-    },
-    {
-        id: 'c2',
-        title: 'Call de Onboarding',
-        date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
-        duration: '60 min',
-        mentor: 'Gabriel (Mentor)',
-        status: 'COMPLETED',
-        recordingUrl: 'https://loom.com/share/...'
-    }
-];
+import { collection, query, where, onSnapshot, addDoc } from 'firebase/firestore';
+import { db, auth } from '../../lib/firebase';
+import { Loader } from 'lucide-react';
 
 export const MenteeCallsPage: React.FC = () => {
     const toast = useToast();
     const [showScheduleModal, setShowScheduleModal] = useState(false);
+    const [calls, setCalls] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
     const [scheduleData, setScheduleData] = useState({
         type: 'ONBOARDING',
         date: '',
         time: '10:00'
     });
 
-    const handleSchedule = () => {
+    React.useEffect(() => {
+        // Fetch calls for current mentee (fallback 'm1')
+        // Ideally: where('menteeId', '==', auth.currentUser?.uid)
+        const q = query(collection(db, 'calls')); // Fetching all for demo if auth not ready, or filter by 'menteeId'
+        // Ideally: query(collection(db, 'calls'), where('menteeId', '==', 'm1'));
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const fetched = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+                date: doc.data().scheduledAt?.toDate() // Mapping scheduledAt -> date
+            }));
+            setCalls(fetched);
+            setLoading(false);
+        });
+        return () => unsubscribe();
+    }, []);
+
+    const handleSchedule = async () => {
         if (!scheduleData.date) {
             toast.error('Selecione uma data para a call');
             return;
         }
 
-        toast.success('Solicitação enviada!', 'O mentor confirmará o horário em breve.');
-        setShowScheduleModal(false);
+        try {
+            const scheduledAt = new Date(`${scheduleData.date}T${scheduleData.time}`);
+            await addDoc(collection(db, 'calls'), {
+                menteeId: 'm1', // Fallback
+                menteeName: 'Carlos Lima', // Fallback
+                title: `Call: ${scheduleData.type}`,
+                scheduledAt: scheduledAt,
+                duration: 45,
+                status: 'SCHEDULED', // Or REQUESTED if supported
+                meetingLink: '',
+                createdAt: new Date()
+            });
+
+            toast.success('Solicitação enviada!', 'O mentor confirmará o horário em breve.');
+            setShowScheduleModal(false);
+            setScheduleData({ type: 'ONBOARDING', date: '', time: '10:00' });
+        } catch (error) {
+            console.error("Error scheduling call:", error);
+            toast.error("Erro ao agendar call");
+        }
     };
 
     const formatDate = (date: Date) => {
@@ -71,37 +92,38 @@ export const MenteeCallsPage: React.FC = () => {
                 <div className="calls-main">
                     <h2 className="section-title">Próximas Sessões</h2>
                     <div className="calls-list">
-                        {mockCalls.filter(c => c.status === 'SCHEDULED').map(call => (
-                            <Card key={call.id} className="call-card next" padding="lg">
-                                <div className="call-date-badge">
-                                    <Calendar size={20} />
-                                    <span>{formatDate(call.date)}</span>
-                                </div>
-                                <div className="call-info">
-                                    <h3>{call.title}</h3>
-                                    <div className="call-meta">
-                                        <span><Clock size={14} /> {call.duration}</span>
-                                        <span><Video size={14} /> Google Meet</span>
+                        {loading ? <Loader className="animate-spin" /> :
+                            calls.filter(c => c.status === 'SCHEDULED').map(call => (
+                                <Card key={call.id} className="call-card next" padding="lg">
+                                    <div className="call-date-badge">
+                                        <Calendar size={20} />
+                                        <span>{formatDate(call.date)}</span>
                                     </div>
-                                </div>
-                                <div className="call-actions">
-                                    <Button variant="primary" onClick={() => window.open(call.link)}>
-                                        Acessar Sala
-                                    </Button>
-                                    <Button variant="ghost" onClick={() => {
-                                        toast.info('Reagendando call', 'Escolha um novo horário.');
-                                        setShowScheduleModal(true);
-                                    }}>
-                                        Reagendar
-                                    </Button>
-                                </div>
-                            </Card>
-                        ))}
+                                    <div className="call-info">
+                                        <h3>{call.title}</h3>
+                                        <div className="call-meta">
+                                            <span><Clock size={14} /> {call.duration} min</span>
+                                            <span><Video size={14} /> Google Meet</span>
+                                        </div>
+                                    </div>
+                                    <div className="call-actions">
+                                        <Button variant="primary" onClick={() => window.open(call.link)}>
+                                            Acessar Sala
+                                        </Button>
+                                        <Button variant="ghost" onClick={() => {
+                                            toast.info('Reagendando call', 'Escolha um novo horário.');
+                                            setShowScheduleModal(true);
+                                        }}>
+                                            Reagendar
+                                        </Button>
+                                    </div>
+                                </Card>
+                            ))}
                     </div>
 
                     <h2 className="section-title mt-10">Histórico e Gravações</h2>
                     <div className="calls-list">
-                        {mockCalls.filter(c => c.status === 'COMPLETED').map(call => (
+                        {calls.filter(c => c.status === 'COMPLETED').map(call => (
                             <Card key={call.id} className="call-card past" padding="md">
                                 <div className="call-info">
                                     <h3>{call.title}</h3>

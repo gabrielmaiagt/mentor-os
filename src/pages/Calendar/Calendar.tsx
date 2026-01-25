@@ -1,4 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { collection, query, onSnapshot, addDoc } from 'firebase/firestore';
+import { db, auth } from '../../lib/firebase';
+import { useNavigate } from 'react-router-dom';
 import {
     ChevronLeft,
     ChevronRight,
@@ -11,53 +14,84 @@ import { useToast } from '../../components/ui/Toast';
 import type { Call } from '../../types';
 import './Calendar.css';
 
-// Mock data
-const mockCalls: Call[] = [
-    {
-        id: 'c1',
-        menteeId: 'm1',
-        scheduledAt: new Date(new Date().setHours(10, 0, 0, 0)),
-        durationMinutes: 60,
-        type: 'REGULAR',
-        status: 'SCHEDULED',
-        meetLink: 'https://meet.google.com/abc-defg-hij',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-    },
-    {
-        id: 'c2',
-        menteeId: 'm2',
-        scheduledAt: new Date(new Date().setHours(14, 0, 0, 0)),
-        durationMinutes: 45,
-        type: 'ONBOARDING',
-        status: 'SCHEDULED',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-    },
-    {
-        id: 'c3',
-        menteeId: 'm1',
-        scheduledAt: new Date(new Date(Date.now() + 24 * 60 * 60 * 1000).setHours(11, 0, 0, 0)),
-        durationMinutes: 60,
-        type: 'REGULAR',
-        status: 'SCHEDULED',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-    },
-];
-
-const mockMentees: Record<string, { name: string }> = {
-    'm1': { name: 'Carlos Lima' },
-    'm2': { name: 'Ana Oliveira' },
-};
+// Mock data removed
 
 const weekDays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 const hours = Array.from({ length: 12 }, (_, i) => i + 8); // 8h to 19h
 
 export const CalendarPage: React.FC = () => {
+    const navigate = useNavigate();
     const toast = useToast();
     const [currentDate, setCurrentDate] = useState(new Date());
     const [showNewCallModal, setShowNewCallModal] = useState(false);
+
+    const [calls, setCalls] = useState<Call[]>([]);
+    const [mentees, setMentees] = useState<any[]>([]);
+    const [menteeMap, setMenteeMap] = useState<Record<string, { name: string }>>({});
+    const [newCall, setNewCall] = useState({
+        menteeId: '',
+        scheduledAt: '',
+        durationMinutes: 60,
+        type: 'REGULAR'
+    });
+
+    // Fetch Calls
+    useEffect(() => {
+        const q = query(collection(db, 'calls'));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const fetchedCalls = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+                scheduledAt: doc.data().scheduledAt?.toDate(),
+                createdAt: doc.data().createdAt?.toDate(),
+                updatedAt: doc.data().updatedAt?.toDate(),
+            })) as Call[];
+            setCalls(fetchedCalls);
+        });
+        return () => unsubscribe();
+    }, []);
+
+    // Fetch Mentees for Lookup & Dropdown
+    useEffect(() => {
+        const q = query(collection(db, 'mentees'));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const list = snapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name }));
+            setMentees(list);
+
+            const map: Record<string, { name: string }> = {};
+            list.forEach(m => {
+                map[m.id] = { name: m.name };
+            });
+            setMenteeMap(map);
+        });
+        return () => unsubscribe();
+    }, []);
+
+    const handleCreateCall = async () => {
+        try {
+            if (!newCall.menteeId || !newCall.scheduledAt) {
+                toast.error("Preencha os campos obrigatórios");
+                return;
+            }
+
+            await addDoc(collection(db, 'calls'), {
+                menteeId: newCall.menteeId,
+                scheduledAt: new Date(newCall.scheduledAt),
+                durationMinutes: Number(newCall.durationMinutes),
+                type: newCall.type,
+                status: 'SCHEDULED',
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                createdBy: auth.currentUser?.uid
+            });
+            toast.success("Call agendada com sucesso!");
+            setShowNewCallModal(false);
+            setNewCall({ menteeId: '', scheduledAt: '', durationMinutes: 60, type: 'REGULAR' });
+        } catch (error) {
+            console.error("Error creating call:", error);
+            toast.error("Erro ao agendar call");
+        }
+    };
 
     // Get week dates
     const getWeekDates = () => {
@@ -86,7 +120,8 @@ export const CalendarPage: React.FC = () => {
     };
 
     const getCallsForDate = (date: Date) => {
-        return mockCalls.filter(call => {
+        return calls.filter(call => {
+            if (!call.scheduledAt) return false;
             const callDate = new Date(call.scheduledAt);
             return callDate.toDateString() === date.toDateString();
         });
@@ -192,11 +227,15 @@ export const CalendarPage: React.FC = () => {
                                         style={{
                                             ...getCallStyle(call),
                                             backgroundColor: getCallTypeColor(call.type),
+                                            cursor: 'pointer'
                                         }}
-                                        onClick={() => toast.info('Detalhes da call', `${mockMentees[call.menteeId]?.name} - ${formatTime(call.scheduledAt)}`)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            navigate(`/mentee/${call.menteeId}`);
+                                        }}
                                     >
                                         <span className="calendar-call-time">{formatTime(call.scheduledAt)}</span>
-                                        <span className="calendar-call-name">{mockMentees[call.menteeId]?.name}</span>
+                                        <span className="calendar-call-name">{menteeMap[call.menteeId]?.name || 'Desconhecido'}</span>
                                         <span className="calendar-call-duration">{call.durationMinutes}min</span>
                                     </div>
                                 ))}
@@ -210,36 +249,40 @@ export const CalendarPage: React.FC = () => {
             <div className="upcoming-calls">
                 <h2 className="upcoming-title">Próximas Calls</h2>
                 <div className="upcoming-list">
-                    {mockCalls.slice(0, 3).map(call => (
-                        <Card key={call.id} variant="interactive" padding="md" className="upcoming-card">
-                            <div className="upcoming-info">
-                                <div className="upcoming-avatar">
-                                    {mockMentees[call.menteeId]?.name.charAt(0)}
+                    {calls
+                        .filter(c => c.scheduledAt > new Date())
+                        .sort((a, b) => a.scheduledAt.getTime() - b.scheduledAt.getTime())
+                        .slice(0, 3)
+                        .map(call => (
+                            <Card key={call.id} variant="interactive" padding="md" className="upcoming-card">
+                                <div className="upcoming-info">
+                                    <div className="upcoming-avatar">
+                                        {(menteeMap[call.menteeId]?.name || '?').charAt(0)}
+                                    </div>
+                                    <div className="upcoming-details">
+                                        <span className="upcoming-name">{menteeMap[call.menteeId]?.name || 'Desconhecido'}</span>
+                                        <span className="upcoming-time">
+                                            <Clock size={12} />
+                                            {new Intl.DateTimeFormat('pt-BR', {
+                                                weekday: 'short',
+                                                day: '2-digit',
+                                                month: 'short',
+                                                hour: '2-digit',
+                                                minute: '2-digit',
+                                            }).format(call.scheduledAt)}
+                                        </span>
+                                    </div>
                                 </div>
-                                <div className="upcoming-details">
-                                    <span className="upcoming-name">{mockMentees[call.menteeId]?.name}</span>
-                                    <span className="upcoming-time">
-                                        <Clock size={12} />
-                                        {new Intl.DateTimeFormat('pt-BR', {
-                                            weekday: 'short',
-                                            day: '2-digit',
-                                            month: 'short',
-                                            hour: '2-digit',
-                                            minute: '2-digit',
-                                        }).format(call.scheduledAt)}
-                                    </span>
+                                <div className="upcoming-actions">
+                                    {call.type === 'ONBOARDING' && (
+                                        <Badge variant="info" size="sm">Onboarding</Badge>
+                                    )}
+                                    <Button variant="primary" size="sm" icon={<Video size={14} />}>
+                                        Entrar
+                                    </Button>
                                 </div>
-                            </div>
-                            <div className="upcoming-actions">
-                                {call.type === 'ONBOARDING' && (
-                                    <Badge variant="info" size="sm">Onboarding</Badge>
-                                )}
-                                <Button variant="primary" size="sm" icon={<Video size={14} />}>
-                                    Entrar
-                                </Button>
-                            </div>
-                        </Card>
-                    ))}
+                            </Card>
+                        ))}
                 </div>
             </div>
 
@@ -251,29 +294,37 @@ export const CalendarPage: React.FC = () => {
                 footer={
                     <>
                         <Button variant="ghost" onClick={() => setShowNewCallModal(false)}>Cancelar</Button>
-                        <Button variant="primary" onClick={() => {
-                            toast.success('Call agendada!');
-                            setShowNewCallModal(false);
-                        }}>Agendar</Button>
+                        <Button variant="primary" onClick={handleCreateCall}>Agendar</Button>
                     </>
                 }
             >
                 <div className="modal-form">
                     <div className="form-field">
                         <label>Mentorado</label>
-                        <select>
+                        <select
+                            value={newCall.menteeId}
+                            onChange={(e) => setNewCall({ ...newCall, menteeId: e.target.value })}
+                        >
                             <option value="">Selecione um mentorado</option>
-                            <option value="m1">Carlos Lima</option>
-                            <option value="m2">Ana Oliveira</option>
+                            {mentees.map(m => (
+                                <option key={m.id} value={m.id}>{m.name}</option>
+                            ))}
                         </select>
                     </div>
                     <div className="form-field">
                         <label>Data e Hora</label>
-                        <input type="datetime-local" />
+                        <input
+                            type="datetime-local"
+                            value={newCall.scheduledAt}
+                            onChange={(e) => setNewCall({ ...newCall, scheduledAt: e.target.value })}
+                        />
                     </div>
                     <div className="form-field">
                         <label>Duração</label>
-                        <select>
+                        <select
+                            value={newCall.durationMinutes}
+                            onChange={(e) => setNewCall({ ...newCall, durationMinutes: Number(e.target.value) })}
+                        >
                             <option value="30">30 minutos</option>
                             <option value="60">60 minutos</option>
                             <option value="90">90 minutos</option>
@@ -281,7 +332,10 @@ export const CalendarPage: React.FC = () => {
                     </div>
                     <div className="form-field">
                         <label>Tipo</label>
-                        <select>
+                        <select
+                            value={newCall.type}
+                            onChange={(e) => setNewCall({ ...newCall, type: e.target.value })}
+                        >
                             <option value="REGULAR">Regular</option>
                             <option value="ONBOARDING">Onboarding</option>
                             <option value="EMERGENCY">Emergência</option>

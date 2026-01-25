@@ -12,61 +12,80 @@ import {
     Plus,
     AlertTriangle,
     CheckCircle,
-    Flame
+    Flame,
+    Loader
 } from 'lucide-react';
+import { useParams } from 'react-router-dom';
+import { collection, query, where, getDocs, doc, updateDoc, addDoc } from 'firebase/firestore';
+import { db, auth } from '../../lib/firebase';
 import { Card, CardHeader, CardContent, Badge, Button, Modal } from '../../components/ui';
 import { useToast } from '../../components/ui/Toast';
 import { LEAD_STAGES, DEAL_STAGES, getStageConfig } from '../../types';
 import type { Lead, Deal } from '../../types';
 import './LeadProfile.css';
 
-// Mock data
-const mockLead: Lead = {
-    id: 'l1',
-    name: 'João Silva',
-    whatsapp: '11999887766',
-    email: 'joao.silva@email.com',
-    source: 'Instagram',
-    tags: ['tráfego direto', 'iniciante', 'urgente'],
-    stage: 'CLOSING',
-    status: 'ACTIVE',
-    lastContactAt: new Date(Date.now() - 52 * 60 * 60 * 1000),
-    nextActionAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
-    nextActionType: 'SEND_PIX',
-    objections: ['Preço alto', 'Tempo de retorno'],
-    notesShort: 'Interessado em tráfego para e-commerce de roupas fitness. Já tentou rodar sozinho mas não teve resultado.',
-    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-    updatedAt: new Date(Date.now() - 52 * 60 * 60 * 1000),
-};
-
-const mockDeal: Deal = {
-    id: 'd1',
-    leadId: 'l1',
-    offerName: 'Mentoria Tráfego Direto',
-    pitchAmount: 3000,
-    paymentPreference: 'PIX',
-    stage: 'PAYMENT_SENT',
-    heat: 'HOT',
-    leadName: 'João Silva',
-    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-    updatedAt: new Date(Date.now() - 52 * 60 * 60 * 1000),
-};
-
-const mockTimeline = [
-    { id: '1', type: 'message', content: 'Enviou PIX da mentoria', date: new Date(Date.now() - 52 * 60 * 60 * 1000) },
-    { id: '2', type: 'stage', content: 'Deal movido para PAYMENT_SENT', date: new Date(Date.now() - 52 * 60 * 60 * 1000) },
-    { id: '3', type: 'message', content: 'Pitch enviado via WhatsApp', date: new Date(Date.now() - 72 * 60 * 60 * 1000) },
-    { id: '4', type: 'call', content: 'Call de qualificação - 25min', date: new Date(Date.now() - 96 * 60 * 60 * 1000) },
-    { id: '5', type: 'stage', content: 'Lead qualificado', date: new Date(Date.now() - 96 * 60 * 60 * 1000) },
-    { id: '6', type: 'created', content: 'Lead criado via Instagram', date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000) },
-];
+// Mocks removed
 
 export const LeadProfilePage: React.FC = () => {
+    const { id: leadId } = useParams();
     const navigate = useNavigate();
     const toast = useToast();
-    const [lead] = useState(mockLead);
-    const [deal] = useState(mockDeal);
+
+    const [lead, setLead] = useState<Lead | null>(null);
+    const [deal, setDeal] = useState<Deal | null>(null);
+    const [loading, setLoading] = useState(true);
     const [showNoteModal, setShowNoteModal] = useState(false);
+
+    React.useEffect(() => {
+        const fetchLeadData = async () => {
+            if (!leadId) return;
+            try {
+                // Fetch deal associated with this leadId
+                // Since we don't have a separate 'leads' collection developed yet, we are using deals.
+                const q = query(collection(db, 'deals'), where('leadId', '==', leadId));
+                const snapshot = await getDocs(q);
+
+                if (!snapshot.empty) {
+                    const dealDoc = snapshot.docs[0];
+                    const dealData = {
+                        id: dealDoc.id,
+                        ...dealDoc.data(),
+                        createdAt: dealDoc.data().createdAt?.toDate(),
+                        updatedAt: dealDoc.data().updatedAt?.toDate()
+                    } as Deal;
+                    setDeal(dealData);
+
+                    // Simulate Lead data from Deal
+                    setLead({
+                        id: dealData.leadId,
+                        name: dealData.leadName,
+                        whatsapp: dealData.leadWhatsapp || '',
+                        email: '', // Not in deal yet
+                        source: 'Indefinido',
+                        tags: [],
+                        stage: 'CLOSING', // Derived
+                        status: 'ACTIVE',
+                        lastContactAt: dealData.updatedAt,
+                        objections: [],
+                        notesShort: '',
+                        createdAt: dealData.createdAt,
+                        updatedAt: dealData.updatedAt
+                    });
+                } else {
+                    toast.error("Lead não encontrado");
+                    navigate('/crm');
+                }
+            } catch (error) {
+                console.error("Error fetching lead:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchLeadData();
+    }, [leadId, navigate]);
+
+    if (loading) return <div className="flex items-center justify-center p-12"><Loader className="animate-spin" /></div>;
+    if (!lead || !deal) return null;
 
     const leadStageConfig = getStageConfig(LEAD_STAGES, lead.stage);
     const dealStageConfig = getStageConfig(DEAL_STAGES, deal.stage);
@@ -283,18 +302,24 @@ export const LeadProfilePage: React.FC = () => {
                         <CardHeader title="Histórico" />
                         <CardContent>
                             <div className="timeline">
-                                {mockTimeline.map((event, index) => (
-                                    <div key={event.id} className="timeline-item">
-                                        <div className="timeline-marker">
-                                            <div className={`timeline-dot timeline-dot-${event.type}`} />
-                                            {index < mockTimeline.length - 1 && <div className="timeline-line" />}
-                                        </div>
-                                        <div className="timeline-content">
-                                            <p className="timeline-text">{event.content}</p>
-                                            <span className="timeline-date">{formatDate(event.date)}</span>
-                                        </div>
+                                <div className="timeline-item">
+                                    <div className="timeline-marker">
+                                        <div className="timeline-dot timeline-dot-created" />
                                     </div>
-                                ))}
+                                    <div className="timeline-content">
+                                        <p className="timeline-text">Lead/Deal criado</p>
+                                        <span className="timeline-date">{formatDate(lead.createdAt)}</span>
+                                    </div>
+                                </div>
+                                <div className="timeline-item">
+                                    <div className="timeline-marker">
+                                        <div className="timeline-dot timeline-dot-stage" />
+                                    </div>
+                                    <div className="timeline-content">
+                                        <p className="timeline-text">Última atualização: {deal.stage}</p>
+                                        <span className="timeline-date">{formatDate(deal.updatedAt)}</span>
+                                    </div>
+                                </div>
                             </div>
                         </CardContent>
                     </Card>

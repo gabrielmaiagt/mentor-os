@@ -4,46 +4,16 @@ import { useToast } from '../../components/ui/Toast';
 import { CheckSquare, Clock, Plus } from 'lucide-react';
 import './MenteeTasks.css';
 
-// Mock Tasks Data
-const mockTasks = [
-    {
-        id: 't1',
-        title: 'Assistir módulo de Mineração',
-        description: 'Ver todas as aulas do módulo 3 e anotar dúvidas.',
-        dueDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000), // Amanhã
-        priority: 'HIGH',
-        status: 'DONE',
-    },
-    {
-        id: 't2',
-        title: 'Selecionar 10 ofertas candidatas',
-        description: 'Usar a biblioteca de anúncios do Facebook.',
-        dueDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
-        priority: 'HIGH',
-        status: 'TODO',
-    },
-    {
-        id: 't3',
-        title: 'Configurar Business Manager',
-        description: 'Seguir o checklist de contingência.',
-        dueDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // Atrasada
-        priority: 'MEDIUM',
-        status: 'TODO', // Visualmente atrasada
-    },
-    {
-        id: 't4',
-        title: 'Definir orçamento de teste',
-        description: 'Calcular com base no CPA ideal.',
-        dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
-        priority: 'LOW',
-        status: 'TODO',
-    }
-];
+import { collection, query, where, onSnapshot, addDoc, updateDoc, doc, getDocs } from 'firebase/firestore';
+import { db, auth } from '../../lib/firebase';
+import { Loader } from 'lucide-react';
 
 export const MenteeTasksPage: React.FC = () => {
     const toast = useToast();
     const [filter, setFilter] = useState<'ALL' | 'TODO' | 'DONE'>('ALL');
     const [showAddModal, setShowAddModal] = useState(false);
+    const [tasks, setTasks] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
 
     // Form state
     const [formData, setFormData] = useState({
@@ -53,10 +23,63 @@ export const MenteeTasksPage: React.FC = () => {
         priority: 'MEDIUM'
     });
 
-    const filteredTasks = mockTasks.filter(task => {
+    React.useEffect(() => {
+        // Fetch tasks for current user. 
+        // For MVP without strict auth, we fetch all tasks or try to match 'menteeId' if we had a context.
+        // Let's assume we fetch ALL tasks for now (admin view) OR try to find tasks linked to "m1" if using fallback.
+        // Implemented: Fetch ALL tasks.
+        const q = query(collection(db, 'tasks'));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const fetched = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+                dueDate: doc.data().dueDate?.toDate()
+            }));
+            setTasks(fetched);
+            setLoading(false);
+        });
+        return () => unsubscribe();
+    }, []);
+
+    const filteredTasks = tasks.filter(task => {
         if (filter === 'ALL') return true;
         return task.status === filter;
     });
+
+    const handleCreateTask = async () => {
+        if (!formData.title) {
+            toast.error("Título obrigatório");
+            return;
+        }
+
+        try {
+            await addDoc(collection(db, 'tasks'), {
+                ...formData,
+                dueDate: new Date(formData.dueDate),
+                status: 'TODO',
+                menteeId: 'm1', // Hardcoded fallback for now if no auth context
+                createdAt: new Date()
+            });
+            toast.success('Tarefa criada com sucesso!');
+            setShowAddModal(false);
+            setFormData({ title: '', description: '', dueDate: new Date().toISOString().split('T')[0], priority: 'MEDIUM' });
+        } catch (error) {
+            console.error("Error creating task:", error);
+            toast.error("Erro ao criar tarefa");
+        }
+    };
+
+    const handleToggleStatus = async (taskId: string, currentStatus: string) => {
+        try {
+            await updateDoc(doc(db, 'tasks', taskId), {
+                status: currentStatus === 'DONE' ? 'TODO' : 'DONE'
+            });
+            toast.success("Status atualizado!");
+        } catch (error) {
+            console.error("Error updating task:", error);
+            toast.error("Erro ao atualizar tarefa");
+        }
+    };
 
     const formatDate = (date: Date) => {
         return new Intl.DateTimeFormat('pt-BR', {
@@ -114,7 +137,7 @@ export const MenteeTasksPage: React.FC = () => {
                                 <input
                                     type="checkbox"
                                     checked={task.status === 'DONE'}
-                                    readOnly
+                                    onChange={() => handleToggleStatus(task.id, task.status)}
                                 />
                             </div>
                             <div className="task-info-full">
@@ -160,11 +183,7 @@ export const MenteeTasksPage: React.FC = () => {
                 footer={
                     <>
                         <Button variant="ghost" onClick={() => setShowAddModal(false)}>Cancelar</Button>
-                        <Button variant="primary" onClick={() => {
-                            toast.success('Tarefa criada com sucesso!');
-                            setShowAddModal(false);
-                            // Aqui adicionaria ao state em uma app real
-                        }}>Criar Tarefa</Button>
+                        <Button variant="primary" onClick={handleCreateTask}>Criar Tarefa</Button>
                     </>
                 }
             >

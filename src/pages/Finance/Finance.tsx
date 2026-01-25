@@ -1,4 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { collection, query, orderBy, onSnapshot, addDoc } from 'firebase/firestore';
+import { db, auth } from '../../lib/firebase';
+import { useNavigate } from 'react-router-dom';
 import {
     BarChart,
     Bar,
@@ -24,7 +27,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 import { Card, Button, Badge, Modal } from '../../components/ui';
-import { mockTransactions, mockFinanceStats, mockRevenueChartData } from '../../lib/mockFinanceData';
+import { mockRevenueChartData } from '../../lib/mockFinanceData';
 import type { PaymentStatus } from '../../types/finance';
 import { useToast } from '../../components/ui/Toast';
 import './Finance.css';
@@ -37,40 +40,99 @@ const formatCurrency = (value: number) => {
 };
 
 const FinancePage: React.FC = () => {
+    const navigate = useNavigate();
     const toast = useToast();
-    const [stats] = useState(mockFinanceStats);
-    const [transactions, setTransactions] = useState(mockTransactions);
+
+    const [transactions, setTransactions] = useState<any[]>([]);
+    const [mentees, setMentees] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    // Fetch Transactions
+    useEffect(() => {
+        const q = query(collection(db, 'transactions'), orderBy('dueDate', 'desc'));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            setTransactions(snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+                dueDate: doc.data().dueDate?.toDate(),
+                paidAt: doc.data().paidAt?.toDate(),
+                createdAt: doc.data().createdAt?.toDate()
+            })));
+            setLoading(false);
+        });
+        return () => unsubscribe();
+    }, []);
+
+    // Fetch Mentees for Dropdown
+    useEffect(() => {
+        const q = query(collection(db, 'mentees'), orderBy('name', 'asc'));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            setMentees(snapshot.docs.map(doc => ({
+                id: doc.id,
+                name: doc.data().name
+            })));
+        });
+        return () => unsubscribe();
+    }, []);
+
+    // Calculate Real Stats
+    const stats = useMemo(() => {
+        const total = transactions.filter(t => t.status === 'PAID').reduce((sum, t) => sum + t.amount, 0);
+
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const monthly = transactions
+            .filter(t => t.status === 'PAID' && t.paidAt >= startOfMonth)
+            .reduce((sum, t) => sum + t.amount, 0);
+
+        const pending = transactions.filter(t => t.status === 'PENDING').reduce((sum, t) => sum + t.amount, 0);
+        const overdue = transactions.filter(t => t.status === 'OVERDUE').reduce((sum, t) => sum + t.amount, 0);
+
+        return {
+            totalRevenue: total,
+            monthlyRevenue: monthly,
+            projectedRevenue: monthly + pending, // Simple projection
+            pendingRevenue: pending,
+            overdueRevenue: overdue
+        };
+    }, [transactions]);
+
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [viewAll, setViewAll] = useState(false);
     const [showOnlyPending, setShowOnlyPending] = useState(false);
 
     // Form state
     const [newTx, setNewTx] = useState({
-        menteeName: '',
+        menteeId: '',
         amount: '',
         status: 'PAID' as PaymentStatus,
         method: 'PIX',
         dueDate: new Date().toISOString().split('T')[0]
     });
 
-    const handleAddTransaction = (e: React.FormEvent) => {
+    const handleAddTransaction = async (e: React.FormEvent) => {
         e.preventDefault();
-        const tx = {
-            id: `tx-${Date.now()}`,
-            menteeId: 'manual', // Mock ID
-            menteeName: newTx.menteeName,
-            description: 'Adicionado manualmente',
-            amount: Number(newTx.amount),
-            status: newTx.status,
-            method: newTx.method as any,
-            dueDate: new Date(newTx.dueDate),
-            paidAt: newTx.status === 'PAID' ? new Date() : undefined
-        };
-
-        setTransactions([tx, ...transactions]);
-        setIsModalOpen(false);
-        toast.success('Transação adicionada!');
-        setNewTx({ menteeName: '', amount: '', status: 'PAID', method: 'PIX', dueDate: new Date().toISOString().split('T')[0] });
+        try {
+            const selectedMentee = mentees.find(m => m.id === newTx.menteeId);
+            await addDoc(collection(db, 'transactions'), {
+                menteeId: newTx.menteeId,
+                menteeName: selectedMentee?.name || 'Desconhecido',
+                description: 'Transação Manual',
+                amount: Number(newTx.amount),
+                status: newTx.status,
+                method: newTx.method,
+                dueDate: new Date(newTx.dueDate),
+                paidAt: newTx.status === 'PAID' ? new Date() : null,
+                createdAt: new Date(),
+                createdBy: auth.currentUser?.uid
+            });
+            setIsModalOpen(false);
+            toast.success('Transação adicionada!');
+            setNewTx({ menteeId: '', amount: '', status: 'PAID', method: 'PIX', dueDate: new Date().toISOString().split('T')[0] });
+        } catch (error) {
+            console.error("Error adding transaction:", error);
+            toast.error("Erro ao adicionar transação");
+        }
     };
 
     // Filter and Sort
@@ -95,6 +157,10 @@ const FinancePage: React.FC = () => {
         if (status === 'OVERDUE') return <AlertTriangle size={18} />;
         return <DollarSign size={18} />;
     };
+
+    if (loading) {
+        return <div className="p-8 text-center text-secondary">Carregando financeiro...</div>;
+    }
 
     return (
         <div className="finance-page">
@@ -229,7 +295,12 @@ const FinancePage: React.FC = () => {
 
                     <div className="transactions-list">
                         {displayedTransactions.map(transaction => (
-                            <div key={transaction.id} className="transaction-item">
+                            <div
+                                key={transaction.id}
+                                className="transaction-item clickable"
+                                onClick={() => navigate(`/mentee/${transaction.menteeId}`)}
+                                style={{ cursor: 'pointer' }}
+                            >
                                 <div className="transaction-info">
                                     <div className={`transaction-icon ${transaction.status.toLowerCase()}`}>
                                         {getMethodIcon(transaction.status)}
@@ -271,14 +342,17 @@ const FinancePage: React.FC = () => {
                 <form onSubmit={handleAddTransaction} className="modal-content-form">
                     <div className="form-group">
                         <label>Mentorado / Cliente</label>
-                        <input
+                        <select
                             required
-                            type="text"
                             className="input-field"
-                            placeholder="Ex: Carlos Lima"
-                            value={newTx.menteeName}
-                            onChange={e => setNewTx({ ...newTx, menteeName: e.target.value })}
-                        />
+                            value={newTx.menteeId}
+                            onChange={e => setNewTx({ ...newTx, menteeId: e.target.value })}
+                        >
+                            <option value="">Selecione...</option>
+                            {mentees.map(m => (
+                                <option key={m.id} value={m.id}>{m.name}</option>
+                            ))}
+                        </select>
                     </div>
                     <div className="form-row-2">
                         <div className="form-group">

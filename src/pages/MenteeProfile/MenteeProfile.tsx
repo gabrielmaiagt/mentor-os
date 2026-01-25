@@ -1,5 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { doc, onSnapshot, collection, query, where, orderBy, addDoc } from 'firebase/firestore';
+import { db } from '../../lib/firebase';
 import {
     ArrowLeft,
     Phone,
@@ -21,145 +23,25 @@ import { Card, CardHeader, CardContent, Badge, Button, Modal } from '../../compo
 import { OfferMinedCard } from '../../components/mining';
 import { useToast } from '../../components/ui/Toast';
 import { MENTEE_STAGES, getStageConfig, DEFAULT_ONBOARDING_TEMPLATE } from '../../types';
-import { mockOffersMined, calculateMiningSummary } from '../../lib/mockMiningData';
+// mockTemplates removed
 import type { Mentee, MenteeStage, Call, Task, OfferMined, OfferStatus, OnboardingProgress } from '../../types';
 import './MenteeProfile.css';
 
-// Mock data - all mentees for lookup by ID
-const allMentees: Record<string, Mentee> = {
-    'm1': {
-        id: 'm1',
-        name: 'Carlos Lima',
-        whatsapp: '11965432109',
-        email: 'carlos@email.com',
-        plan: '6 meses',
-        startAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-        currentStage: 'TRAFFIC',
-        stageProgress: 60,
-        weeklyGoal: 'Configurar campanhas no Google Ads',
-        blocked: true,
-        lastUpdateAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000),
-        nextCallAt: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
-        createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-        updatedAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000),
-    },
-    'm2': {
-        id: 'm2',
-        name: 'Ana Oliveira',
-        whatsapp: '11976543210',
-        email: 'ana@email.com',
-        plan: '6 meses',
-        startAt: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000),
-        currentStage: 'OFFER',
-        stageProgress: 80,
-        weeklyGoal: 'Finalizar copy da oferta',
-        blocked: false,
-        lastUpdateAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-        nextCallAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-        createdAt: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000),
-        updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-    },
-    'm3': {
-        id: 'm3',
-        name: 'Roberto Silva',
-        whatsapp: '11954321098',
-        email: 'roberto@email.com',
-        plan: '3 meses',
-        startAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
-        currentStage: 'ONBOARDING',
-        stageProgress: 40,
-        weeklyGoal: 'Completar diagnóstico inicial',
-        blocked: false,
-        lastUpdateAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-        nextCallAt: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
-        createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
-        updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-    },
-    'm4': {
-        id: 'm4',
-        name: 'Fernanda Souza',
-        whatsapp: '11912345678',
-        email: 'fernanda@email.com',
-        plan: '6 meses',
-        startAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000),
-        currentStage: 'MINING',
-        stageProgress: 50,
-        weeklyGoal: 'Minerar 10 ofertas com mais de 10 anúncios',
-        blocked: false,
-        lastUpdateAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-        nextCallAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
-        createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000),
-        updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-    },
+// Mining Helper
+const calculateMiningSummary = (offers: OfferMined[]) => {
+    const totalAds = offers.reduce((acc, o) => acc + (o.adCount || 0), 0);
+    const topOffer = [...offers].sort((a, b) => (b.adCount || 0) - (a.adCount || 0))[0];
+    return {
+        offersTotal: offers.length,
+        adsTotal: totalAds,
+        byStatus: {
+            TESTING: offers.filter(o => o.status === 'TESTING').length,
+            SCALING: offers.filter(o => o.status === 'SCALING').length,
+            STOPPED: offers.filter(o => o.status === 'STOPPED').length
+        },
+        topOffer
+    };
 };
-
-const mockCalls: Call[] = [
-    {
-        id: 'c1',
-        menteeId: 'm1',
-        scheduledAt: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
-        durationMinutes: 60,
-        type: 'REGULAR',
-        status: 'SCHEDULED',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-    },
-    {
-        id: 'c2',
-        menteeId: 'm1',
-        scheduledAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-        durationMinutes: 45,
-        type: 'REGULAR',
-        status: 'DONE',
-        summary: 'Revisamos configuração de campanhas. Carlos está com dificuldade no público.',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-    },
-    {
-        id: 'c3',
-        menteeId: 'm4',
-        scheduledAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
-        durationMinutes: 60,
-        type: 'REGULAR',
-        status: 'SCHEDULED',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-    },
-];
-
-const mockTasks: Task[] = [
-    {
-        id: 't1',
-        title: 'Criar campanha de teste no Google Ads',
-        description: 'Seguir o passo-a-passo do módulo 4',
-        dueAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-        status: 'OVERDUE',
-        ownerId: 'm1',
-        ownerRole: 'MENTEE',
-        scope: 'DELIVERY',
-        entityType: 'MENTEE',
-        entityId: 'm1',
-        priority: 'HIGH',
-        quickActions: [],
-        createdAt: new Date(),
-        updatedAt: new Date(),
-    },
-    {
-        id: 't2',
-        title: 'Definir público-alvo',
-        dueAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
-        status: 'TODO',
-        ownerId: 'm1',
-        ownerRole: 'MENTEE',
-        scope: 'DELIVERY',
-        entityType: 'MENTEE',
-        entityId: 'm1',
-        priority: 'MEDIUM',
-        quickActions: [],
-        createdAt: new Date(),
-        updatedAt: new Date(),
-    },
-];
 
 // Updated stage journey to include MINING
 const stageJourney: MenteeStage[] = ['ONBOARDING', 'MINING', 'OFFER', 'CREATIVES', 'TRAFFIC', 'OPTIMIZATION', 'SCALING'];
@@ -171,27 +53,91 @@ export const MenteeProfilePage: React.FC = () => {
     const navigate = useNavigate();
     const toast = useToast();
 
-    // Get mentee by ID from URL param
-    const mentee = allMentees[id || 'm1'] || allMentees['m1'];
+    const [mentee, setMentee] = useState<Mentee | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [menteeCalls, setMenteeCalls] = useState<Call[]>([]);
+    const [menteeTasks, setMenteeTasks] = useState<Task[]>([]);
 
     const [activeTab, setActiveTab] = useState<TabType>('overview');
     const [showTaskModal, setShowTaskModal] = useState(false);
     const [showCallModal, setShowCallModal] = useState(false);
 
+    // Fetch Mentee Data
+    useEffect(() => {
+        if (!id) return;
+        const unsubscribe = onSnapshot(doc(db, 'mentees', id), (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                setMentee({
+                    id: docSnap.id,
+                    ...data,
+                    startAt: data.startAt?.toDate() || new Date(),
+                    lastUpdateAt: data.lastUpdateAt?.toDate() || new Date(),
+                    nextCallAt: data.nextCallAt?.toDate(),
+                    createdAt: data.createdAt?.toDate(),
+                    updatedAt: data.updatedAt?.toDate(),
+                } as Mentee);
+            } else {
+                toast.error("Mentorado não encontrado");
+                navigate('/mentees');
+            }
+            setLoading(false);
+        });
+        return () => unsubscribe();
+    }, [id, navigate]);
+
+    // Fetch Calls
+    useEffect(() => {
+        if (!id) return;
+        const q = query(collection(db, 'calls'), where('menteeId', '==', id), orderBy('scheduledAt', 'desc'));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            setMenteeCalls(snapshot.docs.map(d => ({
+                id: d.id,
+                ...d.data(),
+                scheduledAt: d.data().scheduledAt?.toDate(),
+                createdAt: d.data().createdAt?.toDate(),
+            })) as Call[]);
+        });
+        return () => unsubscribe();
+    }, [id]);
+
+    // Fetch Tasks
+    useEffect(() => {
+        if (!id) return;
+        const q = query(collection(db, 'tasks'), where('ownerId', '==', id), orderBy('dueAt', 'asc'));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            setMenteeTasks(snapshot.docs.map(d => ({
+                id: d.id,
+                ...d.data(),
+                dueAt: d.data().dueAt?.toDate(),
+                createdAt: d.data().createdAt?.toDate(),
+            })) as Task[]);
+        });
+        return () => unsubscribe();
+    }, [id]);
+
+    // New Task State
+    const [newTask, setNewTask] = useState({
+        title: '',
+        description: '',
+        dueAt: new Date().toISOString().split('T')[0]
+    });
+
     // Onboarding Data (Mock retrieval)
     const onboardingProgress: OnboardingProgress | null = useMemo(() => {
+        if (!mentee) return null;
         // In a real app, this would come from the API/Database
         const saved = localStorage.getItem(`onboarding_${mentee.id}`);
         return saved ? JSON.parse(saved) : null;
-    }, [mentee.id]);
+    }, [mentee]);
 
     // Mining state
-    const [offers, setOffers] = useState<OfferMined[]>(mockOffersMined);
+    const [offers, setOffers] = useState<OfferMined[]>([]);
     const miningSummary = useMemo(() => calculateMiningSummary(offers), [offers]);
 
+    if (loading || !mentee) return <div className="p-8 text-center">Carregando perfil...</div>;
+
     const currentStageIndex = stageJourney.indexOf(mentee.currentStage);
-    const menteeCalls = mockCalls.filter(c => c.menteeId === mentee.id);
-    const menteeTasks = mockTasks.filter(t => t.ownerId === mentee.id);
     const isMiningStage = mentee.currentStage === 'MINING';
 
     const getDaysSince = (date?: Date) => {
@@ -246,7 +192,12 @@ export const MenteeProfilePage: React.FC = () => {
                 </button>
 
                 <div className="mentee-profile-actions">
-                    <Button variant="ghost" size="sm" icon={<Edit size={16} />}>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        icon={<Edit size={16} />}
+                        onClick={() => toast.info('Em breve', 'A edição completa do perfil estará disponível na próxima versão.')}
+                    >
                         Editar
                     </Button>
                 </div>
@@ -460,12 +411,20 @@ export const MenteeProfilePage: React.FC = () => {
                             <CardHeader title="Materiais Enviados" />
                             <CardContent>
                                 <div className="resources-list">
-                                    <div className="resource-item">
+                                    <div
+                                        className="resource-item clickable"
+                                        onClick={() => window.open('https://ads.google.com/intl/pt-BR_br/home/', '_blank')}
+                                        style={{ cursor: 'pointer' }}
+                                    >
                                         <FileText size={16} />
                                         <span>Módulo 4 - Google Ads Básico</span>
                                         <ChevronRight size={14} />
                                     </div>
-                                    <div className="resource-item">
+                                    <div
+                                        className="resource-item clickable"
+                                        onClick={() => window.open('https://www.youtube.com/watch?v=example', '_blank')}
+                                        style={{ cursor: 'pointer' }}
+                                    >
                                         <Play size={16} />
                                         <span>Vídeo: Configurando primeira campanha</span>
                                         <ChevronRight size={14} />
@@ -613,7 +572,12 @@ export const MenteeProfilePage: React.FC = () => {
                         <CardContent>
                             <div className="calls-list">
                                 {menteeCalls.map(call => (
-                                    <div key={call.id} className={`call-item ${call.status === 'SCHEDULED' ? 'scheduled' : ''}`}>
+                                    <div
+                                        key={call.id}
+                                        className={`call-item clickable ${call.status === 'SCHEDULED' ? 'scheduled' : ''}`}
+                                        onClick={() => toast.info('Detalhes da call', `Call ${call.type.toLowerCase()} - ${call.status}`)}
+                                        style={{ cursor: 'pointer' }}
+                                    >
                                         <div className="call-info">
                                             <span className="call-date">{formatDate(call.scheduledAt)}</span>
                                             <span className="call-duration">{call.durationMinutes}min</span>
@@ -675,21 +639,72 @@ export const MenteeProfilePage: React.FC = () => {
                 footer={
                     <>
                         <Button variant="ghost" onClick={() => setShowTaskModal(false)}>Cancelar</Button>
-                        <Button variant="primary" onClick={() => {
-                            toast.success('Tarefa criada!');
-                            setShowTaskModal(false);
+                        <Button variant="primary" onClick={async () => {
+                            try {
+                                if (!id) return;
+                                await addDoc(collection(db, 'tasks'), {
+                                    title: newTask.title,
+                                    description: newTask.description,
+                                    dueAt: new Date(newTask.dueAt),
+                                    ownerId: id,
+                                    ownerRole: 'MENTEE',
+                                    scope: 'DELIVERY',
+                                    entityType: 'MENTEE',
+                                    entityId: id,
+                                    status: 'TODO',
+                                    priority: 'MEDIUM',
+                                    createdAt: new Date(),
+                                    updatedAt: new Date(),
+                                    quickActions: []
+                                });
+                                toast.success('Tarefa criada!', newTask.title);
+                                setShowTaskModal(false);
+                                setNewTask({ title: '', description: '', dueAt: new Date().toISOString().split('T')[0] });
+                            } catch (e) {
+                                console.error(e);
+                                toast.error('Erro ao criar tarefa');
+                            }
                         }}>Criar</Button>
                     </>
                 }
             >
                 <div className="modal-form">
                     <div className="form-field">
+                        <label>Usar Template (Opcional)</label>
+                        <select
+                            className="bg-secondary border border-subtle rounded-md px-3 py-2 text-primary outline-none"
+                            disabled
+                        >
+                            <option value="">Templates indisponíveis (WIP)</option>
+                        </select>
+                    </div>
+
+                    <div className="form-field">
                         <label>Título</label>
-                        <input type="text" placeholder="O que precisa ser feito?" />
+                        <input
+                            type="text"
+                            placeholder="O que precisa ser feito?"
+                            value={newTask.title}
+                            onChange={e => setNewTask({ ...newTask, title: e.target.value })}
+                        />
+                    </div>
+                    <div className="form-field">
+                        <label>Descrição</label>
+                        <textarea
+                            rows={3}
+                            className="w-full bg-secondary border border-subtle rounded-md px-3 py-2 text-primary outline-none"
+                            placeholder="Detalhes da tarefa..."
+                            value={newTask.description}
+                            onChange={e => setNewTask({ ...newTask, description: e.target.value })}
+                        />
                     </div>
                     <div className="form-field">
                         <label>Prazo</label>
-                        <input type="date" />
+                        <input
+                            type="date"
+                            value={newTask.dueAt}
+                            onChange={e => setNewTask({ ...newTask, dueAt: e.target.value })}
+                        />
                     </div>
                 </div>
             </Modal>
@@ -731,5 +746,6 @@ export const MenteeProfilePage: React.FC = () => {
         </div>
     );
 };
+
 
 export default MenteeProfilePage;

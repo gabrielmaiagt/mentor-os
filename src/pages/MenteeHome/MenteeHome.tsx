@@ -16,57 +16,143 @@ import { OfferMinedCard } from '../../components/mining';
 import { OnboardingChecklist, TourGuide } from '../../components/onboarding';
 import { useToast } from '../../components/ui/Toast';
 import { MENTEE_STAGES, getStageConfig, OFFER_PLATFORMS, DEFAULT_ONBOARDING_TEMPLATE, FIRST_LOGIN_TOUR } from '../../types';
-import { mockOffersMined, calculateMiningSummary } from '../../lib/mockMiningData';
-import type { OfferMined, OfferStatus, MenteeStage, OfferPlatform, OnboardingProgress } from '../../types';
+import { db, auth } from '../../lib/firebase';
+import { collection, query, where, onSnapshot, addDoc, updateDoc, doc, getDocs } from 'firebase/firestore';
+import type { OfferMined, OfferStatus, MenteeStage, OfferPlatform, OnboardingProgress, Mentee } from '../../types';
 import './MenteeHome.css';
 
-// Mock mentee data (would come from context/auth in real app)
-const mockCurrentMentee = {
-    id: 'm1',
-    name: 'Carlos Lima',
-    currentStage: 'ONBOARDING' as MenteeStage, // Set to ONBOARDING to show checklist
-    stageProgress: 40,
-    weeklyGoal: 'Completar o onboarding da mentoria',
-    nextCallAt: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
-};
+// Helper to calculate summary from real data
+const calculateMiningSummary = (offers: OfferMined[]) => {
+    const testing = offers.filter(o => o.status === 'TESTING').length;
+    const winner = offers.filter(o => o.status === 'WINNER').length;
+    const candidate = offers.filter(o => o.status === 'CANDIDATE').length;
+    const discarded = offers.filter(o => o.status === 'DISCARDED').length;
 
-// Mock onboarding progress
-const mockOnboardingProgress: OnboardingProgress = {
-    menteeId: 'm1',
-    templateId: 'default',
-    currentStepIndex: 1,
-    completedSteps: ['ob1'], // First step already done
-    skippedSteps: [],
-    stepData: {},
-    xpEarned: 50,
-    startedAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
-    lastActivityAt: new Date(),
+    const adsTotal = offers.reduce((acc, curr) => acc + curr.adCount, 0);
+    const topOffer = [...offers].sort((a, b) => b.adCount - a.adCount)[0];
+
+    return {
+        offersTotal: offers.length,
+        adsTotal,
+        byStatus: { TESTING: testing, WINNER: winner, CANDIDATE: candidate, DISCARDED: discarded },
+        topOffer
+    };
 };
 
 export const MenteeHomePage: React.FC = () => {
     const toast = useToast();
     const navigate = useNavigate();
-    const [mentee, setMentee] = useState(mockCurrentMentee);
-    const [offers, setOffers] = useState<OfferMined[]>(mockOffersMined);
+
+    const [mentee, setMentee] = useState<Mentee | null>(null);
+    const [offers, setOffers] = useState<OfferMined[]>([]);
+    const [loading, setLoading] = useState(true);
+
     const [showAddModal, setShowAddModal] = useState(false);
     const [editingOffer, setEditingOffer] = useState<OfferMined | null>(null);
     const [filterStatus, setFilterStatus] = useState<OfferStatus | 'ALL'>('ALL');
     const [sortBy, setSortBy] = useState<'adCount' | 'lastTouchedAt'>('adCount');
 
-    // Onboarding state - Initialize from localStorage if available
-    const [onboardingProgress, setOnboardingProgress] = useState<OnboardingProgress>(() => {
-        const saved = localStorage.getItem(`onboarding_m1`); // Usando id mock m1
-        return saved ? JSON.parse(saved) : mockOnboardingProgress;
-    });
+    // Onboarding state
+    const [onboardingProgress, setOnboardingProgress] = useState<OnboardingProgress | null>(null);
+
+    // Fetch Mentee & Onboarding Linked to Auth User
+    React.useEffect(() => {
+        const fetchMentee = async () => {
+            if (!auth.currentUser) return; // Wait for auth
+
+            try {
+                const email = auth.currentUser.email;
+                if (!email) return;
+
+                // 1. Try to find by UID first (if already linked)
+                let q = query(collection(db, 'mentees'), where('uid', '==', auth.currentUser.uid));
+                let snapshot = await getDocs(q);
+
+                // 2. If not found, try to find by Email (first login/link)
+                if (snapshot.empty) {
+                    q = query(collection(db, 'mentees'), where('email', '==', email));
+                    snapshot = await getDocs(q);
+
+                    // If found by email, LINK IT by saving the uid
+                    if (!snapshot.empty) {
+                        const docRef = snapshot.docs[0].ref;
+                        await updateDoc(docRef, { uid: auth.currentUser.uid });
+                    }
+                }
+
+                if (!snapshot.empty) {
+                    const docData = snapshot.docs[0];
+                    const myMentee = {
+                        id: docData.id,
+                        ...docData.data(),
+                        // Parse dates
+                        startAt: docData.data().startAt?.toDate(),
+                        lastUpdateAt: docData.data().lastUpdateAt?.toDate(),
+                        createdAt: docData.data().createdAt?.toDate(),
+                        updatedAt: docData.data().updatedAt?.toDate(),
+                        nextCallAt: docData.data().nextCallAt?.toDate()
+                    } as Mentee;
+                    setMentee(myMentee);
+
+                    // Load onboarding
+                    const saved = localStorage.getItem(`onboarding_${myMentee.id}`);
+                    if (saved) {
+                        setOnboardingProgress(JSON.parse(saved));
+                    } else {
+                        setOnboardingProgress({
+                            menteeId: myMentee.id,
+                            templateId: 'default',
+                            currentStepIndex: 0,
+                            completedSteps: [],
+                            skippedSteps: [],
+                            stepData: {},
+                            xpEarned: 0,
+                            startedAt: new Date(),
+                            lastActivityAt: new Date()
+                        });
+                    }
+                } else {
+                    // No profile found for this user
+                    console.log("No mentee profile found for email:", email);
+                    // Optionally show a "Profile not found" or "Contact support" state
+                }
+            } catch (error) {
+                console.error("Error fetching mentee:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchMentee();
+    }, [auth.currentUser]); // Re-run when auth state changes (e.g. login)
+
+    // Fetch Offers
+    React.useEffect(() => {
+        if (!mentee) return;
+
+        const q = query(collection(db, 'offers'), where('createdByUserId', '==', mentee.id));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            setOffers(snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+                createdAt: doc.data().createdAt?.toDate(),
+                updatedAt: doc.data().updatedAt?.toDate(),
+                lastTouchedAt: doc.data().lastTouchedAt?.toDate()
+            })) as OfferMined[]);
+            setLoading(false);
+        });
+        return () => unsubscribe();
+    }, [mentee]);
 
     // Calculate visible progress
     const calculatedProgress = React.useMemo(() => {
+        if (!mentee || !onboardingProgress) return 0;
         if (mentee.currentStage !== 'ONBOARDING') return mentee.stageProgress;
 
         const completedCount = onboardingProgress.completedSteps.length;
         const totalSteps = DEFAULT_ONBOARDING_TEMPLATE.length;
         return Math.round((completedCount / totalSteps) * 100);
-    }, [mentee.currentStage, mentee.stageProgress, onboardingProgress.completedSteps]);
+    }, [mentee, onboardingProgress]);
 
     const [isTourOpen, setIsTourOpen] = useState(false);
 
@@ -95,7 +181,9 @@ export const MenteeHomePage: React.FC = () => {
 
     // Save onboarding to localStorage whenever it changes
     React.useEffect(() => {
-        localStorage.setItem(`onboarding_m1`, JSON.stringify(onboardingProgress));
+        if (!mentee || !onboardingProgress) return;
+
+        localStorage.setItem(`onboarding_${mentee.id}`, JSON.stringify(onboardingProgress));
 
         // Check for onboarding completion to advance stage
         if (mentee.currentStage === 'ONBOARDING') {
@@ -107,24 +195,70 @@ export const MenteeHomePage: React.FC = () => {
                 toast.success('Parabéns! Você concluiu o Onboarding! 🚀', 'Bem-vindo à fase de Mineração.');
 
                 // Small delay for effect
-                setTimeout(() => {
-                    setMentee(prev => ({
+                setTimeout(async () => {
+                    // Update in Firestore
+                    await updateDoc(doc(db, 'mentees', mentee.id), {
+                        currentStage: 'MINING',
+                        stageProgress: 0,
+                        updatedAt: new Date()
+                    });
+
+                    setMentee(prev => prev ? ({
                         ...prev,
                         currentStage: 'MINING',
                         stageProgress: 0,
                         weeklyGoal: 'Encontrar 10 produtos candidatos'
-                    }));
+                    }) : null);
                 }, 1500);
             }
         }
-    }, [onboardingProgress, mentee.currentStage]);
+    }, [onboardingProgress, mentee?.currentStage, mentee?.id]);
+
+    if (loading) {
+        return (
+            <div className="flex h-screen items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                    <p className="text-secondary">Carregando seu perfil...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (!mentee) {
+        return (
+            <div className="flex h-screen items-center justify-center p-4">
+                <Card padding="lg" className="max-w-md w-full text-center">
+                    <div className="mb-4 text-warning flex justify-center">
+                        <Target size={48} />
+                    </div>
+                    <h2 className="text-xl font-bold mb-2">Perfil não encontrado</h2>
+                    <p className="text-secondary mb-6">
+                        Não encontramos um mentorado vinculado ao email: <br />
+                        <span className="text-primary font-mono bg-secondary/20 px-2 py-1 rounded text-sm block mt-2">
+                            {auth.currentUser?.email}
+                        </span>
+                    </p>
+                    <div className="space-y-3">
+                        <p className="text-sm text-tertiary">
+                            Se você acabou de comprar, verifique se entrou com o <strong>mesmo email</strong> informado no pagamento.
+                        </p>
+                        <Button variant="secondary" fullWidth onClick={() => auth.signOut()}>
+                            Sair e tentar outro email
+                        </Button>
+                    </div>
+                </Card>
+            </div>
+        );
+    }
 
     const stageConfig = getStageConfig(MENTEE_STAGES, mentee.currentStage);
     const summary = calculateMiningSummary(offers);
-    const isOnboarding = mentee.currentStage === 'ONBOARDING';
+    const isOnboarding = mentee.currentStage === 'ONBOARDING' && !!onboardingProgress;
 
     // Onboarding handlers
     const handleCompleteStep = (stepId: string, data?: Record<string, any>) => {
+        if (!onboardingProgress) return;
         // Special trigger for Tour step
         if (stepId === 'ob5') {
             setIsTourOpen(true);
@@ -132,21 +266,21 @@ export const MenteeHomePage: React.FC = () => {
         }
 
         const step = DEFAULT_ONBOARDING_TEMPLATE.find(s => s.id === stepId);
-        setOnboardingProgress(prev => ({
+        setOnboardingProgress(prev => prev ? ({
             ...prev,
             completedSteps: [...prev.completedSteps, stepId],
             stepData: data ? { ...prev.stepData, [stepId]: data } : prev.stepData,
             xpEarned: prev.xpEarned + (step?.xpReward || 0),
             lastActivityAt: new Date(),
-        }));
+        }) : null);
     };
 
     const handleSkipStep = (stepId: string) => {
-        setOnboardingProgress(prev => ({
+        setOnboardingProgress(prev => prev ? ({
             ...prev,
             skippedSteps: [...prev.skippedSteps, stepId],
             lastActivityAt: new Date(),
-        }));
+        }) : null);
         toast.info('Passo pulado', 'Você pode completar depois');
     };
 
@@ -154,12 +288,12 @@ export const MenteeHomePage: React.FC = () => {
         setIsTourOpen(false);
         // Complete the tour step (ob5)
         const step = DEFAULT_ONBOARDING_TEMPLATE.find(s => s.id === 'ob5');
-        setOnboardingProgress(prev => ({
+        setOnboardingProgress(prev => prev ? ({
             ...prev,
             completedSteps: [...prev.completedSteps, 'ob5'],
             xpEarned: prev.xpEarned + (step?.xpReward || 0),
             lastActivityAt: new Date(),
-        }));
+        }) : null);
         toast.success('Tour concluído!', '+75 XP');
     };
 
@@ -182,9 +316,10 @@ export const MenteeHomePage: React.FC = () => {
         setShowHistoryModal(true);
     };
 
-    const handleUpdateAdHistory = () => {
-        if (!updatingHistoryOffer) return;
+    const handleUpdateAdHistory = async () => {
+        if (!updatingHistoryOffer || !mentee) return;
 
+        // Optimistic update for UI
         setOffers(prev => prev.map(o => {
             if (o.id === updatingHistoryOffer.id) {
                 const newAdHistory = [...(o.adHistory || [])];
@@ -198,9 +333,7 @@ export const MenteeHomePage: React.FC = () => {
                     newAdHistory.sort((a, b) => a.date.localeCompare(b.date));
                 }
 
-                // If updating today or a future date, or if it's the latest entry, update adCount
                 const isLatest = newAdHistory[newAdHistory.length - 1].date === historyFormData.date;
-
                 return {
                     ...o,
                     adCount: isLatest ? historyFormData.count : o.adCount,
@@ -211,18 +344,55 @@ export const MenteeHomePage: React.FC = () => {
             return o;
         }));
 
+        try {
+            // Find the updated offer in the local state (it was just updated optimistically)
+            // Wait, we can't easily grab it from state inside this closure perfectly without refs or re-calc.
+            // Let's just reconstruct the update object for Firestore.
+
+            const offerRef = doc(db, 'offers', updatingHistoryOffer.id);
+            // We need to read the current doc or rely on what we just calculated.
+            // Simplified: just update the fields we know changed.
+
+            // Re-calc logic for firestore payload
+            const o = updatingHistoryOffer;
+            const newAdHistory = [...(o.adHistory || [])];
+            const existingIndex = newAdHistory.findIndex(h => h.date === historyFormData.date);
+
+            if (existingIndex >= 0) {
+                newAdHistory[existingIndex] = { ...newAdHistory[existingIndex], count: historyFormData.count };
+            } else {
+                newAdHistory.push({ date: historyFormData.date, count: historyFormData.count });
+                newAdHistory.sort((a, b) => a.date.localeCompare(b.date));
+            }
+            const isLatest = newAdHistory[newAdHistory.length - 1].date === historyFormData.date;
+
+            await updateDoc(offerRef, {
+                adCount: isLatest ? historyFormData.count : o.adCount,
+                adHistory: newAdHistory,
+                lastTouchedAt: new Date()
+            });
+
+            toast.success('Métrica atualizada!');
+        } catch (error) {
+            console.error("Error updating ad history:", error);
+            toast.error("Erro ao salvar métrica");
+        }
+
         setShowHistoryModal(false);
         setUpdatingHistoryOffer(null);
-        toast.success('Métrica atualizada!');
     };
 
-    const handleChangeStatus = (offerId: string, status: OfferStatus) => {
-        setOffers(prev => prev.map(o =>
-            o.id === offerId
-                ? { ...o, status, lastTouchedAt: new Date() }
-                : o
-        ));
-        toast.success(`Oferta marcada como ${status === 'TESTING' ? 'em teste' : status === 'WINNER' ? 'vencedora' : 'descartada'}`);
+    const handleChangeStatus = async (offerId: string, status: OfferStatus) => {
+        try {
+            await updateDoc(doc(db, 'offers', offerId), {
+                status,
+                lastTouchedAt: new Date()
+            });
+            toast.success(`Oferta marcada como ${status === 'TESTING' ? 'em teste' : status === 'WINNER' ? 'vencedora' : 'descartada'}`);
+        } catch (error) {
+            console.error("Error updating status:", error);
+            toast.error("Erro ao atualizar status");
+        }
     };
 
     const handleEdit = (offer: OfferMined) => {
@@ -238,57 +408,57 @@ export const MenteeHomePage: React.FC = () => {
         setShowAddModal(true);
     };
 
-    const handleSaveOffer = () => {
+    const handleSaveOffer = async () => {
         if (!formData.name || !formData.url) {
             toast.error('Preencha nome e URL');
             return;
         }
 
+        if (!mentee) return;
+
         const angleArray = formData.angles.split(',').map(s => s.trim()).filter(Boolean);
 
-        if (editingOffer) {
-            // Edit existing
-            setOffers(prev => prev.map(o =>
-                o.id === editingOffer.id
-                    ? {
-                        ...o,
-                        name: formData.name,
-                        url: formData.url,
-                        adCount: formData.adCount,
-                        platform: formData.platform,
-                        angles: angleArray,
-                        notes: formData.notes,
-                        lastTouchedAt: new Date(),
-                        updatedAt: new Date(),
-                    }
-                    : o
-            ));
-            toast.success('Oferta atualizada!');
-        } else {
-            // Create new
-            const today = new Date().toISOString().split('T')[0];
-            const newOffer: OfferMined = {
-                id: `om${Date.now()}`,
-                name: formData.name,
-                url: formData.url,
-                adCount: formData.adCount,
-                platform: formData.platform,
-                angles: angleArray,
-                notes: formData.notes,
-                status: 'CANDIDATE',
-                adHistory: [{ date: today, count: formData.adCount }],
-                createdAt: new Date(),
-                updatedAt: new Date(),
-                lastTouchedAt: new Date(),
-                createdByUserId: mentee.id,
-            };
-            setOffers(prev => [newOffer, ...prev]);
-            toast.success('Oferta cadastrada!');
-        }
+        try {
+            if (editingOffer) {
+                // Edit existing
+                await updateDoc(doc(db, 'offers', editingOffer.id), {
+                    name: formData.name,
+                    url: formData.url,
+                    adCount: formData.adCount,
+                    platform: formData.platform,
+                    angles: angleArray,
+                    notes: formData.notes,
+                    lastTouchedAt: new Date(),
+                    updatedAt: new Date(),
+                });
+                toast.success('Oferta atualizada!');
+            } else {
+                // Create new
+                const today = new Date().toISOString().split('T')[0];
+                await addDoc(collection(db, 'offers'), {
+                    name: formData.name,
+                    url: formData.url,
+                    adCount: formData.adCount,
+                    platform: formData.platform,
+                    angles: angleArray,
+                    notes: formData.notes,
+                    status: 'CANDIDATE',
+                    adHistory: [{ date: today, count: formData.adCount }],
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                    lastTouchedAt: new Date(),
+                    createdByUserId: mentee.id,
+                });
+                toast.success('Oferta cadastrada!');
+            }
 
-        setShowAddModal(false);
-        setEditingOffer(null);
-        setFormData({ name: '', url: '', adCount: 1, platform: 'META', angles: '', notes: '' });
+            setShowAddModal(false);
+            setEditingOffer(null);
+            setFormData({ name: '', url: '', adCount: 1, platform: 'META', angles: '', notes: '' });
+        } catch (error) {
+            console.error("Error saving offer:", error);
+            toast.error("Erro ao salvar oferta");
+        }
     };
 
     const formatDate = (date: Date) => {

@@ -78,7 +78,7 @@ export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
 export type TaskStatus = 'TODO' | 'DOING' | 'DONE' | 'CANCELED' | 'OVERDUE';
 
 // Template Categories
-export type TemplateCategory = 'SALES' | 'DELIVERY' | 'FINANCE' | 'LEGAL';
+export type TemplateCategory = 'SALES' | 'DELIVERY' | 'FINANCE' | 'LEGAL' | 'TASKS';
 
 // Template Intensity
 export type TemplateIntensity = 'SOFT' | 'MEDIUM' | 'HARD';
@@ -151,6 +151,7 @@ export interface Deal extends FirestoreTimestamps {
     // Denormalized for quick access
     leadName?: string;
     leadWhatsapp?: string;
+    email?: string;
 }
 
 // Payment

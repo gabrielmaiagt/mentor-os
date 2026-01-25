@@ -50,9 +50,16 @@ service cloud.firestore {
     // Mentees collection
     match /mentees/{menteeId} {
       // Mentors can read/write all mentees
-      // Mentees can only read their own document
-      allow read: if isMentor() || isMenteeOwner(menteeId);
-      allow write: if isMentor();
+      // Mentees can only read their own document (by UID or Email for claiming)
+      allow read: if isMentor() || isMenteeOwner(menteeId) || (isAuthenticated() && resource.data.email == request.auth.token.email);
+      
+      // Mentors can create/delete
+      allow create, delete: if isMentor();
+      
+      // Update: Mentors, Owners, or Users claiming their profile via email
+      allow update: if isMentor() || 
+                    isMenteeOwner(menteeId) || 
+                    (isAuthenticated() && resource.data.email == request.auth.token.email && (resource.data.uid == null || resource.data.uid == "") && request.resource.data.uid == request.auth.uid);
       
       // =============================================
       // OFFERS MINED SUBCOLLECTION (MINING MODULE)

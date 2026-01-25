@@ -1,6 +1,6 @@
 // Mining module types
 
-export type OfferStatus = 'CANDIDATE' | 'TESTING' | 'DISCARDED' | 'WINNER';
+export type OfferStatus = 'CANDIDATE' | 'TESTING' | 'SCALING' | 'STOPPED' | 'DISCARDED' | 'WINNER';
 export type OfferPlatform = 'META' | 'TIKTOK' | 'YOUTUBE' | 'GOOGLE' | 'OTHER';
 
 export interface AdHistoryEntry {
@@ -42,8 +42,10 @@ export interface MiningSummary {
 export const OFFER_STATUSES: { key: OfferStatus; label: string; color: string }[] = [
     { key: 'CANDIDATE', label: 'Candidata', color: '#8b5cf6' },
     { key: 'TESTING', label: 'Testando', color: '#f59e0b' },
-    { key: 'DISCARDED', label: 'Descartada', color: '#6b7280' },
+    { key: 'SCALING', label: 'Escalando', color: '#3b82f6' },
     { key: 'WINNER', label: 'Vencedora', color: '#22c55e' },
+    { key: 'STOPPED', label: 'Pausada', color: '#ef4444' },
+    { key: 'DISCARDED', label: 'Descartada', color: '#6b7280' },
 ];
 
 export const OFFER_PLATFORMS: { key: OfferPlatform; label: string }[] = [

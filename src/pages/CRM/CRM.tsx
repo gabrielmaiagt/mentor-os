@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { collection, query, orderBy, onSnapshot, addDoc, updateDoc, doc, where, getDocs } from 'firebase/firestore';
+import { db, auth } from '../../lib/firebase';
 import { useNavigate } from 'react-router-dom';
 import {
     Plus,
@@ -12,126 +14,99 @@ import type { Deal, DealStage, DealHeat } from '../../types';
 import { DEAL_STAGES } from '../../types';
 import './CRM.css';
 
-// Mock deals data
-const mockDeals: Deal[] = [
-    {
-        id: 'd1',
-        leadId: 'l1',
-        offerName: 'Mentoria Tráfego Direto',
-        pitchAmount: 3000,
-        paymentPreference: 'PIX',
-        stage: 'PAYMENT_SENT',
-        heat: 'HOT',
-        leadName: 'João Silva',
-        leadWhatsapp: '11999887766',
-        createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-        updatedAt: new Date(Date.now() - 52 * 60 * 60 * 1000),
-    },
-    {
-        id: 'd2',
-        leadId: 'l2',
-        offerName: 'Mentoria Tráfego Direto',
-        pitchAmount: 2500,
-        paymentPreference: 'CARD',
-        stage: 'PITCH_SENT',
-        heat: 'WARM',
-        leadName: 'Maria Costa',
-        leadWhatsapp: '11998765432',
-        createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-        updatedAt: new Date(Date.now() - 28 * 60 * 60 * 1000),
-    },
-    {
-        id: 'd3',
-        leadId: 'l3',
-        offerName: 'Mentoria Tráfego Direto',
-        pitchAmount: 2500,
-        paymentPreference: 'PIX',
-        stage: 'PITCH_SENT',
-        heat: 'COLD',
-        leadName: 'Pedro Santos',
-        leadWhatsapp: '11987654321',
-        createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-        updatedAt: new Date(Date.now() - 18 * 60 * 60 * 1000),
-    },
-    {
-        id: 'd4',
-        leadId: 'l4',
-        offerName: 'Mentoria Tráfego Direto',
-        pitchAmount: 3500,
-        paymentPreference: 'UNKNOWN',
-        stage: 'OPEN',
-        heat: 'WARM',
-        leadName: 'Ana Oliveira',
-        leadWhatsapp: '11976543210',
-        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-        updatedAt: new Date(Date.now() - 12 * 60 * 60 * 1000),
-    },
-    {
-        id: 'd5',
-        leadId: 'l5',
-        offerName: 'Mentoria Tráfego Direto',
-        pitchAmount: 2000,
-        paymentPreference: 'PIX',
-        stage: 'PAID',
-        heat: 'HOT',
-        leadName: 'Carlos Lima',
-        leadWhatsapp: '11965432109',
-        createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
-        updatedAt: new Date(Date.now() - 1 * 60 * 60 * 1000),
-    },
-    {
-        id: 'd6',
-        leadId: 'l6',
-        offerName: 'Mentoria Tráfego Direto',
-        pitchAmount: 2500,
-        paymentPreference: 'PIX',
-        stage: 'LOST',
-        heat: 'COLD',
-        leadName: 'Fernanda Souza',
-        leadWhatsapp: '11954321098',
-        createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
-        updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-    },
-];
+// Mock data removed
 
 const stages: DealStage[] = ['OPEN', 'PITCH_SENT', 'PAYMENT_SENT', 'PAID', 'LOST'];
 
 export const CRMPage: React.FC = () => {
     const navigate = useNavigate();
     const toast = useToast();
-    const [deals, setDeals] = useState<Deal[]>(mockDeals);
+    const [deals, setDeals] = useState<Deal[]>([]);
     const [draggedDeal, setDraggedDeal] = useState<Deal | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [closingDeal, setClosingDeal] = useState<Deal | null>(null); // New state for closing deal modal
+    const [loading, setLoading] = useState(true);
+
+    // Fetch Deals
+    useEffect(() => {
+        const q = query(collection(db, 'deals'), orderBy('createdAt', 'desc'));
+        const unsubscribe = onSnapshot(q, snapshot => {
+            setDeals(snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+                createdAt: doc.data().createdAt?.toDate(),
+                updatedAt: doc.data().updatedAt?.toDate()
+            })) as Deal[]);
+            setLoading(false);
+        });
+        return () => unsubscribe();
+    }, []);
+
+    // Helper to create Mentee if not exists
+    const ensureMenteeExists = async (deal: Deal) => {
+        // Check if mentee already exists for this deal or lead
+        // We can check by linkedDealId
+        const q = query(collection(db, 'mentees'), where('linkedDealId', '==', deal.id));
+        const snapshot = await getDocs(q);
+
+        if (!snapshot.empty) return; // Already exists
+
+        // Create new Mentee
+        try {
+            await addDoc(collection(db, 'mentees'), {
+                name: deal.leadName,
+                whatsapp: deal.leadWhatsapp || '',
+                email: deal.email || '', // Now using the deal's email
+                plan: deal.offerName.includes('6 meses') ? '6 meses' : '3 meses', // Heuristic
+                startAt: new Date(),
+                currentStage: 'ONBOARDING',
+                stageProgress: 0,
+                weeklyGoal: 'Iniciar onboarding',
+                blocked: false,
+                linkedDealId: deal.id,
+                createdBy: auth.currentUser?.uid,
+                createdAt: new Date(),
+                updatedAt: new Date()
+            });
+            toast.success('Mentorado criado automaticamente!');
+        } catch (error) {
+            console.error("Error creating mentee from deal:", error);
+            toast.error("Erro ao criar mentorado vinculado.");
+        }
+    };
 
     // New Deal Form State
     const [newDeal, setNewDeal] = useState({
         leadName: '',
+        email: '',
         leadWhatsapp: '',
         offerName: 'Mentoria Tráfego Direto',
         pitchAmount: 2000,
         heat: 'HOT' as DealHeat
     });
 
-    const handleCreateDeal = (e: React.FormEvent) => {
+    const handleCreateDeal = async (e: React.FormEvent) => {
         e.preventDefault();
-        const deal: Deal = {
-            id: `d-${Date.now()}`,
-            leadId: `l-${Date.now()}`, // Mock lead ID
-            leadName: newDeal.leadName,
-            leadWhatsapp: newDeal.leadWhatsapp || 'Sem whats',
-            offerName: newDeal.offerName,
-            pitchAmount: Number(newDeal.pitchAmount),
-            paymentPreference: 'UNKNOWN',
-            stage: 'OPEN',
-            heat: newDeal.heat,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-        };
-
-        setDeals([deal, ...deals]);
-        setIsModalOpen(false);
-        toast.success('Deal criado com sucesso!');
-        setNewDeal({ leadName: '', leadWhatsapp: '', offerName: 'Mentoria Tráfego Direto', pitchAmount: 2000, heat: 'HOT' });
+        try {
+            await addDoc(collection(db, 'deals'), {
+                ...newDeal,
+                email: newDeal.email,
+                leadId: `l-${Date.now()}`, // Still mocking lead ID relation as we don't have Leads module fully strict yet
+                paymentPreference: 'UNKNOWN',
+                stage: 'OPEN',
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                pitchAmount: Number(newDeal.pitchAmount),
+                createdBy: auth.currentUser?.uid
+            });
+            setIsModalOpen(false);
+            setIsModalOpen(false);
+            toast.success('Deal criado com sucesso!');
+            setNewDeal({ leadName: '', email: '', leadWhatsapp: '', offerName: 'Mentoria Tráfego Direto', pitchAmount: 2000, heat: 'HOT' });
+        } catch (error) {
+            console.error("Error creating deal:", error);
+            toast.error("Erro ao criar deal");
+        }
     };
 
     const formatCurrency = (value: number) => {
@@ -172,36 +147,63 @@ export const CRMPage: React.FC = () => {
         e.preventDefault();
     };
 
-    const handleDrop = (stage: DealStage) => {
+    const handleDrop = async (stage: DealStage) => {
         if (!draggedDeal) return;
 
-        // Update deal stage
-        setDeals(prev => prev.map(d =>
-            d.id === draggedDeal.id
-                ? { ...d, stage, updatedAt: new Date() }
-                : d
-        ));
+        try {
+            await updateDoc(doc(db, 'deals', draggedDeal.id), {
+                stage,
+                updatedAt: new Date()
+            });
 
-        toast.success('Deal atualizado', `Movido para ${DEAL_STAGES.find(s => s.key === stage)?.label}`);
+            if (stage === 'PAID') {
+                // Check if email exists before marking as paid
+                if (!draggedDeal.email) {
+                    setClosingDeal(draggedDeal);
+                    return; // Stop update, wait for modal
+                }
+                await ensureMenteeExists(draggedDeal);
+            }
+
+            toast.success('Deal atualizado', `Movido para ${DEAL_STAGES.find(s => s.key === stage)?.label}`);
+        } catch (error) {
+            console.error("Error updating deal:", error);
+            toast.error("Erro ao atualizar deal");
+        }
         setDraggedDeal(null);
     };
 
-    const markAsPaid = (deal: Deal) => {
-        setDeals(prev => prev.map(d =>
-            d.id === deal.id
-                ? { ...d, stage: 'PAID' as DealStage, updatedAt: new Date() }
-                : d
-        ));
-        toast.success('Deal fechado!', `${deal.leadName} marcado como pago. Mentorado criado.`);
+    const markAsPaid = async (deal: Deal) => {
+        // If email missing, open close deal modal
+        if (!deal.email) {
+            setClosingDeal(deal);
+            return;
+        }
+
+        try {
+            await updateDoc(doc(db, 'deals', deal.id), {
+                stage: 'PAID',
+                updatedAt: new Date()
+            });
+            await ensureMenteeExists(deal);
+            toast.success('Deal fechado!', `${deal.leadName} marcado como pago. Mentorado criado.`);
+        } catch (error) {
+            console.error("Error marking as paid:", error);
+            toast.error("Erro ao atualizar deal");
+        }
     };
 
-    const markAsLost = (deal: Deal) => {
-        setDeals(prev => prev.map(d =>
-            d.id === deal.id
-                ? { ...d, stage: 'LOST' as DealStage, updatedAt: new Date() }
-                : d
-        ));
-        toast.info('Deal perdido', `${deal.leadName} movido para perdidos`);
+    const markAsLost = async (deal: Deal) => {
+        try {
+            await updateDoc(doc(db, 'deals', deal.id), {
+                stage: 'LOST',
+                updatedAt: new Date()
+            });
+            toast.info('Deal perdido', `${deal.leadName} movido para perdidos`);
+        } catch (error) {
+            console.error("Error marking as lost:", error);
+            toast.error("Erro ao atualizar deal");
+        }
     };
 
     const getDealsByStage = (stage: DealStage) =>
@@ -211,6 +213,10 @@ export const CRMPage: React.FC = () => {
         const stageDeals = getDealsByStage(stage);
         return stageDeals.reduce((sum, d) => sum + d.pitchAmount, 0);
     };
+
+    if (loading) {
+        return <div className="p-8 text-center text-secondary">Carregando CRM...</div>;
+    }
 
     return (
         <div className="crm">
@@ -268,6 +274,8 @@ export const CRMPage: React.FC = () => {
                                             variant="interactive"
                                             draggable
                                             onDragStart={() => handleDragStart(deal)}
+                                            onClick={() => navigate(`/lead/${deal.leadId}`)}
+                                            style={{ cursor: 'pointer' }}
                                         >
                                             <div className="crm-card-header">
                                                 <span className="crm-card-name">{deal.leadName}</span>
@@ -291,12 +299,11 @@ export const CRMPage: React.FC = () => {
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"
-                                                        onClick={() => {
-                                                            setDeals(prev => prev.map(d =>
-                                                                d.id === deal.id
-                                                                    ? { ...d, stage: 'PITCH_SENT' as DealStage, updatedAt: new Date() }
-                                                                    : d
-                                                            ));
+                                                        onClick={async () => {
+                                                            await updateDoc(doc(db, 'deals', deal.id), {
+                                                                stage: 'PITCH_SENT',
+                                                                updatedAt: new Date()
+                                                            });
                                                         }}
                                                     >
                                                         Pitch enviado
@@ -306,12 +313,11 @@ export const CRMPage: React.FC = () => {
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"
-                                                        onClick={() => {
-                                                            setDeals(prev => prev.map(d =>
-                                                                d.id === deal.id
-                                                                    ? { ...d, stage: 'PAYMENT_SENT' as DealStage, updatedAt: new Date() }
-                                                                    : d
-                                                            ));
+                                                        onClick={async () => {
+                                                            await updateDoc(doc(db, 'deals', deal.id), {
+                                                                stage: 'PAYMENT_SENT',
+                                                                updatedAt: new Date()
+                                                            });
                                                         }}
                                                     >
                                                         Enviar PIX
@@ -379,6 +385,16 @@ export const CRMPage: React.FC = () => {
                         />
                     </div>
                     <div>
+                        <label className="block text-sm font-medium text-secondary mb-1">Email</label>
+                        <input
+                            type="email"
+                            className="w-full bg-secondary border border-subtle rounded-md px-3 py-2 text-primary focus:border-accent outline-none"
+                            placeholder="email@cliente.com"
+                            value={newDeal.email}
+                            onChange={e => setNewDeal({ ...newDeal, email: e.target.value })}
+                        />
+                    </div>
+                    <div>
                         <label className="block text-sm font-medium text-secondary mb-1">WhatsApp</label>
                         <input
                             type="text"
@@ -417,6 +433,71 @@ export const CRMPage: React.FC = () => {
                         <Button variant="primary" type="submit">Criar Deal</Button>
                     </div>
                 </form>
+            </Modal>
+
+            {/* Close Deal Modal (Capture Email) */}
+            <Modal
+                isOpen={!!closingDeal}
+                onClose={() => setClosingDeal(null)}
+                title="Fechar Venda - Dados Finais"
+            >
+                <div className="space-y-4">
+                    <p className="text-secondary text-sm">
+                        Para liberar o acesso do mentorado, precisamos do email oficial.
+                    </p>
+                    <div>
+                        <label className="block text-sm font-medium text-secondary mb-1">Email do Cliente</label>
+                        <input
+                            type="email"
+                            className="w-full bg-secondary border border-subtle rounded-md px-3 py-2 text-primary focus:border-accent outline-none"
+                            placeholder="email@cliente.com"
+                            // We use a local state or ref for this input, but for simplicity let's use a controlled input inside a small component or just simple generic handler
+                            // Wait, simple handler:
+                            id="close-email-input"
+                            defaultValue={closingDeal?.email || ''}
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-secondary mb-1">Confirmação de Valor (R$)</label>
+                        <input
+                            type="number"
+                            className="w-full bg-secondary border border-subtle rounded-md px-3 py-2 text-primary focus:border-accent outline-none"
+                            defaultValue={closingDeal?.pitchAmount}
+                            id="close-amount-input"
+                        />
+                    </div>
+
+                    <div className="flex justify-end gap-2 mt-6">
+                        <Button variant="ghost" onClick={() => setClosingDeal(null)}>Cancelar</Button>
+                        <Button variant="success" onClick={async () => {
+                            if (!closingDeal) return;
+                            const emailInput = (document.getElementById('close-email-input') as HTMLInputElement).value;
+                            const amountInput = (document.getElementById('close-amount-input') as HTMLInputElement).value;
+
+                            if (!emailInput) {
+                                toast.error('Email é obrigatório!');
+                                return;
+                            }
+
+                            try {
+                                const updatedDeal = { ...closingDeal, email: emailInput, pitchAmount: Number(amountInput) };
+                                await updateDoc(doc(db, 'deals', closingDeal.id), {
+                                    email: emailInput,
+                                    pitchAmount: Number(amountInput),
+                                    stage: 'PAID',
+                                    updatedAt: new Date(),
+                                    paymentDate: new Date()
+                                });
+                                await ensureMenteeExists(updatedDeal);
+                                toast.success('Venda Confirmada!', 'Mentorado criado e acesso liberado.');
+                                setClosingDeal(null);
+                            } catch (e) {
+                                console.error(e);
+                                toast.error('Erro ao fechar venda');
+                            }
+                        }}>Confirmar e Liberar Acesso</Button>
+                    </div>
+                </div>
             </Modal>
         </div>
     );

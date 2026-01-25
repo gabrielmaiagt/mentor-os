@@ -83,6 +83,7 @@ export const AddTemplateModal: React.FC<AddTemplateModalProps> = ({ isOpen, onCl
                         >
                             <option value="SALES">Vendas</option>
                             <option value="DELIVERY">Entrega</option>
+                            <option value="TASKS">Tarefas Padrão</option>
                             <option value="FINANCE">Financeiro</option>
                             <option value="LEGAL">Jurídico</option>
                         </select>

@@ -16,61 +16,11 @@ import {
 import { Card, Badge, Button } from '../../components/ui';
 import { useToast } from '../../components/ui/Toast';
 import type { ActionItem } from '../../types';
-import './Execution.css';
+import { collection, query, where, onSnapshot, getDocs } from 'firebase/firestore';
+import { db } from '../../lib/firebase';
+import { Loader } from 'lucide-react';
 
-// Combined queue of items to process
-const mockQueue: ActionItem[] = [
-    {
-        id: '1',
-        type: 'deal',
-        entityId: 'd1',
-        title: 'João Silva',
-        subtitle: 'Mentoria Tráfego Direto - R$ 3.000',
-        urgency: 'critical',
-        delayHours: 52,
-        amount: 3000,
-        whatsapp: '11999887766',
-        suggestedMessage: 'Fala João! Tudo certo?\n\nVi que ficou pendente a confirmação do pagamento.\n\nConsegue resolver isso hoje? Bora começar essa semana!',
-        stage: 'PAYMENT_SENT',
-    },
-    {
-        id: '2',
-        type: 'mentee',
-        entityId: 'm1',
-        title: 'Carlos Lima',
-        subtitle: 'Etapa: TRAFFIC - 8 dias sem update',
-        urgency: 'critical',
-        delayHours: 192,
-        whatsapp: '11976543210',
-        suggestedMessage: 'Carlos, tudo bem?\n\nNotei que faz alguns dias que não temos atualização. Como está o progresso?\n\nSe travou em algo, bora marcar uma call rápida pra resolver. Tenho horário amanhã às 15h.',
-        stage: 'TRAFFIC',
-    },
-    {
-        id: '3',
-        type: 'lead',
-        entityId: 'l2',
-        title: 'Maria Costa',
-        subtitle: 'Lead qualificado - aguardando pitch',
-        urgency: 'attention',
-        delayHours: 28,
-        whatsapp: '11998765432',
-        suggestedMessage: 'Maria, boa tarde!\n\nSeparei um tempo pra te explicar como funciona a mentoria de tráfego.\n\nVocê prefere amanhã às 10h ou às 14h?',
-        stage: 'QUALIFIED',
-    },
-    {
-        id: '4',
-        type: 'deal',
-        entityId: 'd3',
-        title: 'Pedro Santos',
-        subtitle: 'Pitch enviado - aguardando resposta',
-        urgency: 'normal',
-        delayHours: 18,
-        amount: 2500,
-        whatsapp: '11987654321',
-        suggestedMessage: 'Pedro, como está?\n\nVi a proposta que te mandei. Ficou alguma dúvida?\n\nQualquer coisa estou aqui pra ajudar!',
-        stage: 'PITCH_SENT',
-    },
-];
+// Mock data removed
 
 export const ExecutionPage: React.FC = () => {
     const navigate = useNavigate();
@@ -78,14 +28,87 @@ export const ExecutionPage: React.FC = () => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
     const [message, setMessage] = useState('');
+    const [queue, setQueue] = useState<ActionItem[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    // Fetch and Build Queue (Logic copied/adapted from Dashboard)
+    React.useEffect(() => {
+        setLoading(true);
+        const fetchData = async () => {
+            // 1. Deals (Sales Actions)
+            const dealsSnap = await getDocs(query(collection(db, 'deals')));
+            const deals = dealsSnap.docs.map(d => ({ id: d.id, ...d.data(), updatedAt: d.data().updatedAt?.toDate() })) as any[];
+
+            const salesActions: ActionItem[] = deals
+                .filter(d => ['OPEN', 'PITCH_SENT', 'PAYMENT_SENT'].includes(d.stage))
+                .map(d => {
+                    const hoursSince = Math.floor((Date.now() - d.updatedAt.getTime()) / (1000 * 60 * 60));
+                    let urgency: 'normal' | 'attention' | 'critical' = 'normal';
+                    if (hoursSince > 48) urgency = 'critical';
+                    else if (hoursSince > 24) urgency = 'attention';
+
+                    return {
+                        id: d.id,
+                        type: 'deal',
+                        entityId: d.id,
+                        title: d.leadName,
+                        subtitle: `${d.offerName} - ${d.stage}`,
+                        urgency,
+                        delayHours: hoursSince,
+                        amount: d.pitchAmount,
+                        whatsapp: d.leadWhatsapp,
+                        stage: d.stage,
+                        suggestedMessage: d.stage === 'PAYMENT_SENT'
+                            ? `Fala ${d.leadName.split(' ')[0]}! Tudo certo? Vi que ficou pendente a confirmação do pagamento. Consegue resolver hoje?`
+                            : `Oi ${d.leadName.split(' ')[0]}, tudo bem? Como estamos em relação à proposta?`
+                    } as ActionItem;
+                });
+
+            // 2. Mentees (Stuck)
+            const menteesSnap = await getDocs(query(collection(db, 'mentees')));
+            const mentees = menteesSnap.docs.map(d => ({ id: d.id, ...d.data(), lastUpdateAt: d.data().lastUpdateAt?.toDate() })) as any[];
+
+            const stuckMentees: ActionItem[] = mentees
+                .filter(m => {
+                    if (!m.lastUpdateAt) return false;
+                    const daysSince = Math.floor((Date.now() - m.lastUpdateAt.getTime()) / (1000 * 60 * 60 * 24));
+                    return daysSince > 5;
+                })
+                .map(m => ({
+                    id: `stuck-${m.id}`,
+                    type: 'mentee',
+                    entityId: m.id,
+                    title: m.name,
+                    subtitle: `Etapa: ${m.currentStage} - Sem update recente`,
+                    urgency: 'critical',
+                    delayHours: Math.floor((Date.now() - (m.lastUpdateAt?.getTime() || 0)) / (1000 * 60 * 60)),
+                    whatsapp: m.whatsapp || '',
+                    suggestedMessage: `Oi ${m.name.split(' ')[0]}, vi que faz um tempo que não temos novidades. Como estão as coisas?`,
+                    stage: m.currentStage
+                } as ActionItem));
+
+            // Combine and sort
+            const combined = [...salesActions, ...stuckMentees].sort((a, b) => {
+                // Sort by urgency first
+                if (a.urgency === 'critical' && b.urgency !== 'critical') return -1;
+                if (b.urgency === 'critical' && a.urgency !== 'critical') return 1;
+                // Then by delay
+                return (b.delayHours || 0) - (a.delayHours || 0);
+            });
+
+            setQueue(combined);
+            setLoading(false);
+        };
+        fetchData();
+    }, []);
 
     const activeQueue = useMemo(() =>
-        mockQueue.filter(item => !completedIds.has(item.id)),
-        [completedIds]
+        queue.filter(item => !completedIds.has(item.id)),
+        [queue, completedIds]
     );
 
     const currentItem = activeQueue[currentIndex] || null;
-    const progress = mockQueue.length > 0 ? (completedIds.size / mockQueue.length) * 100 : 0;
+    const progress = queue.length > 0 ? (completedIds.size / queue.length) * 100 : 0;
 
     // Initialize message when item changes
     React.useEffect(() => {
@@ -147,8 +170,10 @@ export const ExecutionPage: React.FC = () => {
         }
     };
 
+    if (loading) return <div className="flex justify-center items-center h-screen"><Loader className="animate-spin text-primary" size={32} /></div>;
+
     // All done state
-    if (activeQueue.length === 0) {
+    if (activeQueue.length === 0 && queue.length > 0 && completedIds.size > 0) {
         return (
             <div className="execution">
                 <div className="execution-complete">
@@ -175,6 +200,22 @@ export const ExecutionPage: React.FC = () => {
         );
     }
 
+    if (activeQueue.length === 0 && !loading) {
+        return (
+            <div className="execution">
+                <div className="execution-complete">
+                    <h1 className="execution-complete-title">Nada pendente! 😎</h1>
+                    <p className="execution-complete-text">
+                        Você não tem ações críticas de venda ou entrega pendentes.
+                    </p>
+                    <Button variant="primary" onClick={() => navigate('/dashboard')}>
+                        Voltar ao Dashboard
+                    </Button>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="execution">
             {/* Header */}
@@ -186,7 +227,7 @@ export const ExecutionPage: React.FC = () => {
 
                 <div className="execution-progress">
                     <div className="execution-progress-text">
-                        <span>{completedIds.size} de {mockQueue.length}</span>
+                        <span>{completedIds.size} de {queue.length}</span>
                     </div>
                     <div className="execution-progress-bar">
                         <div

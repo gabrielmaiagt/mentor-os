@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { collection, query, orderBy, onSnapshot, deleteDoc, doc, addDoc } from 'firebase/firestore';
+import { db, auth } from '../../lib/firebase';
 import { useNavigate } from 'react-router-dom';
 import {
     Plus,
@@ -19,91 +21,76 @@ import './Mentees.css';
 
 // ... (mockMiningSummaries remains same)
 
-// Mock data (kept as initial state source)
-const initialMentees: Mentee[] = [
-    // ... (mock data content)
-    {
-        id: 'm1',
-        name: 'Carlos Lima',
-        whatsapp: '11965432109',
-        email: 'carlos@email.com',
-        plan: '6 meses',
-        startAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-        currentStage: 'TRAFFIC',
-        stageProgress: 60,
-        weeklyGoal: 'Configurar campanhas no Google Ads',
-        blocked: true,
-        lastUpdateAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000),
-        nextCallAt: undefined,
-        createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-        updatedAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000),
-    },
-    {
-        id: 'm2',
-        name: 'Ana Oliveira',
-        whatsapp: '11976543210',
-        email: 'ana@email.com',
-        plan: '6 meses',
-        startAt: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000),
-        currentStage: 'OFFER',
-        stageProgress: 80,
-        weeklyGoal: 'Finalizar copy da oferta',
-        blocked: false,
-        lastUpdateAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-        nextCallAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-        createdAt: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000),
-        updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-    },
-    {
-        id: 'm3',
-        name: 'Roberto Silva',
-        whatsapp: '11954321098',
-        email: 'roberto@email.com',
-        plan: '3 meses',
-        startAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
-        currentStage: 'ONBOARDING',
-        stageProgress: 40,
-        weeklyGoal: 'Completar diagnóstico inicial',
-        blocked: false,
-        lastUpdateAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-        nextCallAt: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
-        createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
-        updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-    },
-    {
-        id: 'm4',
-        name: 'Fernanda Souza',
-        whatsapp: '11912345678',
-        email: 'fernanda@email.com',
-        plan: '6 meses',
-        startAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000),
-        currentStage: 'MINING',
-        stageProgress: 50,
-        weeklyGoal: 'Minerar 10 ofertas com mais de 10 anúncios',
-        blocked: false,
-        lastUpdateAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-        nextCallAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
-        createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000),
-        updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-    },
-];
-
 export const MenteesPage: React.FC = () => {
     const navigate = useNavigate();
     const toast = useToast();
     const [searchQuery, setSearchQuery] = useState('');
     const [filterStage, setFilterStage] = useState<MenteeStage | 'ALL'>('ALL');
-    const [mentees, setMentees] = useState<Mentee[]>(initialMentees);
+    const [mentees, setMentees] = useState<Mentee[]>([]);
+    const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
-    const handleSaveMentee = (newMenteeData: Partial<Mentee>) => {
-        const newMentee: Mentee = {
-            ...newMenteeData as Mentee,
-            id: `m${Date.now()}`,
-        };
+    // Fetch Mentees from Firestore
+    useEffect(() => {
+        const q = query(
+            collection(db, 'mentees'),
+            orderBy('createdAt', 'desc')
+        );
 
-        setMentees(prev => [newMentee, ...prev]);
-        toast.success('Mentorado cadastrado com sucesso!');
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const fetchedMentees = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+                // Convert timestamps back to Dates
+                startAt: doc.data().startAt?.toDate() || new Date(),
+                lastUpdateAt: doc.data().lastUpdateAt?.toDate() || new Date(),
+                nextCallAt: doc.data().nextCallAt?.toDate(),
+                createdAt: doc.data().createdAt?.toDate(),
+                updatedAt: doc.data().updatedAt?.toDate(),
+            })) as Mentee[];
+            setMentees(fetchedMentees);
+            setLoading(false);
+        }, (error) => {
+            console.error("Error fetching mentees:", error);
+            toast.error("Erro ao carregar mentorados");
+            setLoading(false);
+        });
+
+        return () => unsubscribe();
+    }, []);
+
+    const handleSaveMentee = async (newMenteeData: Partial<Mentee>) => {
+        try {
+            await addDoc(collection(db, 'mentees'), {
+                ...newMenteeData,
+                createdBy: auth.currentUser?.uid,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                // Default values if not present
+                currentStage: 'ONBOARDING',
+                stageProgress: 0,
+                blocked: false,
+                startAt: new Date()
+            });
+            toast.success('Mentorado cadastrado com sucesso!');
+            setIsModalOpen(false);
+        } catch (error) {
+            console.error("Error creating mentee:", error);
+            toast.error('Erro ao cadastrar mentorado');
+        }
+    };
+
+    const handleDeleteMentee = async (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (window.confirm('Tem certeza que deseja remover este mentorado? Esta ação não pode ser desfeita.')) {
+            try {
+                await deleteDoc(doc(db, 'mentees', id));
+                toast.success('Mentorado removido');
+            } catch (error) {
+                console.error("Error deleting mentee:", error);
+                toast.error('Erro ao remover mentorado');
+            }
+        }
     };
 
     const filteredMentees = mentees.filter(m => {
@@ -129,6 +116,10 @@ export const MenteesPage: React.FC = () => {
         if (days === 1) return 'Amanhã';
         return `Em ${days} dias`;
     };
+
+    if (loading) {
+        return <div className="p-8 text-center text-secondary">Carregando mentorados...</div>;
+    }
 
     return (
         <div className="mentees">
@@ -254,7 +245,8 @@ export const MenteesPage: React.FC = () => {
                             <div className="mentee-actions">
                                 <span className="text-xs text-secondary flex items-center gap-1 mr-auto">
                                     <CreditCard size={12} />
-                                    {Math.random() > 0.5 ? 'Pix' : 'Cartão'}
+                                    {/* TODO: Real Payment Method Check */}
+                                    Pix
                                 </span>
                                 <Button
                                     variant="ghost"
@@ -271,13 +263,7 @@ export const MenteesPage: React.FC = () => {
                                     variant="ghost"
                                     size="sm"
                                     className="text-error hover:bg-error-light"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        if (window.confirm('Tem certeza que deseja remover este mentorado?')) {
-                                            setMentees(prev => prev.filter(m => m.id !== mentee.id));
-                                            toast.success('Mentorado removido');
-                                        }
-                                    }}
+                                    onClick={(e) => handleDeleteMentee(mentee.id, e)}
                                 >
                                     <Trash2 size={14} />
                                 </Button>
@@ -289,7 +275,7 @@ export const MenteesPage: React.FC = () => {
 
             {filteredMentees.length === 0 && (
                 <div className="mentees-empty">
-                    <p>Nenhum mentorado encontrado</p>
+                    <p>Nenhum mentorado encontrado. Comece adicionando um novo!</p>
                 </div>
             )}
 

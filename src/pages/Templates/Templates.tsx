@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, FileText, DollarSign, Scale, Users, CheckCircle, Plus } from 'lucide-react';
 import { TemplateCard } from '../../components/templates';
-import { mockTemplates } from '../../lib/mockTemplates';
 import type { TemplateCategory, Template } from '../../types';
 import { AddTemplateModal } from './AddTemplateModal';
 import { Button } from '../../components/ui';
@@ -13,7 +12,8 @@ const CATEGORIES: { key: TemplateCategory | 'ALL'; label: string; icon: React.Re
     { key: 'ALL', label: 'Todos', icon: <FileText size={18} /> },
     { key: 'SALES', label: 'Vendas', icon: <DollarSign size={18} /> },
     { key: 'DELIVERY', label: 'Entrega', icon: <Users size={18} /> },
-    { key: 'FINANCE', label: 'Financeiro', icon: <CheckCircle size={18} /> }, // Using CheckCircle as generic finance-related or DollarSign
+    { key: 'TASKS', label: 'Tarefas Padrão', icon: <CheckCircle size={18} /> },
+    { key: 'FINANCE', label: 'Financeiro', icon: <DollarSign size={18} /> },
     { key: 'LEGAL', label: 'Jurídico', icon: <Scale size={18} /> },
 ];
 
@@ -39,8 +39,8 @@ export const TemplatesPage: React.FC = () => {
         return () => unsubscribe();
     }, []);
 
-    // Merge mocks with DB templates
-    const allTemplates = [...dbTemplates, ...mockTemplates];
+    // Use only DB templates
+    const allTemplates = dbTemplates;
 
     const filteredTemplates = allTemplates.filter(template => {
         const matchesCategory = selectedCategory === 'ALL' || template.category === selectedCategory;

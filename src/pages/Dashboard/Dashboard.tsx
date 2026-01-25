@@ -10,8 +10,11 @@ import {
     Zap,
     Calendar,
     ArrowUpRight,
-    Search
+    Search,
+    Loader
 } from 'lucide-react';
+import { collection, query, where, onSnapshot, orderBy, getDocs } from 'firebase/firestore';
+import { db } from '../../lib/firebase';
 
 import { Card, Badge, Button } from '../../components/ui';
 import { useToast } from '../../components/ui/Toast';
@@ -20,97 +23,192 @@ import { ptBR } from 'date-fns/locale';
 import type { ActionItem, FinanceSnapshot } from '../../types';
 import './Dashboard.css';
 
-// Mock data for demonstration
-const mockFinance: FinanceSnapshot = {
-    today: 2500,
-    week: 8500,
-    month: 24500,
-    total: 156000,
-    openDeals: 4,
-    pendingPayments: 2,
-    blockedMentees: 1,
-};
-
-const mockSalesActions: ActionItem[] = [
-    {
-        id: '1',
-        type: 'deal',
-        entityId: 'd1',
-        title: 'João Silva',
-        subtitle: 'Mentoria Tráfego Direto',
-        urgency: 'critical',
-        delayHours: 52,
-        amount: 3000,
-        whatsapp: '11999887766',
-        suggestedMessage: 'Fala João! Tudo bem? Vi que ainda não confirmou o pagamento. Bora fechar essa semana?',
-        stage: 'PAYMENT_SENT',
-    },
-    {
-        id: '2',
-        type: 'lead',
-        entityId: 'l2',
-        title: 'Maria Costa',
-        subtitle: 'Lead qualificado - aguardando pitch',
-        urgency: 'attention',
-        delayHours: 28,
-        whatsapp: '11998765432',
-        suggestedMessage: 'Maria, separei um horário pra te explicar como funciona a mentoria. Qual melhor horário pra você?',
-        stage: 'QUALIFIED',
-    },
-    {
-        id: '3',
-        type: 'deal',
-        entityId: 'd3',
-        title: 'Pedro Santos',
-        subtitle: 'Pitch enviado ontem',
-        urgency: 'normal',
-        delayHours: 18,
-        amount: 2500,
-        whatsapp: '11987654321',
-        stage: 'PITCH_SENT',
-    },
-];
-
-const mockDeliveryActions: ActionItem[] = [
-    {
-        id: '4',
-        type: 'call',
-        entityId: 'c1',
-        title: 'Call com Ana Oliveira',
-        subtitle: 'Revisão semanal - 14:00',
-        urgency: 'normal',
-        dueAt: new Date(),
-    },
-    {
-        id: '5',
-        type: 'mentee',
-        entityId: 'm1',
-        title: 'Carlos Lima - TRAVADO',
-        subtitle: '8 dias sem atualização',
-        urgency: 'critical',
-        delayHours: 192,
-        whatsapp: '11976543210',
-        suggestedMessage: 'Carlos, tudo bem? Notei que faz uns dias que não temos updates. Bora marcar uma call rápida pra destravar?',
-        stage: 'TRAFFIC',
-    },
-];
-
-// Mock mining overview data
-const mockMiningOverview = [
-    { menteeId: 'm4', name: 'Fernanda Souza', stage: 'MINING', offersTotal: 5, adsTotal: 67, testing: 1, lastMinedDays: 1 },
-    { menteeId: 'm5', name: 'Lucas Pereira', stage: 'MINING', offersTotal: 0, adsTotal: 0, testing: 0, lastMinedDays: null },
-];
-
-const mockAlerts = [
-    { id: '1', type: 'money', label: 'R$ 5.500 em risco', count: 2, description: 'Deals com ação vencida há +48h' },
-    { id: '2', type: 'stuck', label: '1 mentorado travado', count: 1, description: 'Sem update há mais de 5 dias' },
-    { id: '3', type: 'calls', label: '2 calls em 24h', count: 2, description: 'Preparar agenda e material' },
-    { id: '4', type: 'mining', label: '1 em MINING sem ofertas', count: 1, description: 'Mentorado precisa minerar' },
-];
+// Mocks removed. Using calculated data.
 
 export const DashboardPage: React.FC = () => {
     const navigate = useNavigate();
     const toast = useToast();
+    const [loading, setLoading] = React.useState(true);
+
+    // State for aggregated data
+    const [finance, setFinance] = React.useState<FinanceSnapshot>({
+        today: 0, week: 0, month: 0, total: 0,
+        openDeals: 0, pendingPayments: 0, blockedMentees: 0
+    });
+    const [salesActions, setSalesActions] = React.useState<ActionItem[]>([]);
+    const [deliveryActions, setDeliveryActions] = React.useState<ActionItem[]>([]);
+    const [miningOverview, setMiningOverview] = React.useState<any[]>([]);
+    const [alerts, setAlerts] = React.useState<any[]>([]);
+
+    React.useEffect(() => {
+        const fetchData = async () => {
+            // 1. Finance (Transactions)
+            // We'll listen to transactions to calculate totals
+            const unsubFinance = onSnapshot(query(collection(db, 'transactions')), (snapshot) => {
+                const txs = snapshot.docs.map(d => ({ ...d.data(), dueDate: d.data().dueDate?.toDate(), paidAt: d.data().paidAt?.toDate() })) as any[];
+                const now = new Date();
+                const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+                const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+
+                const today = txs.filter(t => t.status === 'PAID' && t.paidAt >= startOfDay).reduce((sum, t) => sum + t.amount, 0);
+                const week = txs.filter(t => t.status === 'PAID' && t.paidAt >= startOfWeek).reduce((sum, t) => sum + t.amount, 0);
+                const month = txs.filter(t => t.status === 'PAID' && t.paidAt >= startOfMonth).reduce((sum, t) => sum + t.amount, 0);
+                const total = txs.filter(t => t.status === 'PAID').reduce((sum, t) => sum + t.amount, 0);
+
+                // Deals stats needed for finance snapshot (pending payments, open deals) can be updated below
+                setFinance(prev => ({ ...prev, today, week, month, total }));
+            });
+
+            // 2. Deals (Sales Actions & Finance Stats)
+            const unsubDeals = onSnapshot(query(collection(db, 'deals')), (snapshot) => {
+                const deals = snapshot.docs.map(d => ({ id: d.id, ...d.data(), updatedAt: d.data().updatedAt?.toDate() })) as any[];
+
+                // Update Finance Stats part 2
+                const openDealsCount = deals.filter(d => ['OPEN', 'PITCH_SENT', 'PAYMENT_SENT'].includes(d.stage)).length;
+                const pendingPaymentsCount = deals.filter(d => d.stage === 'PAYMENT_SENT').length;
+
+                setFinance(prev => ({ ...prev, openDeals: openDealsCount, pendingPayments: pendingPaymentsCount }));
+
+                // Sales Actions Logic
+                const actions: ActionItem[] = deals
+                    .filter(d => ['OPEN', 'PITCH_SENT', 'PAYMENT_SENT'].includes(d.stage))
+                    .map(d => {
+                        const hoursSince = Math.floor((Date.now() - d.updatedAt.getTime()) / (1000 * 60 * 60));
+                        let urgency: 'normal' | 'attention' | 'critical' = 'normal';
+                        if (hoursSince > 48) urgency = 'critical';
+                        else if (hoursSince > 24) urgency = 'attention';
+
+                        return {
+                            id: d.id,
+                            type: 'deal',
+                            entityId: d.id,
+                            title: d.leadName,
+                            subtitle: `${d.offerName} - ${d.stage}`,
+                            urgency,
+                            delayHours: hoursSince,
+                            amount: d.pitchAmount,
+                            whatsapp: d.leadWhatsapp,
+                            stage: d.stage
+                        } as ActionItem;
+                    })
+                    .sort((a, b) => (b.delayHours || 0) - (a.delayHours || 0)); // urgent first
+
+                setSalesActions(actions);
+            });
+
+            // 3. Mentees (Delivery Actions - Stuck, Mining Overview)
+            const unsubMentees = onSnapshot(query(collection(db, 'mentees')), async (snapshot) => {
+                const mentees = snapshot.docs.map(d => ({ id: d.id, ...d.data(), lastUpdateAt: d.data().lastUpdateAt?.toDate() })) as any[];
+
+                const blockedCount = mentees.filter(m => m.blocked).length;
+                setFinance(prev => ({ ...prev, blockedMentees: blockedCount }));
+
+                // Stuck Mentees Actions
+                const stuckMentees = mentees
+                    .filter(m => {
+                        if (!m.lastUpdateAt) return false;
+                        const daysSince = Math.floor((Date.now() - m.lastUpdateAt.getTime()) / (1000 * 60 * 60 * 24));
+                        return daysSince > 5;
+                    })
+                    .map(m => ({
+                        id: `stuck-${m.id}`,
+                        type: 'mentee',
+                        entityId: m.id,
+                        title: `${m.name}`,
+                        subtitle: 'Sem atualização recente',
+                        urgency: 'critical',
+                        delayHours: Math.floor((Date.now() - (m.lastUpdateAt?.getTime() || 0)) / (1000 * 60 * 60)),
+                        whatsapp: m.whatsapp,
+                        suggestedMessage: `Oi ${m.name.split(' ')[0]}, vi que faz um tempo que não temos novidades. Como estão as coisas?`
+                    } as ActionItem));
+
+                setDeliveryActions(prev => {
+                    // Merge calls (handled below) with stuck mentees
+                    // For now just keep stuck mentees, we'll merge them in the render or state update
+                    // Better: separate state? Let's assume we merge manually. 
+                    // Actually, we need to wait for calls to merge properly.
+                    // Let's store stuck mentees in a separate var? No, let's just set it here and merge calls later if possible, but hooks run independently.
+                    // Strategy: Two states `callsActions` and `menteesActions`, then merge on render? Or just append.
+                    return stuckMentees;
+                });
+
+                // Mining Overview
+                const miningMentees = mentees.filter(m => m.currentStage === 'MINING');
+                // We need offer stats for each. This is expensive (N input queries).
+                // Optimization: fetch ALL offers once and aggregate locally.
+                const offersSnap = await getDocs(query(collection(db, 'offers')));
+                const allOffers = offersSnap.docs.map(d => ({ ...d.data(), createdByUserId: d.data().createdByUserId }));
+
+                const miningStats = miningMentees.map(m => {
+                    const mOffers = allOffers.filter((o: any) => o.createdByUserId === m.id);
+                    return {
+                        menteeId: m.id,
+                        name: m.name,
+                        stage: 'MINING',
+                        offersTotal: mOffers.length,
+                        adsTotal: mOffers.reduce((sum: number, o: any) => sum + (o.adCount || 0), 0),
+                        testing: mOffers.filter((o: any) => o.status === 'TESTING').length,
+                        lastMinedDays: null // Hard to calc without querying sub-activity
+                    };
+                });
+                setMiningOverview(miningStats);
+            });
+
+            // 4. Calls (Delivery Actions)
+            const unsubCalls = onSnapshot(query(collection(db, 'calls')), (snapshot) => {
+                const calls = snapshot.docs.map(d => ({ id: d.id, ...d.data(), scheduledAt: d.data().scheduledAt?.toDate() })) as any[];
+                const todayStr = new Date().toDateString();
+
+                const todayCalls = calls
+                    .filter(c => c.scheduledAt && new Date(c.scheduledAt).toDateString() === todayStr)
+                    .map(c => ({
+                        id: c.id,
+                        type: 'call',
+                        entityId: c.menteeId,
+                        title: `Call agendada`, // We need mentee name, maybe fetch or just generic
+                        subtitle: `${c.scheduledAt.getHours()}:${c.scheduledAt.getMinutes().toString().padStart(2, '0')}`,
+                        urgency: 'normal',
+                        dueAt: c.scheduledAt
+                    } as ActionItem));
+
+                setDeliveryActions(prev => {
+                    // Filter out old calls to avoid duplication if re-run
+                    const nonCalls = prev.filter(p => p.type !== 'call');
+                    return [...nonCalls, ...todayCalls].sort((a, b) => {
+                        // Sort logic: Calls first? Or Urgency?
+                        if (a.type === 'call') return -1;
+                        return 0;
+                    });
+                });
+            });
+
+            setLoading(false);
+            return () => {
+                unsubFinance();
+                unsubDeals();
+                unsubMentees();
+                unsubCalls();
+            };
+        };
+        fetchData();
+    }, []);
+
+    // Alerts Calculation
+    React.useEffect(() => {
+        const newAlerts = [];
+        const moneyAtRisk = salesActions.filter(a => a.urgency === 'critical').reduce((sum, a) => sum + (a.amount || 0), 0);
+        if (moneyAtRisk > 0) newAlerts.push({ id: '1', type: 'money', label: `R$ ${moneyAtRisk} em risco`, count: 0, description: 'Deals críticos' });
+
+        const stuckCount = deliveryActions.filter(a => a.type === 'mentee' && a.urgency === 'critical').length;
+        if (stuckCount > 0) newAlerts.push({ id: '2', type: 'stuck', label: `${stuckCount} mentorados travados`, count: stuckCount, description: 'Precisam de atenção' });
+
+        const callsCount = deliveryActions.filter(a => a.type === 'call').length;
+        if (callsCount > 0) newAlerts.push({ id: '3', type: 'calls', label: `${callsCount} calls hoje`, count: callsCount, description: 'Prepare a agenda' });
+
+        setAlerts(newAlerts);
+    }, [salesActions, deliveryActions]);
+
 
     const formatCurrency = (value: number) => {
         return new Intl.NumberFormat('pt-BR', {
@@ -176,36 +274,36 @@ export const DashboardPage: React.FC = () => {
                         </div>
                         <div className="finance-card-content">
                             <span className="finance-card-label">Hoje</span>
-                            <span className="finance-card-value">{formatCurrency(mockFinance.today)}</span>
+                            <span className="finance-card-value">{formatCurrency(finance.today)}</span>
                         </div>
                     </Card>
 
                     <Card className="finance-card" padding="md">
                         <div className="finance-card-content">
                             <span className="finance-card-label">7 dias</span>
-                            <span className="finance-card-value">{formatCurrency(mockFinance.week)}</span>
+                            <span className="finance-card-value">{formatCurrency(finance.week)}</span>
                         </div>
                     </Card>
 
                     <Card className="finance-card" padding="md">
                         <div className="finance-card-content">
                             <span className="finance-card-label">30 dias</span>
-                            <span className="finance-card-value">{formatCurrency(mockFinance.month)}</span>
+                            <span className="finance-card-value">{formatCurrency(finance.month)}</span>
                         </div>
                     </Card>
 
                     <Card className="finance-card finance-card-stats" padding="md">
                         <div className="finance-stats">
                             <div className="finance-stat">
-                                <span className="finance-stat-value">{mockFinance.openDeals}</span>
+                                <span className="finance-stat-value">{finance.openDeals}</span>
                                 <span className="finance-stat-label">Deals abertos</span>
                             </div>
                             <div className="finance-stat">
-                                <span className="finance-stat-value text-warning">{mockFinance.pendingPayments}</span>
+                                <span className="finance-stat-value text-warning">{finance.pendingPayments}</span>
                                 <span className="finance-stat-label">Pagamentos</span>
                             </div>
                             <div className="finance-stat">
-                                <span className="finance-stat-value text-error">{mockFinance.blockedMentees}</span>
+                                <span className="finance-stat-value text-error">{finance.blockedMentees}</span>
                                 <span className="finance-stat-label">Travados</span>
                             </div>
                         </div>
@@ -220,7 +318,7 @@ export const DashboardPage: React.FC = () => {
                     <div className="section-header">
                         <div className="section-title-group">
                             <h2 className="section-title">🎯 Vender Hoje</h2>
-                            <Badge>{mockSalesActions.length}</Badge>
+                            <Badge>{salesActions.length}</Badge>
                         </div>
                         <Button variant="ghost" size="sm" onClick={() => navigate('/crm')}>
                             Ver CRM <ChevronRight size={16} />
@@ -228,12 +326,13 @@ export const DashboardPage: React.FC = () => {
                     </div>
 
                     <div className="action-list">
-                        {mockSalesActions.map((action) => (
+                        {salesActions.map((action) => (
                             <Card
                                 key={action.id}
                                 variant={action.urgency === 'critical' ? 'urgent' : 'interactive'}
                                 padding="md"
                                 className={`action-card ${action.urgency === 'critical' ? 'action-card-urgent' : ''}`}
+                                onClick={() => navigate(`/lead/${action.entityId}`)}
                             >
                                 <div className="action-card-header">
                                     <div className="action-card-info">
@@ -286,7 +385,7 @@ export const DashboardPage: React.FC = () => {
                     <div className="section-header">
                         <div className="section-title-group">
                             <h2 className="section-title">📦 Entregar Hoje</h2>
-                            <Badge>{mockDeliveryActions.length}</Badge>
+                            <Badge>{deliveryActions.length}</Badge>
                         </div>
                         <Button variant="ghost" size="sm" onClick={() => navigate('/mentees')}>
                             Ver todos <ChevronRight size={16} />
@@ -294,12 +393,13 @@ export const DashboardPage: React.FC = () => {
                     </div>
 
                     <div className="action-list">
-                        {mockDeliveryActions.map((action) => (
+                        {deliveryActions.map((action) => (
                             <Card
                                 key={action.id}
                                 variant={action.urgency === 'critical' ? 'urgent' : 'interactive'}
                                 padding="md"
                                 className={`action-card ${action.urgency === 'critical' ? 'action-card-urgent' : ''}`}
+                                onClick={() => navigate(`/mentee/${action.entityId}`)}
                             >
                                 <div className="action-card-header">
                                     <div className="action-card-info">
@@ -378,7 +478,7 @@ export const DashboardPage: React.FC = () => {
             <section className="dashboard-section">
                 <h2 className="section-title">⚠️ Alertas</h2>
                 <div className="alerts-grid">
-                    {mockAlerts.map((alert) => (
+                    {alerts.map((alert) => (
                         <Card
                             key={alert.id}
                             className="alert-card"
@@ -413,7 +513,7 @@ export const DashboardPage: React.FC = () => {
                 <div className="section-header">
                     <div className="section-title-group">
                         <h2 className="section-title">⛏️ Mineração — Visão Geral</h2>
-                        <Badge>{mockMiningOverview.length} em MINING</Badge>
+                        <Badge>{miningOverview.length} em MINING</Badge>
                     </div>
                     <Button variant="ghost" size="sm" onClick={() => navigate('/mentees')}>
                         Ver todos <ChevronRight size={16} />
@@ -421,7 +521,7 @@ export const DashboardPage: React.FC = () => {
                 </div>
 
                 <div className="mining-overview-grid">
-                    {mockMiningOverview.map((m) => (
+                    {miningOverview.map((m) => (
                         <Card
                             key={m.menteeId}
                             variant="interactive"

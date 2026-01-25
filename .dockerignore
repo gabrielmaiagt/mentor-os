@@ -1,0 +1,9 @@
+node_modules
+dist
+.git
+.env
+.firebaserc
+firebase.json
+firebase-config-output.json
+firestore.indexes.json
+firestore.rules
