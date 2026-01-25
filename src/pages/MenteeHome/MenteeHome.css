@@ -320,3 +320,43 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* Modal specific styles */
+.tasks-list-modal {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.task-item-modal {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    background-color: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    transition: opacity var(--transition-fast);
+}
+
+.task-item-modal input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--accent-primary);
+    cursor: pointer;
+}
+
+.task-item-modal span {
+    font-size: var(--text-sm);
+    color: var(--text-primary);
+}
+
+.text-strike {
+    text-decoration: line-through;
+    color: var(--text-tertiary) !important;
+}
+
+.update-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}

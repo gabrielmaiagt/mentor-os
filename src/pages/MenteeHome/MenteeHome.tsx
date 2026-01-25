@@ -58,6 +58,11 @@ export const MenteeHomePage: React.FC = () => {
     });
     const [isTourOpen, setIsTourOpen] = useState(false);
 
+
+    // Quick Actions Modals
+    const [showTasksModal, setShowTasksModal] = useState(false);
+    const [showUpdateModal, setShowUpdateModal] = useState(false);
+
     // History Update Modal state
     const [showHistoryModal, setShowHistoryModal] = useState(false);
     const [updatingHistoryOffer, setUpdatingHistoryOffer] = useState<OfferMined | null>(null);
@@ -311,14 +316,14 @@ export const MenteeHomePage: React.FC = () => {
                         <span className="quick-action-value">{formatDate(mentee.nextCallAt!)}</span>
                     </div>
                 </Card>
-                <Card padding="md" className="quick-action-card clickable">
+                <Card padding="md" className="quick-action-card clickable" onClick={() => setShowTasksModal(true)}>
                     <CheckSquare size={20} />
                     <div>
                         <span className="quick-action-label">Tarefas</span>
                         <span className="quick-action-value">3 pendentes</span>
                     </div>
                 </Card>
-                <Card padding="md" className="quick-action-card clickable">
+                <Card padding="md" className="quick-action-card clickable" onClick={() => setShowUpdateModal(true)}>
                     <MessageSquare size={20} />
                     <div>
                         <span className="quick-action-label">Enviar Update</span>
@@ -559,6 +564,68 @@ export const MenteeHomePage: React.FC = () => {
                             value={historyFormData.count}
                             onChange={e => setHistoryFormData(prev => ({ ...prev, count: parseInt(e.target.value) || 0 }))}
                         />
+                    </div>
+                </div>
+            </Modal>
+
+            {/* Tasks Modal */}
+            <Modal
+                isOpen={showTasksModal}
+                onClose={() => setShowTasksModal(false)}
+                title="Minhas Tarefas"
+                size="md"
+                footer={<Button variant="ghost" onClick={() => setShowTasksModal(false)}>Fechar</Button>}
+            >
+                <div className="tasks-list-modal">
+                    {[
+                        { title: 'Assistir módulo de Mineração', done: true },
+                        { title: 'Selecionar 10 ofertas candidatas', done: false },
+                        { title: 'Configurar Business Manager', done: false },
+                    ].map((task, i) => (
+                        <div key={i} className="task-item-modal">
+                            <input
+                                type="checkbox"
+                                checked={task.done}
+                                onChange={() => toast.success('Status atualizado!')}
+                            />
+                            <span className={task.done ? 'text-strike' : ''}>{task.title}</span>
+                        </div>
+                    ))}
+                    <div className="mt-4 text-center">
+                        <Button variant="ghost" size="sm" onClick={() => toast.info('Redirecionando para quadro completo...')}>Ver quadro completo</Button>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* Update Modal */}
+            <Modal
+                isOpen={showUpdateModal}
+                onClose={() => setShowUpdateModal(false)}
+                title="Enviar Update Semanal"
+                size="lg"
+                footer={
+                    <>
+                        <Button variant="ghost" onClick={() => setShowUpdateModal(false)}>Cancelar</Button>
+                        <Button variant="primary" onClick={() => {
+                            toast.success('Relatório enviado com sucesso!');
+                            setShowUpdateModal(false);
+                        }}>Enviar Relatório</Button>
+                    </>
+                }
+            >
+                <div className="update-form">
+                    <p className="text-secondary mb-4">Compartilhe seu progresso com o mentor.</p>
+                    <div className="form-field">
+                        <label>Resumo da Semana</label>
+                        <textarea rows={3} placeholder="O que você fez essa semana?" />
+                    </div>
+                    <div className="form-field">
+                        <label>Resultados Alcançados</label>
+                        <textarea rows={2} placeholder="Vendas, leads, métricas..." />
+                    </div>
+                    <div className="form-field">
+                        <label>Dificuldades / Travas</label>
+                        <textarea rows={2} placeholder="Onde você precisa de ajuda?" />
                     </div>
                 </div>
             </Modal>
