@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { User, Mail, Phone, Calendar } from 'lucide-react';
 import { Button, Modal } from '../../components/ui';
 import type { Mentee, ProgramType } from '../../types';
+import './AddMenteeModal.css';
 
 interface AddMenteeModalProps {
     isOpen: boolean;
@@ -36,15 +37,15 @@ export const AddMenteeModal: React.FC<AddMenteeModalProps> = ({ isOpen, onClose,
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title="Novo Mentorado">
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="add-mentee-form">
                 <div className="form-group">
-                    <label className="text-sm font-medium text-secondary mb-1 block">Nome Completo</label>
-                    <div className="relative">
-                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-tertiary" size={18} />
+                    <label>Nome Completo</label>
+                    <div className="input-wrapper">
+                        <User className="input-icon" size={18} />
                         <input
                             type="text"
                             required
-                            className="bg-secondary border border-subtle rounded-md pl-10 pr-3 py-2 w-full text-primary focus:outline-none focus:border-accent"
+                            className="form-input"
                             value={formData.name}
                             onChange={e => setFormData({ ...formData, name: e.target.value })}
                             placeholder="Ex: Carlos Lima"
@@ -53,13 +54,13 @@ export const AddMenteeModal: React.FC<AddMenteeModalProps> = ({ isOpen, onClose,
                 </div>
 
                 <div className="form-group">
-                    <label className="text-sm font-medium text-secondary mb-1 block">Email</label>
-                    <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-tertiary" size={18} />
+                    <label>Email</label>
+                    <div className="input-wrapper">
+                        <Mail className="input-icon" size={18} />
                         <input
                             type="email"
                             required
-                            className="bg-secondary border border-subtle rounded-md pl-10 pr-3 py-2 w-full text-primary focus:outline-none focus:border-accent"
+                            className="form-input"
                             value={formData.email}
                             onChange={e => setFormData({ ...formData, email: e.target.value })}
                             placeholder="carlos@email.com"
@@ -68,13 +69,13 @@ export const AddMenteeModal: React.FC<AddMenteeModalProps> = ({ isOpen, onClose,
                 </div>
 
                 <div className="form-group">
-                    <label className="text-sm font-medium text-secondary mb-1 block">WhatsApp</label>
-                    <div className="relative">
-                        <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-tertiary" size={18} />
+                    <label>WhatsApp</label>
+                    <div className="input-wrapper">
+                        <Phone className="input-icon" size={18} />
                         <input
                             type="tel"
                             required
-                            className="bg-secondary border border-subtle rounded-md pl-10 pr-3 py-2 w-full text-primary focus:outline-none focus:border-accent"
+                            className="form-input"
                             value={formData.whatsapp}
                             onChange={e => setFormData({ ...formData, whatsapp: e.target.value })}
                             placeholder="11999999999"
@@ -83,11 +84,11 @@ export const AddMenteeModal: React.FC<AddMenteeModalProps> = ({ isOpen, onClose,
                 </div>
 
                 <div className="form-group">
-                    <label className="text-sm font-medium text-secondary mb-1 block">Plano</label>
-                    <div className="relative">
-                        <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-tertiary" size={18} />
+                    <label>Plano</label>
+                    <div className="input-wrapper">
+                        <Calendar className="input-icon" size={18} />
                         <select
-                            className="bg-secondary border border-subtle rounded-md pl-10 pr-3 py-2 w-full text-primary focus:outline-none focus:border-accent appearance-none"
+                            className="form-select"
                             value={formData.plan}
                             onChange={e => setFormData({ ...formData, plan: e.target.value as ProgramType })}
                         >
@@ -98,7 +99,7 @@ export const AddMenteeModal: React.FC<AddMenteeModalProps> = ({ isOpen, onClose,
                     </div>
                 </div>
 
-                <div className="flex justify-end gap-2 mt-6">
+                <div className="modal-actions">
                     <Button type="button" variant="ghost" onClick={onClose}>
                         Cancelar
                     </Button>
