@@ -16,6 +16,7 @@ export const AddMenteeModal: React.FC<AddMenteeModalProps> = ({ isOpen, onClose,
         email: '',
         whatsapp: '',
         plan: '6 meses' as ProgramType,
+        startDate: new Date().toISOString().split('T')[0]
     });
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -25,12 +26,12 @@ export const AddMenteeModal: React.FC<AddMenteeModalProps> = ({ isOpen, onClose,
             currentStage: 'ONBOARDING',
             stageProgress: 0,
             blocked: false,
-            startAt: new Date(),
+            startAt: new Date(formData.startDate),
             createdAt: new Date(),
             updatedAt: new Date(),
         });
         onClose();
-        setFormData({ name: '', email: '', whatsapp: '', plan: '6 meses' });
+        setFormData({ name: '', email: '', whatsapp: '', plan: '6 meses', startDate: new Date().toISOString().split('T')[0] });
     };
 
     if (!isOpen) return null;
@@ -83,19 +84,34 @@ export const AddMenteeModal: React.FC<AddMenteeModalProps> = ({ isOpen, onClose,
                     </div>
                 </div>
 
-                <div className="form-group">
-                    <label>Plano</label>
-                    <div className="input-wrapper">
-                        <Calendar className="input-icon" size={18} />
-                        <select
-                            className="form-select"
-                            value={formData.plan}
-                            onChange={e => setFormData({ ...formData, plan: e.target.value as ProgramType })}
-                        >
-                            <option value="3 meses">Mentoria Trimestral (3 meses)</option>
-                            <option value="6 meses">Mentoria Semestral (6 meses)</option>
-                            <option value="12 meses">Mentoria Anual (12 meses)</option>
-                        </select>
+                <div className="form-row">
+                    <div className="form-group">
+                        <label>Plano</label>
+                        <div className="input-wrapper">
+                            <Calendar className="input-icon" size={18} />
+                            <select
+                                className="form-select"
+                                value={formData.plan}
+                                onChange={e => setFormData({ ...formData, plan: e.target.value as ProgramType })}
+                            >
+                                <option value="3 meses">Mentoria Trimestral (3 meses)</option>
+                                <option value="6 meses">Mentoria Semestral (6 meses)</option>
+                                <option value="12 meses">Mentoria Anual (12 meses)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div className="form-group">
+                        <label>Data de Início</label>
+                        <div className="input-wrapper">
+                            <Calendar className="input-icon" size={18} />
+                            <input
+                                type="date"
+                                required
+                                className="form-input"
+                                value={formData.startDate}
+                                onChange={e => setFormData({ ...formData, startDate: e.target.value })}
+                            />
+                        </div>
                     </div>
                 </div>
 

@@ -70,7 +70,7 @@ export const MenteesPage: React.FC = () => {
                 currentStage: 'ONBOARDING',
                 stageProgress: 0,
                 blocked: false,
-                startAt: new Date()
+                startAt: newMenteeData.startAt || new Date()
             });
             toast.success('Mentorado cadastrado com sucesso!');
             setIsModalOpen(false);
