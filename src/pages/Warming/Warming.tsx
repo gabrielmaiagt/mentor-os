@@ -289,59 +289,100 @@ export const WarmingPage: React.FC = () => {
                         {/* Right Column: Active Chip Details (9 cols) */}
                         {activeChip && (
                             <div className="xl:col-span-9 flex flex-col gap-6 animate-slide-in">
-                                {/* Day Status Card */}
-                                <div className="glass-panel rounded-2xl p-8 relative overflow-hidden bg-gradient-to-br from-zinc-900 via-black to-zinc-950 border border-white/10 shadow-2xl">
-                                    <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-warning/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+                                {/* Day Status Card - Premium Redesign */}
+                                <div className="glass-panel rounded-3xl p-10 relative overflow-hidden border border-white/10 shadow-2xl">
+                                    {/* Animated Background Gradient Blob */}
+                                    <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-br from-purple-500/20 via-blue-500/20 to-warning/20 rounded-full blur-3xl -translate-y-1/3 translate-x-1/3 pointer-events-none animate-pulse-slow" />
+                                    <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-warning/10 to-transparent rounded-full blur-3xl translate-y-1/2 -translate-x-1/2 pointer-events-none" />
 
-                                    <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-8">
-                                        <div className="flex-1 space-y-4">
-                                            <div className="flex items-center gap-3">
-                                                <Badge variant="default" className="border border-warning text-warning bg-transparent px-3 py-1 text-xs uppercase tracking-widest font-bold">
-                                                    Dia {activeChip.currentDay} / 10
+                                    <div className="relative z-10">
+                                        {/* Header with Badges */}
+                                        <div className="flex items-center gap-4 mb-8">
+                                            <Badge variant="default" className="border-2 border-warning/40 text-warning bg-warning/10 px-4 py-2 text-sm uppercase tracking-wider font-bold backdrop-blur-sm">
+                                                <Shield size={14} className="mr-2" />
+                                                Dia {activeChip.currentDay} / 10
+                                            </Badge>
+                                            {isDayComplete ? (
+                                                <Badge variant="success" className="px-4 py-2 text-sm animate-in fade-in bg-success/20 text-success border-2 border-success/40 backdrop-blur-sm">
+                                                    <Check size={14} className="mr-2" strokeWidth={3} />
+                                                    COMPLETO
                                                 </Badge>
-                                                {isDayComplete ? (
-                                                    <Badge variant="success" className="px-3 py-1 text-xs animate-in fade-in bg-success/20 text-success border border-success/30">
-                                                        <Check size={12} className="mr-1.5" /> COMPLETO
-                                                    </Badge>
-                                                ) : (
-                                                    <span className="text-xs text-secondary animate-pulse">
-                                                        Em andamento...
-                                                    </span>
-                                                )}
-                                            </div>
-
-                                            <div>
-                                                <h2 className="text-3xl md:text-5xl font-bold text-white mb-3 tracking-tight">
-                                                    {currentProtocol?.title.replace(/Dia \d+ - /, '')}
-                                                </h2>
-                                                <p className="text-zinc-400 text-lg md:text-xl max-w-2xl leading-relaxed font-light">
-                                                    {currentProtocol?.description}
-                                                </p>
-                                            </div>
+                                            ) : (
+                                                <span className="text-sm text-zinc-400 animate-pulse font-medium flex items-center gap-2">
+                                                    <Circle size={8} className="fill-current animate-ping" />
+                                                    Em andamento
+                                                </span>
+                                            )}
                                         </div>
 
-                                        {/* Progress Circle - Larger & Cleaner */}
-                                        <div className="relative w-32 h-32 flex-shrink-0 group">
-                                            <div className="absolute inset-0 bg-warning/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-                                            <svg className="w-full h-full transform -rotate-90 drop-shadow-2xl">
-                                                <circle
-                                                    cx="64" cy="64" r="58"
-                                                    stroke="currentColor" strokeWidth="6"
-                                                    fill="transparent" className="text-white/5"
-                                                />
-                                                <circle
-                                                    cx="64" cy="64" r="58"
-                                                    stroke="currentColor" strokeWidth="6"
-                                                    fill="transparent"
-                                                    strokeDasharray={364}
-                                                    strokeDashoffset={364 - (364 * progress) / 100}
-                                                    className="text-warning transition-all duration-1000 ease-out"
-                                                    strokeLinecap="round"
-                                                />
-                                            </svg>
-                                            <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                                                <span className="text-3xl font-bold text-white tracking-tighter">{Math.round(progress)}%</span>
-                                                <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mt-1">Concluído</span>
+                                        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-10">
+                                            {/* Left Content */}
+                                            <div className="flex-1 space-y-6">
+                                                <div>
+                                                    <h2 className="text-4xl lg:text-6xl font-bold text-white mb-4 tracking-tight leading-none bg-gradient-to-br from-white via-white to-zinc-300 bg-clip-text text-transparent">
+                                                        {currentProtocol?.title.replace(/Dia \d+ - /, '')}
+                                                    </h2>
+                                                    <p className="text-zinc-300 text-lg lg:text-xl max-w-2xl leading-relaxed">
+                                                        {currentProtocol?.description}
+                                                    </p>
+                                                </div>
+
+                                                {/* Progress Bar - Modern Linear */}
+                                                <div className="w-full max-w-md">
+                                                    <div className="flex items-center justify-between text-sm mb-3">
+                                                        <span className="text-zinc-400 font-medium">Progresso do Dia</span>
+                                                        <span className="text-white font-bold text-lg">{Math.round(progress)}%</span>
+                                                    </div>
+                                                    <div className="h-3 bg-white/5 rounded-full overflow-hidden backdrop-blur-sm border border-white/10">
+                                                        <div
+                                                            className="h-full bg-gradient-to-r from-warning via-yellow-400 to-warning transition-all duration-1000 ease-out relative overflow-hidden"
+                                                            style={{ width: `${progress}%` }}
+                                                        >
+                                                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Right - Circular Progress (Larger & Premium) */}
+                                            <div className="relative w-48 h-48 lg:w-56 lg:h-56 flex-shrink-0 group">
+                                                {/* Glow effect */}
+                                                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/30 via-blue-500/30 to-warning/30 blur-2xl rounded-full opacity-60 group-hover:opacity-100 transition-opacity duration-700 animate-pulse-slow" />
+
+                                                {/* SVG Circle */}
+                                                <svg className="w-full h-full transform -rotate-90 drop-shadow-2xl relative z-10">
+                                                    <defs>
+                                                        <linearGradient id="progressGradientWarming" x1="0%" y1="0%" x2="100%" y2="100%">
+                                                            <stop offset="0%" stopColor="#8b5cf6" />
+                                                            <stop offset="50%" stopColor="#3b82f6" />
+                                                            <stop offset="100%" stopColor="#eab308" />
+                                                        </linearGradient>
+                                                    </defs>
+                                                    <circle
+                                                        cx="50%" cy="50%" r="45%"
+                                                        stroke="currentColor" strokeWidth="8"
+                                                        fill="transparent" className="text-white/5"
+                                                    />
+                                                    <circle
+                                                        cx="50%" cy="50%" r="45%"
+                                                        stroke="url(#progressGradientWarming)" strokeWidth="8"
+                                                        fill="transparent"
+                                                        strokeDasharray={`${2 * Math.PI * (0.45 * 224)}`}
+                                                        strokeDashoffset={`${2 * Math.PI * (0.45 * 224) * (1 - progress / 100)}`}
+                                                        className="transition-all duration-1000 ease-out"
+                                                        strokeLinecap="round"
+                                                    />
+                                                </svg>
+
+                                                {/* Center Content */}
+                                                <div className="absolute inset-0 flex flex-col items-center justify-center text-center z-20">
+                                                    <span className="text-5xl lg:text-6xl font-black text-white tracking-tighter mb-1 drop-shadow-lg">
+                                                        {Math.round(progress)}%
+                                                    </span>
+                                                    <span className="text-xs text-zinc-400 uppercase tracking-widest font-bold">
+                                                        Concluído
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
