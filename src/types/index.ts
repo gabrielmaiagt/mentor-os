@@ -214,6 +214,12 @@ export interface Mentee extends FirestoreTimestamps {
     lastUpdateAt?: Date;
     nextCallAt?: Date;
     active?: boolean; // active by default (undefined or true)
+    avatarUrl?: string;
+    // Gamification
+    xp?: number;
+    level?: number;
+    badges?: string[];
+    nextLevelXp?: number;
 }
 
 // Call
@@ -439,3 +445,33 @@ export interface AppNotification extends FirestoreTimestamps {
     link?: string;
     createdAt: any;
 }
+
+// Swipe File
+export type SwipeFileCategory = 'X1' | 'Venda Direta' | 'VSL' | 'High Ticket' | 'Criativos' | 'Copy';
+
+export interface SwipeFileItem {
+    id: string;
+    title: string;
+    description: string;
+    category: SwipeFileCategory;
+    url?: string; // Link to offer/video
+    imageUrl?: string; // Screenshot/Thumbnail
+    tags?: string[];
+    createdAt: Date;
+    createdBy: string;
+    likes?: number;
+    views?: number;
+}
+
+// Config / Feature Flags
+export interface FeatureFlags {
+    enableMining: boolean;
+    enableWarming: boolean;
+    enableAcademy: boolean;
+    enableSwipeFile: boolean;
+    enableRanking: boolean;
+    enableResources: boolean;
+}
+
+// Assets
+export * from './assets';

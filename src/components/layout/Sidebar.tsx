@@ -17,6 +17,7 @@ import {
     Pickaxe
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useFeatureFlags } from '../../hooks/useFeatureFlags';
 import './Sidebar.css';
 
 interface NavItem {
@@ -57,8 +58,21 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => {
     const { user, signOut } = useAuth();
+    const { features } = useFeatureFlags();
 
-    const navItems = user?.role === 'mentee' ? menteeNavItems : mentorNavItems;
+    const filterNavItems = (items: NavItem[]) => {
+        return items.filter(item => {
+            if (item.path.includes('mining') && !features.enableMining) return false;
+            if (item.path.includes('warming') && !features.enableWarming) return false;
+            if (item.path.includes('academy') && !features.enableAcademy) return false;
+            if (item.path.includes('swipe-file') && !features.enableSwipeFile) return false; // Swipe file nav logic if meant to be here
+            if (item.path.includes('ranking') && !features.enableRanking) return false; // Usually inside profile but good to have safeguard
+            if (item.path.includes('resources') && !features.enableResources) return false;
+            return true;
+        });
+    };
+
+    const navItems = user?.role === 'mentee' ? filterNavItems(menteeNavItems) : mentorNavItems;
 
     return (
         <>

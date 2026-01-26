@@ -743,3 +743,55 @@
         grid-template-columns: repeat(2, 1fr);
     }
 }
+
+/* Gamification Styles */
+.mentee-avatar-section {
+    position: relative;
+    display: inline-block;
+}
+
+.level-badge {
+    position: absolute;
+    bottom: -5px;
+    right: -5px;
+    background: var(--accent-primary);
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.9rem;
+    border: 3px solid var(--bg-card);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    z-index: 10;
+}
+
+.xp-badge {
+    background: rgba(234, 179, 8, 0.1);
+    color: var(--status-warning);
+    border: 1px solid rgba(234, 179, 8, 0.2);
+    gap: 0.25rem;
+}
+
+.gamification-bar-container {
+    margin: 0.75rem 0;
+    width: 100%;
+    max-width: 300px;
+}
+
+.xp-progress-bar {
+    height: 8px;
+    background: var(--bg-secondary);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.xp-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+    border-radius: 4px;
+    transition: width 0.5s ease-out;
+}

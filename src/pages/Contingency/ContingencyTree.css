@@ -1,0 +1,8 @@
+.contingency-tree-container {
+    /* Custom scrollbar */
+}
+
+/* Connectors handled via inline styles usually, but we can add polish here */
+.tree-node {
+    position: relative;
+}

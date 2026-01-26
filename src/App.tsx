@@ -26,6 +26,9 @@ import ManageAcademyPage from './pages/Academy/ManageAcademy';
 import WarmingPage from './pages/Warming/Warming';
 import MiningPage from './pages/Mining/Mining';
 import HowItWorksPage from './pages/HowItWorks/HowItWorks';
+import { SwipeFileLib } from './pages/SwipeFile/SwipeFileLib';
+import { AssetsManager } from './pages/Contingency/AssetsManager';
+import { SettingsPage } from './pages/Settings/Settings';
 
 function App() {
   return (
@@ -56,6 +59,9 @@ function App() {
               <Route path="/warming" element={<WarmingPage />} />
               <Route path="/academy/manage" element={<ManageAcademyPage />} />
               <Route path="/onboarding-editor" element={<OnboardingEditorPage />} />
+              <Route path="/swipe-file" element={<SwipeFileLib />} />
+              <Route path="/assets" element={<AssetsManager />} />
+              <Route path="/settings" element={<SettingsPage />} />
             </Route>
 
             {/* Protected mentee routes */}
@@ -69,6 +75,7 @@ function App() {
               <Route path="/me/warming" element={<WarmingPage />} />
               <Route path="/warming" element={<WarmingPage />} />
               <Route path="/me/how-it-works" element={<HowItWorksPage />} />
+              <Route path="/me/swipe-file" element={<SwipeFileLib />} />
             </Route>
 
             {/* Default redirect */}

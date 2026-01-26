@@ -25,6 +25,10 @@ import { useToast } from '../../components/ui/Toast';
 import { MENTEE_STAGES, getStageConfig, DEFAULT_ONBOARDING_TEMPLATE } from '../../types';
 // mockTemplates removed
 import type { Mentee, MenteeStage, Call, Task, OfferMined, OfferStatus, OnboardingProgress } from '../../types';
+import { calculateLevel, calculateNextLevelXp, calculateProgressToNextLevel, addXp } from '../../lib/gamification';
+import { BadgesList } from '../../components/gamification/BadgesList';
+import { MenteeRanking } from '../../components/gamification/MenteeRanking';
+import { Zap, Trophy, Medal } from 'lucide-react';
 import './MenteeProfile.css';
 
 // Mining Helper
@@ -46,7 +50,7 @@ const calculateMiningSummary = (offers: OfferMined[]) => {
 // Updated stage journey to include MINING
 const stageJourney: MenteeStage[] = ['ONBOARDING', 'MINING', 'OFFER', 'CREATIVES', 'TRAFFIC', 'OPTIMIZATION', 'SCALING'];
 
-type TabType = 'overview' | 'onboarding' | 'mining' | 'calls' | 'tasks';
+type TabType = 'overview' | 'onboarding' | 'mining' | 'calls' | 'tasks' | 'achievements' | 'ranking';
 
 export const MenteeProfilePage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -298,11 +302,17 @@ export const MenteeProfilePage: React.FC = () => {
                 {/* ... existing header content ... */}
             </div>
 
-            {/* Main Info */}
+            {/* Main Info with Gamification */}
             <div className="mentee-profile-main">
-                <div className="mentee-avatar-lg">
-                    {mentee.name.charAt(0).toUpperCase()}
+                <div className="mentee-avatar-section">
+                    <div className="mentee-avatar-lg">
+                        {mentee.name.charAt(0).toUpperCase()}
+                        <div className="level-badge">
+                            {calculateLevel(mentee.xp || 0)}
+                        </div>
+                    </div>
                 </div>
+
                 <div className="mentee-info">
                     <div className="mentee-name-row">
                         <h1 className="mentee-name">{mentee.name}</h1>
@@ -311,7 +321,32 @@ export const MenteeProfilePage: React.FC = () => {
                                 <AlertTriangle size={12} /> TRAVADO
                             </Badge>
                         )}
+                        <Badge variant="default" className="xp-badge">
+                            <Zap size={12} className="text-warning fill-warning" />
+                            {mentee.xp || 0} XP
+                        </Badge>
                     </div>
+
+                    {/* Gamification Bar */}
+                    <div className="gamification-bar-container">
+                        <div className="flex justify-between text-xs text-secondary mb-1">
+                            <span>Nível {calculateLevel(mentee.xp || 0)}</span>
+                            <span>Próx: {calculateNextLevelXp(calculateLevel(mentee.xp || 0))} XP</span>
+                        </div>
+                        <div className="xp-progress-bar">
+                            <div
+                                className="xp-progress-fill"
+                                style={{
+                                    width: `${calculateProgressToNextLevel(
+                                        mentee.xp || 0,
+                                        calculateLevel(mentee.xp || 0),
+                                        calculateNextLevelXp(calculateLevel(mentee.xp || 0))
+                                    )}%`
+                                }}
+                            />
+                        </div>
+                    </div>
+
                     <div className="mentee-meta">
                         <span className="mentee-plan">{mentee.plan}</span>
                         <span className="mentee-start">
@@ -393,6 +428,20 @@ export const MenteeProfilePage: React.FC = () => {
                     onClick={() => setActiveTab('overview')}
                 >
                     Visão Geral
+                </button>
+                <button
+                    className={`mentee-tab ${activeTab === 'achievements' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('achievements')}
+                >
+                    <Trophy size={14} />
+                    Conquistas
+                </button>
+                <button
+                    className={`mentee-tab ${activeTab === 'ranking' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('ranking')}
+                >
+                    <Medal size={14} />
+                    Ranking
                 </button>
                 <button
                     className={`mentee-tab ${activeTab === 'onboarding' ? 'active' : ''}`}
@@ -710,9 +759,32 @@ export const MenteeProfilePage: React.FC = () => {
                             <div className="tasks-list">
                                 {menteeTasks.map(task => (
                                     <div key={task.id} className={`task-item ${task.status === 'OVERDUE' ? 'overdue' : ''}`}>
-                                        <div className="task-checkbox">
-                                            <input type="checkbox" checked={task.status === 'DONE'} readOnly />
-                                        </div>
+                                        <input
+                                            type="checkbox"
+                                            checked={task.status === 'DONE'}
+                                            onChange={async (e) => {
+                                                const newStatus = e.target.checked ? 'DONE' : 'TODO';
+                                                try {
+                                                    await updateDoc(doc(db, 'tasks', task.id), {
+                                                        status: newStatus,
+                                                        updatedAt: new Date()
+                                                    });
+
+                                                    // XP Trigger: Task Completion (+10 XP)
+                                                    if (newStatus === 'DONE' && mentee) {
+                                                        const res = await addXp(mentee.id, 10);
+                                                        if (res?.levelUp) {
+                                                            toast.success('LEVEL UP!', `Parabéns! Você alcançou o nível ${res.newLevel}`);
+                                                        } else {
+                                                            toast.success('+10 XP', 'Tarefa concluída!');
+                                                        }
+                                                    }
+                                                } catch (err) {
+                                                    console.error(err);
+                                                    toast.error('Erro ao atualizar tarefa');
+                                                }
+                                            }}
+                                        />
                                         <div className="task-content">
                                             <span className="task-title">{task.title}</span>
                                             {task.dueAt && (
@@ -727,6 +799,18 @@ export const MenteeProfilePage: React.FC = () => {
                             </div>
                         </CardContent>
                     </Card>
+                </div>
+            )}
+
+            {activeTab === 'achievements' && (
+                <div className="achievements-tab-content">
+                    <BadgesList earnedBadgeIds={mentee.badges} />
+                </div>
+            )}
+
+            {activeTab === 'ranking' && (
+                <div className="ranking-tab-content">
+                    <MenteeRanking />
                 </div>
             )}
 

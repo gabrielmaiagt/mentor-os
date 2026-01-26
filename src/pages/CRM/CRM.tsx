@@ -15,6 +15,7 @@ import type { Deal, DealStage, DealHeat } from '../../types';
 import { DEAL_STAGES } from '../../types';
 import { exportToCSV, formatDealsForExport } from '../../utils/export';
 import { Download } from 'lucide-react';
+import { addXp, checkAndUnlockBadge } from '../../lib/gamification';
 import './CRM.css';
 
 // Mock data removed
@@ -184,7 +185,11 @@ export const CRMPage: React.FC = () => {
                     setClosingDeal(draggedDeal);
                     return; // Stop update, wait for modal
                 }
-                await ensureMenteeExists(draggedDeal);
+                const mId = await ensureMenteeExists(draggedDeal);
+                if (mId) {
+                    await addXp(mId, 100); // 100 XP for becoming a client
+                    await checkAndUnlockBadge(mId, 'start');
+                }
             }
 
             toast.success('Deal atualizado', `Movido para ${DEAL_STAGES.find(s => s.key === stage)?.label}`);
@@ -207,7 +212,11 @@ export const CRMPage: React.FC = () => {
                 stage: 'PAID',
                 updatedAt: new Date()
             });
-            await ensureMenteeExists(deal);
+            const mId = await ensureMenteeExists(deal);
+            if (mId) {
+                await addXp(mId, 100);
+                await checkAndUnlockBadge(mId, 'start');
+            }
             toast.success('Deal fechado!', `${deal.leadName} marcado como pago. Mentorado criado.`);
         } catch (error) {
             console.error("Error marking as paid:", error);
@@ -599,6 +608,10 @@ export const CRMPage: React.FC = () => {
                                 });
 
                                 const menteeId = await ensureMenteeExists(updatedDeal);
+                                if (menteeId) {
+                                    await addXp(menteeId, 100);
+                                    await checkAndUnlockBadge(menteeId, 'start');
+                                }
 
                                 // Create Finance Transaction
                                 await addDoc(collection(db, 'transactions'), {
