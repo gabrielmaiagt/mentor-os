@@ -289,22 +289,22 @@ export const WarmingPage: React.FC = () => {
                         {/* Right Column: Active Chip Details (9 cols) */}
                         {activeChip && (
                             <div className="xl:col-span-9 flex flex-col gap-6 animate-slide-in">
-                                {/* Day Status Card - Premium Redesign */}
-                                <div className="glass-panel rounded-3xl p-10 relative overflow-hidden border border-white/10 shadow-2xl">
+                                {/* Day Status Card - Premium with Proper Spacing */}
+                                <div className="glass-panel rounded-3xl p-12 relative overflow-hidden border border-white/10 shadow-2xl">
                                     {/* Animated Background Gradient Blob */}
-                                    <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-br from-purple-500/20 via-blue-500/20 to-warning/20 rounded-full blur-3xl -translate-y-1/3 translate-x-1/3 pointer-events-none animate-pulse-slow" />
+                                    <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-br from-purple-500/10 via-blue-500/10 to-warning/10 rounded-full blur-3xl -translate-y-1/3 translate-x-1/3 pointer-events-none animate-pulse-slow" />
                                     <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-warning/10 to-transparent rounded-full blur-3xl translate-y-1/2 -translate-x-1/2 pointer-events-none" />
 
-                                    <div className="relative z-10">
+                                    <div className="relative z-10 space-y-10">
                                         {/* Header with Badges */}
-                                        <div className="flex items-center gap-4 mb-8">
-                                            <Badge variant="default" className="border-2 border-warning/40 text-warning bg-warning/10 px-4 py-2 text-sm uppercase tracking-wider font-bold backdrop-blur-sm">
-                                                <Shield size={14} className="mr-2" />
+                                        <div className="flex items-center gap-4">
+                                            <Badge variant="default" className="border-2 border-warning/40 text-warning bg-warning/10 px-4 py-2.5 text-sm uppercase tracking-wider font-bold backdrop-blur-sm">
+                                                <Shield size={16} className="mr-2" />
                                                 Dia {activeChip.currentDay} / 10
                                             </Badge>
                                             {isDayComplete ? (
-                                                <Badge variant="success" className="px-4 py-2 text-sm animate-in fade-in bg-success/20 text-success border-2 border-success/40 backdrop-blur-sm">
-                                                    <Check size={14} className="mr-2" strokeWidth={3} />
+                                                <Badge variant="success" className="px-4 py-2.5 text-sm animate-in fade-in bg-success/20 text-success border-2 border-success/40 backdrop-blur-sm">
+                                                    <Check size={16} className="mr-2" strokeWidth={3} />
                                                     COMPLETO
                                                 </Badge>
                                             ) : (
@@ -315,31 +315,32 @@ export const WarmingPage: React.FC = () => {
                                             )}
                                         </div>
 
-                                        {/* Content Section */}
-                                        <div className="space-y-8">
-                                            <div>
-                                                <h2 className="text-4xl lg:text-6xl font-bold text-white mb-4 tracking-tight leading-none">
-                                                    {currentProtocol?.title.replace(/Dia \d+ - /, '')}
-                                                </h2>
-                                                <p className="text-zinc-300 text-lg lg:text-xl max-w-3xl leading-relaxed">
-                                                    {currentProtocol?.description}
-                                                </p>
-                                            </div>
+                                        {/* Title & Description */}
+                                        <div className="space-y-6">
+                                            <h2 className="text-5xl lg:text-7xl font-black text-white tracking-tight leading-none">
+                                                {currentProtocol?.title.replace(/Dia \d+ - /, '')}
+                                            </h2>
+                                            <p className="text-zinc-300 text-xl lg:text-2xl max-w-4xl leading-relaxed font-light">
+                                                {currentProtocol?.description}
+                                            </p>
+                                        </div>
 
-                                            {/* Large Progress Bar - Full Width */}
-                                            <div className="w-full space-y-4">
-                                                <div className="flex items-center justify-between">
-                                                    <span className="text-zinc-400 font-semibold text-base">Progresso do Dia</span>
-                                                    <span className="text-white font-black text-4xl tabular-nums">{Math.round(progress)}%</span>
+                                        {/* Large Progress Bar - Full Width */}
+                                        <div className="w-full space-y-5 pt-6 border-t border-white/5">
+                                            <div className="flex items-end justify-between">
+                                                <div>
+                                                    <span className="text-zinc-500 font-semibold text-sm uppercase tracking-wider block mb-2">Progresso do Dia</span>
+                                                    <span className="text-white font-black text-6xl tabular-nums leading-none">{Math.round(progress)}%</span>
                                                 </div>
-                                                <div className="h-6 bg-white/5 rounded-full overflow-hidden backdrop-blur-sm border border-white/10 shadow-inner">
-                                                    <div
-                                                        className="h-full bg-gradient-to-r from-purple-500 via-blue-500 to-warning transition-all duration-1000 ease-out relative overflow-hidden shadow-lg"
-                                                        style={{ width: `${progress}%` }}
-                                                    >
-                                                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
-                                                        <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent" />
-                                                    </div>
+                                            </div>
+                                            <div className="h-8 bg-gradient-to-r from-white/5 to-white/10 rounded-2xl overflow-hidden backdrop-blur-sm border-2 border-white/10 shadow-2xl">
+                                                <div
+                                                    className="h-full bg-gradient-to-r from-purple-600 via-blue-500 to-yellow-400 transition-all duration-1000 ease-out relative overflow-hidden"
+                                                    style={{ width: `${progress}%` }}
+                                                >
+                                                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-shimmer" />
+                                                    <div className="absolute inset-0 bg-gradient-to-b from-white/30 to-transparent" />
+                                                    <div className="absolute inset-0 shadow-[inset_0_2px_4px_rgba(255,255,255,0.3)]" />
                                                 </div>
                                             </div>
                                         </div>
