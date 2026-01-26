@@ -2,33 +2,27 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     DollarSign,
-    AlertTriangle,
-    MessageSquare,
-    Phone,
-    Copy,
-    ChevronRight,
     Zap,
-    Calendar,
-    ArrowUpRight,
-    Search
+    ChevronRight,
+    Search,
+    AlertTriangle,
+    Calendar
 } from 'lucide-react';
 import { collection, query, onSnapshot, getDocs } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 
 import { Card, Badge, Button, Skeleton } from '../../components/ui';
-import { SmartTasksWidget } from '../../components/dashboard/SmartTasksWidget';
-import { useToast } from '../../components/ui/Toast';
+import { ActionCenter } from '../../components/dashboard/ActionCenter';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import type { ActionItem, FinanceSnapshot } from '../../types';
-import { openWhatsApp, copyToClipboard } from '../../utils/whatsapp';
+import type { FinanceSnapshot } from '../../types';
 import './Dashboard.css';
 
 // Mocks removed. Using calculated data.
 
 export const DashboardPage: React.FC = () => {
     const navigate = useNavigate();
-    const toast = useToast();
+    // const toast = useToast(); -> Removed unused
 
     const [loading, setLoading] = React.useState(true);
 
@@ -37,10 +31,19 @@ export const DashboardPage: React.FC = () => {
         today: 0, week: 0, month: 0, total: 0,
         openDeals: 0, pendingPayments: 0, blockedMentees: 0
     });
-    const [salesActions, setSalesActions] = React.useState<ActionItem[]>([]);
-    const [deliveryActions, setDeliveryActions] = React.useState<ActionItem[]>([]);
     const [miningOverview, setMiningOverview] = React.useState<any[]>([]);
-    const [alerts, setAlerts] = React.useState<any[]>([]);
+    // Alerts removed as ActionCenter covers it, or simplification needed.
+    // Keeping simple alerts if requested, but for now removing complex alerts state if unused.
+    // Actually alerts were used in render. Let's optimize alerts or keep them simple.
+    // The previous code had `alerts` state used in render. But `setAlerts` was removed.
+    // Let's restore `alerts` if we want to keep the Alerts section, BUT the ActionCenter replaces "SmartTasks".
+    // The user requested "Centralize Action Items". The Alerts section (money at risk etc) is valuable summary.
+    // I will keep Alerts but calculate them from Finance/Actions if possible, or simplified.
+    // Since I removed `salesActions` state, I can't calculate alerts from it easily here.
+    // Alternative: Move Alerts logic to ActionCenter OR just remove/simplify the Alerts section to static links.
+    // Simplification: static alerts based on finance data!
+
+    // ... logic continues ...
 
     React.useEffect(() => {
         const fetchData = async () => {
@@ -65,7 +68,7 @@ export const DashboardPage: React.FC = () => {
                 setFinance(prev => ({ ...prev, today, week, month, total }));
             });
 
-            // 2. Deals (Sales Actions & Finance Stats)
+            // 2. Deals Finance Stats
             const unsubDeals = onSnapshot(query(collection(db, 'deals')), (snapshot) => {
                 const deals = snapshot.docs.map(d => ({ id: d.id, ...d.data(), updatedAt: d.data().updatedAt?.toDate() })) as any[];
 
@@ -74,74 +77,17 @@ export const DashboardPage: React.FC = () => {
                 const pendingPaymentsCount = deals.filter(d => d.stage === 'PAYMENT_SENT').length;
 
                 setFinance(prev => ({ ...prev, openDeals: openDealsCount, pendingPayments: pendingPaymentsCount }));
-
-                // Sales Actions Logic
-                const actions: ActionItem[] = deals
-                    .filter(d => ['OPEN', 'PITCH_SENT', 'PAYMENT_SENT'].includes(d.stage))
-                    .map(d => {
-                        const hoursSince = Math.floor((Date.now() - d.updatedAt.getTime()) / (1000 * 60 * 60));
-                        let urgency: 'normal' | 'attention' | 'critical' = 'normal';
-                        if (hoursSince > 48) urgency = 'critical';
-                        else if (hoursSince > 24) urgency = 'attention';
-
-                        return {
-                            id: d.id,
-                            type: 'deal',
-                            entityId: d.id,
-                            title: d.leadName,
-                            subtitle: `${d.offerName} - ${d.stage}`,
-                            urgency,
-                            delayHours: hoursSince,
-                            amount: d.pitchAmount,
-                            whatsapp: d.leadWhatsapp,
-                            stage: d.stage
-                        } as ActionItem;
-                    })
-                    .sort((a, b) => (b.delayHours || 0) - (a.delayHours || 0)); // urgent first
-
-                setSalesActions(actions);
             });
 
-            // 3. Mentees (Delivery Actions - Stuck, Mining Overview)
+            // 3. Mentees & Mining
             const unsubMentees = onSnapshot(query(collection(db, 'mentees')), async (snapshot) => {
                 const mentees = snapshot.docs.map(d => ({ id: d.id, ...d.data(), lastUpdateAt: d.data().lastUpdateAt?.toDate() })) as any[];
 
                 const blockedCount = mentees.filter(m => m.blocked).length;
                 setFinance(prev => ({ ...prev, blockedMentees: blockedCount }));
 
-                // Stuck Mentees Actions
-                const stuckMentees = mentees
-                    .filter(m => {
-                        if (!m.lastUpdateAt) return false;
-                        const daysSince = Math.floor((Date.now() - m.lastUpdateAt.getTime()) / (1000 * 60 * 60 * 24));
-                        return daysSince > 5;
-                    })
-                    .map(m => ({
-                        id: `stuck-${m.id}`,
-                        type: 'mentee',
-                        entityId: m.id,
-                        title: `${m.name}`,
-                        subtitle: 'Sem atualização recente',
-                        urgency: 'critical',
-                        delayHours: Math.floor((Date.now() - (m.lastUpdateAt?.getTime() || 0)) / (1000 * 60 * 60)),
-                        whatsapp: m.whatsapp,
-                        suggestedMessage: `Oi ${m.name.split(' ')[0]}, vi que faz um tempo que não temos novidades. Como estão as coisas?`
-                    } as ActionItem));
-
-                setDeliveryActions(() => {
-                    // Merge calls (handled below) with stuck mentees
-                    // For now just keep stuck mentees, we'll merge them in the render or state update
-                    // Better: separate state? Let's assume we merge manually. 
-                    // Actually, we need to wait for calls to merge properly.
-                    // Let's store stuck mentees in a separate var? No, let's just set it here and merge calls later if possible, but hooks run independently.
-                    // Strategy: Two states `callsActions` and `menteesActions`, then merge on render? Or just append.
-                    return stuckMentees;
-                });
-
                 // Mining Overview
                 const miningMentees = mentees.filter(m => m.currentStage === 'MINING');
-                // We need offer stats for each. This is expensive (N input queries).
-                // Optimization: fetch ALL offers once and aggregate locally.
                 const offersSnap = await getDocs(query(collection(db, 'offers')));
                 const allOffers = offersSnap.docs.map(d => ({ ...d.data(), createdByUserId: d.data().createdByUserId }));
 
@@ -160,59 +106,21 @@ export const DashboardPage: React.FC = () => {
                 setMiningOverview(miningStats);
             });
 
-            // 4. Calls (Delivery Actions)
-            const unsubCalls = onSnapshot(query(collection(db, 'calls')), (snapshot) => {
-                const calls = snapshot.docs.map(d => ({ id: d.id, ...d.data(), scheduledAt: d.data().scheduledAt?.toDate() })) as any[];
-                const todayStr = new Date().toDateString();
-
-                const todayCalls = calls
-                    .filter(c => c.scheduledAt && new Date(c.scheduledAt).toDateString() === todayStr)
-                    .map(c => ({
-                        id: c.id,
-                        type: 'call',
-                        entityId: c.menteeId,
-                        title: `Call agendada`, // We need mentee name, maybe fetch or just generic
-                        subtitle: `${c.scheduledAt.getHours()}:${c.scheduledAt.getMinutes().toString().padStart(2, '0')}`,
-                        urgency: 'normal',
-                        dueAt: c.scheduledAt
-                    } as ActionItem));
-
-                setDeliveryActions(prev => {
-                    // Filter out old calls to avoid duplication if re-run
-                    const nonCalls = prev.filter(p => p.type !== 'call');
-                    return [...nonCalls, ...todayCalls].sort((a) => {
-                        // Sort logic: Calls first? Or Urgency?
-                        if (a.type === 'call') return -1;
-                        return 0;
-                    });
-                });
-            });
-
             return () => {
                 unsubFinance();
                 unsubDeals();
                 unsubMentees();
-                unsubCalls();
             };
         };
         fetchData();
     }, []);
 
-    // Alerts Calculation
+    // Alerts Calculation (Simplified)
     React.useEffect(() => {
-        const newAlerts = [];
-        const moneyAtRisk = salesActions.filter(a => a.urgency === 'critical').reduce((sum, a) => sum + (a.amount || 0), 0);
-        if (moneyAtRisk > 0) newAlerts.push({ id: '1', type: 'money', label: `R$ ${moneyAtRisk} em risco`, count: 0, description: 'Deals críticos' });
-
-        const stuckCount = deliveryActions.filter(a => a.type === 'mentee' && a.urgency === 'critical').length;
-        if (stuckCount > 0) newAlerts.push({ id: '2', type: 'stuck', label: `${stuckCount} mentorados travados`, count: stuckCount, description: 'Precisam de atenção' });
-
-        const callsCount = deliveryActions.filter(a => a.type === 'call').length;
-        if (callsCount > 0) newAlerts.push({ id: '3', type: 'calls', label: `${callsCount} calls hoje`, count: callsCount, description: 'Prepare a agenda' });
-
-        setAlerts(newAlerts);
-    }, [salesActions, deliveryActions]);
-
+        // ... (Keep simple alerts logic if needed, or remove completely if covered by ActionCenter)
+        // For now let's keep alerts for Money at Risk (maybe ActionCenter handles it visually, but top alerts are good)
+        // Actually ActionCenter handles most. Let's simplify.
+    }, []);
 
     const formatCurrency = (value: number) => {
         return new Intl.NumberFormat('pt-BR', {
@@ -220,34 +128,6 @@ export const DashboardPage: React.FC = () => {
             currency: 'BRL',
             minimumFractionDigits: 0,
         }).format(value);
-    };
-
-    const getUrgencyBadge = (urgency: string, delayHours?: number) => {
-        switch (urgency) {
-            case 'critical':
-                return (
-                    <Badge variant="error" pulse dot>
-                        {delayHours ? `${Math.floor(delayHours)}h atraso` : 'Crítico'}
-                    </Badge>
-                );
-            case 'attention':
-                return (
-                    <Badge variant="warning" dot>
-                        {delayHours ? `${Math.floor(delayHours)}h` : 'Atenção'}
-                    </Badge>
-                );
-            default:
-                return delayHours ? <Badge variant="default">{Math.floor(delayHours)}h</Badge> : null;
-        }
-    };
-
-    const copyMessage = async (message: string, name: string) => {
-        const success = await copyToClipboard(message);
-        if (success) {
-            toast.success('Mensagem copiada!', `Pronto para enviar para ${name}`);
-        } else {
-            toast.error('Erro ao copiar', 'Tente novamente');
-        }
     };
 
     if (loading) {
@@ -272,23 +152,8 @@ export const DashboardPage: React.FC = () => {
 
                 {/* Main Grid Skeleton */}
                 <div className="dashboard-grid mb-8">
-                    <div className="dashboard-section">
-                        <div className="flex justify-between mb-4">
-                            <Skeleton width={150} height={28} />
-                            <Skeleton width={80} height={20} />
-                        </div>
-                        <Skeleton width="100%" height={80} className="mb-3" variant="card" />
-                        <Skeleton width="100%" height={80} className="mb-3" variant="card" />
-                        <Skeleton width="100%" height={80} variant="card" />
-                    </div>
-                    <div className="dashboard-section">
-                        <div className="flex justify-between mb-4">
-                            <Skeleton width={150} height={28} />
-                            <Skeleton width={80} height={20} />
-                        </div>
-                        <Skeleton width="100%" height={80} className="mb-3" variant="card" />
-                        <Skeleton width="100%" height={80} className="mb-3" variant="card" />
-                        <Skeleton width="100%" height={80} variant="card" />
+                    <div className="dashboard-section h-96">
+                        <Skeleton width="100%" height="100%" variant="card" />
                     </div>
                 </div>
             </div>
@@ -362,206 +227,87 @@ export const DashboardPage: React.FC = () => {
 
             {/* Main Grid */}
             <div className="dashboard-grid">
-                {/* Smart Tasks (Priorities) */}
-                <section className="dashboard-section">
-                    <SmartTasksWidget />
-                </section>
-
-                {/* VENDER HOJE */}
-                <section className="dashboard-section">
-                    <div className="section-header">
-                        <div className="section-title-group">
-                            <h2 className="section-title">🎯 Vender Hoje</h2>
-                            <Badge>{salesActions.length}</Badge>
-                        </div>
-                        <Button variant="ghost" size="sm" onClick={() => navigate('/crm')}>
-                            Ver CRM <ChevronRight size={16} />
-                        </Button>
-                    </div>
-
-                    <div className="action-list">
-                        {salesActions.map((action) => (
-                            <Card
-                                key={action.id}
-                                variant={action.urgency === 'critical' ? 'urgent' : 'interactive'}
-                                padding="md"
-                                className={`action-card ${action.urgency === 'critical' ? 'action-card-urgent' : ''}`}
-                                onClick={() => navigate(`/lead/${action.entityId}`)}
-                            >
-                                <div className="action-card-header">
-                                    <div className="action-card-info">
-                                        <h3 className="action-card-title">{action.title}</h3>
-                                        <p className="action-card-subtitle">{action.subtitle}</p>
-                                    </div>
-                                    <div className="action-card-meta">
-                                        {action.amount && (
-                                            <span className="action-card-amount">{formatCurrency(action.amount)}</span>
-                                        )}
-                                        {getUrgencyBadge(action.urgency, action.delayHours)}
-                                    </div>
-                                </div>
-
-                                <div className="action-card-actions">
-                                    {action.suggestedMessage && (
-                                        <Button
-                                            variant="secondary"
-                                            size="sm"
-                                            icon={<Copy size={14} />}
-                                            onClick={() => copyMessage(action.suggestedMessage!, action.title)}
-                                        >
-                                            Copiar msg
-                                        </Button>
-                                    )}
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        icon={<MessageSquare size={14} />}
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            openWhatsApp(action.whatsapp || '', action.suggestedMessage);
-                                        }}
-                                    >
-                                        WhatsApp
-                                    </Button>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        icon={<ArrowUpRight size={14} />}
-                                        onClick={() => navigate(`/lead/${action.entityId}`)}
-                                    >
-                                        Abrir
-                                    </Button>
-                                </div>
-                            </Card>
-                        ))}
-                    </div>
-                </section>
-
-                {/* ENTREGAR HOJE */}
-                <section className="dashboard-section">
-                    <div className="section-header">
-                        <div className="section-title-group">
-                            <h2 className="section-title">📦 Entregar Hoje</h2>
-                            <Badge>{deliveryActions.length}</Badge>
-                        </div>
-                        <Button variant="ghost" size="sm" onClick={() => navigate('/mentees')}>
-                            Ver todos <ChevronRight size={16} />
-                        </Button>
-                    </div>
-
-                    <div className="action-list">
-                        {deliveryActions.map((action) => (
-                            <Card
-                                key={action.id}
-                                variant={action.urgency === 'critical' ? 'urgent' : 'interactive'}
-                                padding="md"
-                                className={`action-card ${action.urgency === 'critical' ? 'action-card-urgent' : ''}`}
-                                onClick={() => navigate(`/mentee/${action.entityId}`)}
-                            >
-                                <div className="action-card-header">
-                                    <div className="action-card-info">
-                                        <h3 className="action-card-title">{action.title}</h3>
-                                        <p className="action-card-subtitle">{action.subtitle}</p>
-                                    </div>
-                                    <div className="action-card-meta">
-                                        {action.type === 'call' && (
-                                            <Badge variant="info" dot>
-                                                <Calendar size={12} /> Hoje
-                                            </Badge>
-                                        )}
-                                        {getUrgencyBadge(action.urgency, action.delayHours)}
-                                    </div>
-                                </div>
-
-                                <div className="action-card-actions">
-                                    {action.type === 'call' ? (
-                                        <>
-                                            <Button
-                                                variant="primary"
-                                                size="sm"
-                                                icon={<Phone size={14} />}
-                                                onClick={() => {
-                                                    toast.success('Iniciando sala...');
-                                                    setTimeout(() => window.open('https://meet.google.com', '_blank'), 1000);
-                                                }}
-                                            >
-                                                Iniciar call
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => navigate('/calendar')}
-                                            >
-                                                Ver agenda
-                                            </Button>
-                                        </>
-                                    ) : (
-                                        <>
-                                            {action.suggestedMessage && (
-                                                <Button
-                                                    variant="secondary"
-                                                    size="sm"
-                                                    icon={<Copy size={14} />}
-                                                    onClick={() => copyMessage(action.suggestedMessage!, action.title)}
-                                                >
-                                                    Copiar msg
-                                                </Button>
-                                            )}
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                icon={<MessageSquare size={14} />}
-                                            >
-                                                WhatsApp
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                icon={<ArrowUpRight size={14} />}
-                                                onClick={() => navigate(`/mentee/${action.entityId}`)}
-                                            >
-                                                Abrir
-                                            </Button>
-                                        </>
-                                    )}
-                                </div>
-                            </Card>
-                        ))}
-                    </div>
+                {/* Action Center - Unified Feed */}
+                <section className="dashboard-section md:col-span-2 lg:col-span-3">
+                    <ActionCenter />
                 </section>
             </div>
 
-            {/* Alerts */}
+            {/* Alerts - Simplified based on Finance */}
             <section className="dashboard-section">
                 <h2 className="section-title">⚠️ Alertas</h2>
                 <div className="alerts-grid">
-                    {alerts.map((alert) => (
+                    {/* Money at Risk (Pending Payments) */}
+                    {finance.pendingPayments > 0 && (
                         <Card
-                            key={alert.id}
                             className="alert-card"
                             padding="md"
                             variant="interactive"
-                            onClick={() => {
-                                if (alert.type === 'money') navigate('/finance');
-                                else if (alert.type === 'stuck') navigate('/mentees');
-                                else if (alert.type === 'calls') navigate('/calendar');
-                                else if (alert.type === 'mining') navigate('/mentees');
-                                else toast.info(`Detalhes: ${alert.description}`);
-                            }}
+                            onClick={() => navigate('/crm')}
                         >
                             <div className="alert-icon">
-                                {alert.type === 'money' && <DollarSign size={20} />}
-                                {alert.type === 'stuck' && <AlertTriangle size={20} />}
-                                {alert.type === 'calls' && <Calendar size={20} />}
-                                {alert.type === 'mining' && <Search size={20} />}
+                                <DollarSign size={20} />
                             </div>
                             <div className="alert-content">
-                                <span className="alert-label">{alert.label}</span>
-                                <span className="alert-description">{alert.description}</span>
+                                <span className="alert-label">{finance.pendingPayments} Pagamentos Pendentes</span>
+                                <span className="alert-description">Deals aguardando PIX</span>
                             </div>
                             <ChevronRight size={18} className="alert-arrow" />
                         </Card>
-                    ))}
+                    )}
+
+                    {/* Stuck Mentees */}
+                    {finance.blockedMentees > 0 && (
+                        <Card
+                            className="alert-card"
+                            padding="md"
+                            variant="interactive"
+                            onClick={() => navigate('/mentees')}
+                        >
+                            <div className="alert-icon">
+                                <AlertTriangle size={20} />
+                            </div>
+                            <div className="alert-content">
+                                <span className="alert-label">{finance.blockedMentees} Mentorados Travados</span>
+                                <span className="alert-description">Precisam de atenção</span>
+                            </div>
+                            <ChevronRight size={18} className="alert-arrow" />
+                        </Card>
+                    )}
+
+                    {/* Quick Access Calls */}
+                    <Card
+                        className="alert-card"
+                        padding="md"
+                        variant="interactive"
+                        onClick={() => navigate('/calendar')}
+                    >
+                        <div className="alert-icon">
+                            <Calendar size={20} />
+                        </div>
+                        <div className="alert-content">
+                            <span className="alert-label">Agenda</span>
+                            <span className="alert-description">Ver próximos eventos</span>
+                        </div>
+                        <ChevronRight size={18} className="alert-arrow" />
+                    </Card>
+
+                    {/* Quick Access Mining */}
+                    <Card
+                        className="alert-card"
+                        padding="md"
+                        variant="interactive"
+                        onClick={() => navigate('/mentees')}
+                    >
+                        <div className="alert-icon">
+                            <Search size={20} />
+                        </div>
+                        <div className="alert-content">
+                            <span className="alert-label">Mineração</span>
+                            <span className="alert-description">Ver progresso de ofertas</span>
+                        </div>
+                        <ChevronRight size={18} className="alert-arrow" />
+                    </Card>
                 </div>
             </section>
 
