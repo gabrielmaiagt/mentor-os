@@ -263,13 +263,14 @@ export const MiningPage: React.FC = () => {
                     <select
                         value={filterStatus}
                         onChange={e => setFilterStatus(e.target.value as OfferStatus | 'ALL')}
-                        className="bg-transparent text-sm border-none focus:ring-0 text-white"
+                        style={{ backgroundColor: '#111', color: 'white' }}
+                        className="text-sm border-none focus:ring-0 cursor-pointer rounded-md py-1 px-2"
                     >
-                        <option value="ALL">Todos os status</option>
-                        <option value="CANDIDATE">Candidatas</option>
-                        <option value="TESTING">Testando</option>
-                        <option value="WINNER">Vencedoras</option>
-                        <option value="DISCARDED">Descartadas</option>
+                        <option value="ALL" style={{ backgroundColor: '#111' }}>Todos os status</option>
+                        <option value="CANDIDATE" style={{ backgroundColor: '#111' }}>Candidatas</option>
+                        <option value="TESTING" style={{ backgroundColor: '#111' }}>Testando</option>
+                        <option value="WINNER" style={{ backgroundColor: '#111' }}>Vencedoras</option>
+                        <option value="DISCARDED" style={{ backgroundColor: '#111' }}>Descartadas</option>
                     </select>
                 </div>
                 <div className="w-px h-6 bg-white/10" />
@@ -278,10 +279,11 @@ export const MiningPage: React.FC = () => {
                     <select
                         value={sortBy}
                         onChange={e => setSortBy(e.target.value as 'adCount' | 'lastTouchedAt')}
-                        className="bg-transparent text-sm border-none focus:ring-0 text-white"
+                        style={{ backgroundColor: '#111', color: 'white' }}
+                        className="text-sm border-none focus:ring-0 cursor-pointer rounded-md py-1 px-2"
                     >
-                        <option value="adCount">Mais anúncios</option>
-                        <option value="lastTouchedAt">Mais recentes</option>
+                        <option value="adCount" style={{ backgroundColor: '#111' }}>Mais anúncios</option>
+                        <option value="lastTouchedAt" style={{ backgroundColor: '#111' }}>Mais recentes</option>
                     </select>
                 </div>
             </div>
@@ -303,28 +305,56 @@ export const MiningPage: React.FC = () => {
             <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title={editingOffer ? 'Editar Oferta' : 'Nova Oferta'}>
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-sm mb-1">Nome</label>
-                        <input className="w-full bg-black/20 border border-white/10 rounded p-2" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} placeholder="Nome do produto" />
+                        <label className="block text-sm mb-1 text-secondary">Nome</label>
+                        <input
+                            className="w-full border border-white/10 rounded p-3 text-white placeholder-zinc-500 focus:border-white/20 transition-all outline-none"
+                            style={{ backgroundColor: '#111', color: 'white' }}
+                            value={formData.name}
+                            onChange={e => setFormData({ ...formData, name: e.target.value })}
+                            placeholder="Nome do produto"
+                        />
                     </div>
                     <div>
-                        <label className="block text-sm mb-1">URL</label>
-                        <input className="w-full bg-black/20 border border-white/10 rounded p-2" value={formData.url} onChange={e => setFormData({ ...formData, url: e.target.value })} placeholder="URL do anúncio" />
+                        <label className="block text-sm mb-1 text-secondary">URL</label>
+                        <input
+                            className="w-full border border-white/10 rounded p-3 text-white placeholder-zinc-500 focus:border-white/20 transition-all outline-none"
+                            style={{ backgroundColor: '#111', color: 'white' }}
+                            value={formData.url}
+                            onChange={e => setFormData({ ...formData, url: e.target.value })}
+                            placeholder="URL do anúncio"
+                        />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm mb-1">Contagem Ads</label>
-                            <input type="number" className="w-full bg-black/20 border border-white/10 rounded p-2" value={formData.adCount} onChange={e => setFormData({ ...formData, adCount: parseInt(e.target.value) })} />
+                            <label className="block text-sm mb-1 text-secondary">Contagem Ads</label>
+                            <input
+                                type="number"
+                                className="w-full border border-white/10 rounded p-3 text-white placeholder-zinc-500 focus:border-white/20 transition-all outline-none"
+                                style={{ backgroundColor: '#111', color: 'white' }}
+                                value={formData.adCount}
+                                onChange={e => setFormData({ ...formData, adCount: parseInt(e.target.value) })}
+                            />
                         </div>
                         <div>
-                            <label className="block text-sm mb-1">Plataforma</label>
-                            <select className="w-full bg-black/20 border border-white/10 rounded p-2" value={formData.platform} onChange={e => setFormData({ ...formData, platform: e.target.value as any })}>
-                                {OFFER_PLATFORMS.map(p => <option key={p.key} value={p.key}>{p.label}</option>)}
+                            <label className="block text-sm mb-1 text-secondary">Plataforma</label>
+                            <select
+                                className="w-full border border-white/10 rounded p-3 text-white placeholder-zinc-500 focus:border-white/20 transition-all outline-none"
+                                style={{ backgroundColor: '#111', color: 'white' }}
+                                value={formData.platform}
+                                onChange={e => setFormData({ ...formData, platform: e.target.value as any })}
+                            >
+                                {OFFER_PLATFORMS.map(p => <option key={p.key} value={p.key} style={{ backgroundColor: '#111' }}>{p.label}</option>)}
                             </select>
                         </div>
                     </div>
                     <div>
-                        <label className="block text-sm mb-1">Ângulos (separados por vírgula)</label>
-                        <input className="w-full bg-black/20 border border-white/10 rounded p-2" value={formData.angles} onChange={e => setFormData({ ...formData, angles: e.target.value })} />
+                        <label className="block text-sm mb-1 text-secondary">Ângulos (separados por vírgula)</label>
+                        <input
+                            className="w-full border border-white/10 rounded p-3 text-white placeholder-zinc-500 focus:border-white/20 transition-all outline-none"
+                            style={{ backgroundColor: '#111', color: 'white' }}
+                            value={formData.angles}
+                            onChange={e => setFormData({ ...formData, angles: e.target.value })}
+                        />
                     </div>
                     <div className="flex justify-end gap-2 mt-4">
                         <Button variant="ghost" onClick={() => setShowAddModal(false)}>Cancelar</Button>
@@ -335,8 +365,14 @@ export const MiningPage: React.FC = () => {
 
             <Modal isOpen={showHistoryModal} onClose={() => setShowHistoryModal(false)} title="Atualizar Histórico">
                 <div className="space-y-4">
-                    <p>Atualize a contagem de anúncios ativos para este criativo hoje.</p>
-                    <input type="number" className="w-full bg-black/20 border border-white/10 rounded p-2 text-2xl text-center font-bold" value={historyFormData.count} onChange={e => setHistoryFormData({ ...historyFormData, count: parseInt(e.target.value) })} />
+                    <p className="text-secondary">Atualize a contagem de anúncios ativos para este criativo hoje.</p>
+                    <input
+                        type="number"
+                        className="w-full border border-white/10 rounded p-3 text-2xl text-center font-bold text-white placeholder-zinc-500 focus:border-white/20 transition-all outline-none"
+                        style={{ backgroundColor: '#111', color: 'white' }}
+                        value={historyFormData.count}
+                        onChange={e => setHistoryFormData({ ...historyFormData, count: parseInt(e.target.value) })}
+                    />
                     <Button variant="primary" fullWidth onClick={handleUpdateAdHistory}>Atualizar</Button>
                 </div>
             </Modal>

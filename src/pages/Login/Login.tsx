@@ -35,7 +35,21 @@ export const LoginPage: React.FC = () => {
             // Navigation handled by auth state change
         } catch (err: any) {
             console.error(err);
-            setError(err.message || 'Ocorreu um erro. Tente novamente.');
+            let message = 'Ocorreu um erro. Tente novamente.';
+
+            if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') {
+                message = 'Email ou senha incorretos.';
+            } else if (err.code === 'auth/email-already-in-use') {
+                message = 'Este email já está sendo usado por outra conta.';
+            } else if (err.code === 'auth/weak-password') {
+                message = 'A senha deve ter pelo menos 6 caracteres.';
+            } else if (err.code === 'auth/too-many-requests') {
+                message = 'Muitas tentativas. Tente novamente mais tarde.';
+            } else if (err.code === 'auth/network-request-failed') {
+                message = 'Erro de conexão. Verifique sua internet.';
+            }
+
+            setError(message);
         } finally {
             setIsSubmitting(false);
         }

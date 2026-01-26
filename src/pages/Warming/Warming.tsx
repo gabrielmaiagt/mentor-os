@@ -3,7 +3,6 @@ import {
     Smartphone,
     Plus,
     Circle,
-    Calendar,
     ChevronRight,
     AlertTriangle,
     Check,
@@ -13,9 +12,11 @@ import {
     Image,
     Settings,
     Mic,
-    Bell
+    Bell,
+    Trophy,
+    Shield
 } from 'lucide-react';
-import { Card, Button, Badge, Modal, Input, Skeleton } from '../../components/ui';
+import { Button, Badge, Modal, Input, Skeleton } from '../../components/ui';
 import { useToast } from '../../components/ui/Toast';
 import { collection, query, where, onSnapshot, addDoc, updateDoc, doc, orderBy } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
@@ -67,7 +68,7 @@ export const WarmingPage: React.FC = () => {
             setLoading(false);
         }, (error) => {
             console.error("Error fetching chips:", error);
-            if (error.code !== 'failed-precondition') {
+            if (error?.code !== 'failed-precondition') {
                 toast.error("Erro ao carregar chips.");
             }
             setLoading(false);
@@ -136,9 +137,6 @@ export const WarmingPage: React.FC = () => {
                 completedActions: newCompletedActions,
                 updatedAt: new Date()
             });
-
-            // Check if day is complete (simple logic: > 80%? or all?)
-            // For gamification, let's say 100% to advance? Or explicit advance button?
         } catch (e) {
             toast.error('Erro ao atualizar');
         }
@@ -159,17 +157,17 @@ export const WarmingPage: React.FC = () => {
 
     const getActionIcon = (type: WarmingActionType) => {
         switch (type) {
-            case 'MESSAGE': return <MessageSquare size={18} className="text-primary" />;
-            case 'CALL': return <Phone size={18} className="text-success" />;
-            case 'STATUS': return <Image size={18} className="text-warning" />;
-            case 'GROUP': return <Users size={18} className="text-info" />;
-            case 'CONFIG': return <Settings size={18} className="text-secondary" />;
-            case 'AUDIO': return <Mic size={18} className="text-error" />;
-            default: return <Circle size={18} />;
+            case 'MESSAGE': return <MessageSquare size={20} className="text-primary" />;
+            case 'CALL': return <Phone size={20} className="text-success" />;
+            case 'STATUS': return <Image size={20} className="text-warning" />;
+            case 'GROUP': return <Users size={20} className="text-info" />;
+            case 'CONFIG': return <Settings size={20} className="text-secondary" />;
+            case 'AUDIO': return <Mic size={20} className="text-error" />;
+            default: return <Circle size={20} />;
         }
     };
 
-    if (loading) return <div className="p-6"><Skeleton height={400} /></div>;
+    if (loading) return <div className="p-8 max-w-[1400px] mx-auto"><Skeleton height={400} /></div>;
 
     const currentProtocol = WARMING_PROTOCOL.find(p => p.day === activeChip?.currentDay);
     const dayActions = currentProtocol?.actions || [];
@@ -179,261 +177,297 @@ export const WarmingPage: React.FC = () => {
     const isDayComplete = completedCount === totalActions && totalActions > 0;
 
     return (
-        <div className="warming-page p-6 max-w-[1400px] mx-auto">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-warning to-error">
-                        Aquecimento X1 (Blindagem)
-                    </h1>
-                    <p className="text-secondary mt-1 text-base">
-                        Protocolo de 10 dias para preparar seus chips para guerra.
-                    </p>
-                </div>
-                <div className="flex gap-2">
-                    <Button
-                        variant="ghost"
-                        icon={<Bell size={18} />}
-                        onClick={requestPermission}
-                        title="Ativar lembretes"
-                    >
-                        Lembretes
-                    </Button>
-                    <Button
-                        variant="primary"
-                        icon={<Plus size={18} />}
-                        onClick={() => setShowAddModal(true)}
-                        className="shadow-glow"
-                    >
-                        Novo Chip
-                    </Button>
-                </div>
-            </div>
+        <div className="warming-page min-h-screen p-6 md:p-12 relative overflow-hidden">
+            {/* Header Glow Effect */}
+            <div className="header-glow" />
 
-            {/* Chip Selector */}
-            {chips.length > 0 && (
-                <div className="flex gap-4 overflow-x-auto pb-4 mb-4 no-scrollbar">
-                    {chips.map(chip => (
-                        <div
-                            key={chip.id}
-                            onClick={() => setActiveChip(chip)}
-                            className={`
-                                min-w-[200px] p-4 rounded-xl border cursor-pointer transition-all duration-200
-                                flex flex-col gap-2 relative overflow-hidden group chip-card
-                                ${activeChip?.id === chip.id
-                                    ? 'bg-warning/10 border-warning shadow-lg shadow-warning/10'
-                                    : 'bg-card border-white/5 hover:border-white/10'
-                                }
-                            `}
-                        >
-                            <div className="flex justify-between items-start">
-                                <span className={`font-bold ${activeChip?.id === chip.id ? 'text-warning' : 'text-primary'}`}>
-                                    {chip.name}
-                                </span>
-                                <Smartphone size={16} className="text-secondary" />
-                            </div>
-                            <div className="text-xs text-secondary">{chip.phoneNumber}</div>
-                            <div className="mt-2 flex items-center justify-between">
-                                <Badge variant={chip.status === 'WARMING' ? 'warning' : 'success'} size="sm">
-                                    {chip.status}
-                                </Badge>
-                                <span className="text-xs font-mono font-bold">Dia {chip.currentDay}/10</span>
-                            </div>
-                            {/* Mini Progress Bar */}
-                            <div className="absolute bottom-0 left-0 w-full h-1 bg-white/5">
-                                <div
-                                    className="h-full bg-warning transition-all"
-                                    style={{ width: `${(chip.currentDay / 10) * 100}%` }}
-                                />
-                            </div>
+            <div className="relative max-w-[1400px] mx-auto z-10 flex flex-col gap-10">
+                {/* Header Section */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                    <div>
+                        <div className="flex items-center gap-3 mb-2">
+                            <Shield size={32} className="text-warning" />
+                            <h1 className="text-4xl font-bold text-white tracking-tight">
+                                Blindagem de Chips
+                            </h1>
                         </div>
-                    ))}
-                </div>
-            )}
-
-            {chips.length === 0 ? (
-                <div className="empty-warming-state">
-                    <div className="empty-icon-wrapper">
-                        <Smartphone size={48} className="text-warning" />
+                        <p className="text-secondary text-lg max-w-2xl">
+                            Gerencie o aquecimento dos seus números para evitar bloqueios. Siga o protocolo de 10 dias rigorosamente.
+                        </p>
                     </div>
-                    <h2 className="text-2xl font-bold mb-3">Nenhum chip em aquecimento</h2>
-                    <p className="text-secondary max-w-md mx-auto mb-8">
-                        Seus chips são suas armas. Cadastre seu primeiro número para iniciar o protocolo de blindagem de 10 dias.
-                    </p>
-                    <Button
-                        variant="primary"
-                        size="lg"
-                        icon={<Plus size={20} />}
-                        onClick={() => setShowAddModal(true)}
-                        className="shadow-glow"
-                    >
-                        Iniciar Protocolo Agora
-                    </Button>
+                    <div className="flex items-center gap-4">
+                        <Button
+                            variant="ghost"
+                            onClick={requestPermission}
+                            className="text-secondary hover:text-primary gap-2"
+                        >
+                            <Bell size={18} /> Ativar Alertas
+                        </Button>
+                        <Button
+                            variant="primary"
+                            icon={<Plus size={20} />}
+                            onClick={() => setShowAddModal(true)}
+                            className="bg-warning hover:bg-warning/80 text-black font-bold px-6 py-6 shadow-[0_0_20px_rgba(234,179,8,0.3)] hover:shadow-[0_0_30px_rgba(234,179,8,0.5)] transition-all"
+                        >
+                            Novo Chip
+                        </Button>
+                    </div>
                 </div>
-            ) : (activeChip && (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Main Content - Timeline */}
-                    <div className="lg:col-span-2 space-y-6">
-                        {/* Day Header */}
-                        <div className="p-8 bg-gradient-to-br from-card to-white/5 rounded-3xl border border-white/5 relative overflow-hidden group">
-                            <div className="absolute -right-6 -top-6 opacity-5 group-hover:opacity-10 transition-opacity duration-700 rotate-12 transform">
-                                <Calendar size={180} />
-                            </div>
-                            <div className="relative z-10">
-                                <div className="flex flex-col gap-2 mb-4">
-                                    <div className="flex items-center gap-3">
-                                        <Badge variant="warning" size="md" className="shadow-lg shadow-warning/20">
-                                            DIA {activeChip.currentDay} DE 10
-                                        </Badge>
-                                        <div className="h-px flex-1 bg-white/10"></div>
-                                    </div>
-                                    <h2 className="text-3xl font-bold text-white tracking-tight">
-                                        {currentProtocol?.title.replace(/Dia \d+ - /, '')}
-                                    </h2>
-                                </div>
-                                <p className="text-secondary max-w-lg leading-relaxed text-lg mb-8">
-                                    {currentProtocol?.description}
-                                </p>
 
-                                <div className="flex items-center gap-4 bg-black/20 p-4 rounded-xl backdrop-blur-sm border border-white/5">
-                                    <div className="flex-1 bg-white/5 h-2 rounded-full overflow-hidden">
-                                        <div
-                                            className="bg-warning h-full transition-all duration-500 shadow-[0_0_10px_rgba(var(--warning-rgb),0.5)]"
-                                            style={{ width: `${progress}%` }}
-                                        />
-                                    </div>
-                                    <span className="text-sm font-bold text-warning whitespace-nowrap">
-                                        {Math.round(progress)}% Concluído
-                                    </span>
-                                </div>
-                            </div>
+                {chips.length === 0 ? (
+                    <div className="empty-state-card glass-panel rounded-3xl p-12 text-center flex flex-col items-center animate-slide-in">
+                        <div className="w-24 h-24 rounded-full bg-warning/10 flex items-center justify-center mb-6 border border-warning/20 shadow-[0_0_30px_rgba(234,179,8,0.1)]">
+                            <Smartphone size={48} className="text-warning" />
                         </div>
-
-                        {/* Action Checklist */}
-                        <div className="space-y-3">
-                            {dayActions.map(action => {
-                                const isCompleted = activeChip.completedActions?.[activeChip.currentDay]?.includes(action.id);
-                                return (
+                        <h2 className="text-2xl font-bold mb-3 text-white">Nenhum chip em blindagem</h2>
+                        <p className="text-secondary max-w-lg mb-8 text-lg">
+                            Adicione seu primeiro número para iniciar a contagem do protocolo de segurança.
+                        </p>
+                        <Button
+                            variant="primary"
+                            size="lg"
+                            onClick={() => setShowAddModal(true)}
+                            className="bg-white text-black hover:bg-white/90 font-bold"
+                        >
+                            Adicionar Primeiro Chip
+                        </Button>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+                        {/* Left Column: Chip List (3 cols) */}
+                        <div className="xl:col-span-3 flex flex-col gap-4">
+                            <h3 className="text-sm font-bold text-secondary uppercase tracking-wider mb-2 px-2">
+                                Seus Chips ({chips.length})
+                            </h3>
+                            <div className="flex flex-col gap-4 overflow-y-auto pr-2 max-h-[80vh] no-scrollbar">
+                                {chips.map(chip => (
                                     <div
-                                        key={action.id}
-                                        onClick={() => toggleAction(activeChip, activeChip.currentDay, action.id)}
+                                        key={chip.id}
+                                        onClick={() => setActiveChip(chip)}
                                         className={`
-                                            group flex items-start md:items-center gap-4 p-5 rounded-2xl border transition-all cursor-pointer select-none relative overflow-hidden
-                                            ${isCompleted
-                                                ? 'bg-warning/5 border-warning/20'
-                                                : 'bg-card border-white/5 hover:border-white/10 hover:bg-white/5'
-                                            }
+                                            chip-card-premium rounded-xl p-6 cursor-pointer group relative chip-sim-cut min-h-[140px] flex flex-col justify-between
+                                            ${activeChip?.id === chip.id ? 'active' : ''}
                                         `}
                                     >
-                                        {/* Progress Line for visual flow */}
-                                        <div className={`absolute left-0 top-0 bottom-0 w-1 transition-colors ${isCompleted ? 'bg-warning' : 'bg-transparent group-hover:bg-white/10'}`} />
+                                        <div className="sim-contacts" />
 
-                                        <div className={`
-                                            w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all shrink-0 shadow-lg
-                                            ${isCompleted
-                                                ? 'bg-warning border-warning text-black scale-110'
-                                                : 'border-white/10 text-transparent group-hover:border-warning/50'
-                                            }
-                                        `}>
-                                            <Check size={16} strokeWidth={4} className={`transition-transform duration-300 ${isCompleted ? 'scale-100' : 'scale-0'}`} />
+                                        <div className="flex justify-between items-start z-10 relative">
+                                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${activeChip?.id === chip.id ? 'bg-warning text-black' : 'bg-white/5 text-secondary'}`}>
+                                                <Smartphone size={20} />
+                                            </div>
+                                            <Badge variant={chip.status === 'WARMING' ? 'warning' : 'success'} className="uppercase text-[10px] tracking-wider font-bold">
+                                                {chip.status}
+                                            </Badge>
                                         </div>
 
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-3 mb-1">
-                                                <span className={`
-                                                    font-mono text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider w-fit
-                                                    ${isCompleted ? 'bg-warning/20 text-warning' : 'bg-white/5 text-secondary'}
-                                                `}>
-                                                    {action.time}
+                                        <div className="z-10 relative">
+                                            <h4 className={`font-bold text-lg mb-0.5 leading-tight transition-colors ${activeChip?.id === chip.id ? 'text-white' : 'text-zinc-300'}`}>
+                                                {chip.name}
+                                            </h4>
+                                            <p className="text-secondary text-sm font-mono opacity-80">{chip.phoneNumber}</p>
+                                        </div>
+
+                                        <div className="z-10 relative pt-2">
+                                            <div className="flex items-center justify-between text-xs mb-1.5">
+                                                <span className={activeChip?.id === chip.id ? 'text-warning font-bold' : 'text-secondary'}>
+                                                    Dia {chip.currentDay}/10
                                                 </span>
-                                                <h3 className={`font-bold text-base truncate transition-colors ${isCompleted ? 'text-secondary line-through decoration-secondary/50' : 'text-white'}`}>
-                                                    {action.title}
-                                                </h3>
+                                                <span className="text-white/20">{Math.round((chip.currentDay / 10) * 100)}%</span>
                                             </div>
-                                            <p className={`text-sm leading-relaxed ${isCompleted ? 'text-secondary/40' : 'text-secondary'}`}>
-                                                {action.description}
+                                            <div className="h-1 bg-black/40 rounded-full overflow-hidden">
+                                                <div
+                                                    className="h-full bg-warning transition-all duration-500"
+                                                    style={{ width: `${(chip.currentDay / 10) * 100}%` }}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Right Column: Active Chip Details (9 cols) */}
+                        {activeChip && (
+                            <div className="xl:col-span-9 flex flex-col gap-6 animate-slide-in">
+                                {/* Day Status Card */}
+                                <div className="glass-panel rounded-2xl p-6 relative overflow-hidden bg-gradient-to-br from-white/5 to-transparent">
+                                    <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-6">
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-3 mb-2">
+                                                <Badge variant="default" className="border-warning/50 text-warning bg-warning/5 px-2 py-0.5 text-xs">
+                                                    DIA {activeChip.currentDay} / 10
+                                                </Badge>
+                                                {isDayComplete && (
+                                                    <Badge variant="success" className="px-2 py-0.5 text-xs animate-in fade-in zoom-in">
+                                                        <Check size={10} className="mr-1" /> COMPLETO
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                            <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
+                                                {currentProtocol?.title.replace(/Dia \d+ - /, '')}
+                                            </h2>
+                                            <p className="text-secondary text-base max-w-xl leading-relaxed">
+                                                {currentProtocol?.description}
                                             </p>
                                         </div>
 
-                                        <div className={`
-                                            p-2 rounded-lg transition-colors
-                                            ${isCompleted ? 'bg-warning/10 opacity-50' : 'bg-white/5 text-white/50 group-hover:text-white group-hover:bg-white/10'}
-                                        `}>
-                                            {getActionIcon(action.type)}
+                                        {/* Progress Circle - Compact */}
+                                        <div className="relative w-20 h-20 flex-shrink-0">
+                                            <svg className="w-full h-full transform -rotate-90">
+                                                <circle
+                                                    cx="40" cy="40" r="36"
+                                                    stroke="currentColor" strokeWidth="6"
+                                                    fill="transparent" className="text-white/5"
+                                                />
+                                                <circle
+                                                    cx="40" cy="40" r="36"
+                                                    stroke="currentColor" strokeWidth="6"
+                                                    fill="transparent"
+                                                    strokeDasharray={226}
+                                                    strokeDashoffset={226 - (226 * progress) / 100}
+                                                    className="text-warning transition-all duration-1000 ease-out"
+                                                    strokeLinecap="round"
+                                                />
+                                            </svg>
+                                            <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                                                <span className="text-sm font-bold text-white">{Math.round(progress)}%</span>
+                                            </div>
                                         </div>
                                     </div>
-                                );
-                            })}
-                        </div>
+                                </div>
 
-                        {/* Next Day Button */}
-                        {isDayComplete && activeChip.currentDay < 10 && (
-                            <div className="flex justify-end pt-4 animate-in fade-in slide-in-from-bottom-4">
-                                <Button
-                                    variant="primary"
-                                    size="lg"
-                                    className="bg-success hover:bg-success/80 text-black font-bold shadow-glow-success px-8 h-14 text-base"
-                                    onClick={() => advanceDay(activeChip)}
-                                    icon={<ChevronRight size={20} />}
-                                >
-                                    Concluir Dia {activeChip.currentDay} e Avançar
-                                </Button>
-                            </div>
-                        )}
+                                {/* Timeline Actions */}
+                                <div className="pl-4 md:pl-8 py-4 relative">
+                                    {/* Vertical Line Container */}
+                                    <div className="hidden md:block absolute left-8 top-0 bottom-0 w-px bg-white/5 ml-[19px]" />
 
-                        {activeChip.currentDay === 10 && isDayComplete && (
-                            <div className="p-8 bg-success/10 border border-success/30 rounded-3xl text-center">
-                                <h3 className="text-3xl font-bold text-success mb-2">Chip Blindado! 🛡️</h3>
-                                <p className="text-secondary text-lg">Este chip completou todo o protocolo. Agora é com você, soldado.</p>
+                                    <div className="space-y-8 relative">
+                                        {dayActions.map((action, index) => {
+                                            const isCompleted = activeChip.completedActions?.[activeChip.currentDay]?.includes(action.id);
+
+                                            return (
+                                                <div
+                                                    key={action.id}
+                                                    onClick={() => toggleAction(activeChip, activeChip.currentDay, action.id)}
+                                                    className="group relative flex gap-6 md:gap-10 items-start cursor-pointer"
+                                                >
+                                                    {/* Timeline Node */}
+                                                    <div className="hidden md:flex flex-col items-center relative z-10">
+                                                        <div className={`
+                                                            w-10 h-10 rounded-full border-2 flex items-center justify-center transition-all duration-300 shadow-xl
+                                                            ${isCompleted
+                                                                ? 'bg-warning border-warning text-black scale-110 shadow-[0_0_20px_rgba(234,179,8,0.4)]'
+                                                                : 'bg-background border-white/20 text-transparent group-hover:border-warning/50'
+                                                            }
+                                                        `}>
+                                                            <Check size={18} strokeWidth={3} className={`transition-transform duration-300 ${isCompleted ? 'scale-100' : 'scale-0'}`} />
+                                                        </div>
+                                                        {index !== dayActions.length - 1 && (
+                                                            <div className={`w-0.5 h-full absolute top-10 -bottom-8 transition-colors duration-500 ${isCompleted ? 'bg-warning/50' : 'bg-transparent'}`} />
+                                                        )}
+                                                    </div>
+
+                                                    {/* Content Card */}
+                                                    <div className={`
+                                                        flex-1 glass-panel rounded-2xl p-6 transition-all duration-300 border-l-4
+                                                        ${isCompleted
+                                                            ? 'border-l-warning bg-warning/5'
+                                                            : 'border-l-transparent hover:border-l-white/20 hover:bg-white/5'
+                                                        }
+                                                    `}>
+                                                        <div className="flex justify-between items-start mb-2">
+                                                            <div className="flex items-center gap-3">
+                                                                <Badge variant="default" className="font-mono bg-black/20 border-white/10 text-secondary">
+                                                                    {action.time}
+                                                                </Badge>
+                                                                <h3 className={`text-xl font-bold transition-colors ${isCompleted ? 'text-white' : 'text-white'}`}>
+                                                                    {action.title}
+                                                                </h3>
+                                                            </div>
+                                                            <div className={`p-2 rounded-full ${isCompleted ? 'bg-warning/20 text-warning' : 'bg-white/5 text-secondary'}`}>
+                                                                {getActionIcon(action.type)}
+                                                            </div>
+                                                        </div>
+                                                        <p className={`text-lg leading-relaxed ${isCompleted ? 'text-secondary/70' : 'text-secondary'}`}>
+                                                            {action.description}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+                                {/* Next Day Action */}
+                                {isDayComplete && activeChip.currentDay < 10 && (
+                                    <div className="flex justify-center p-8 animate-in fade-in slide-in-from-bottom-8">
+                                        <Button
+                                            variant="primary"
+                                            size="lg"
+                                            onClick={() => advanceDay(activeChip)}
+                                            className="bg-success text-black hover:bg-success/90 font-bold px-12 py-8 text-xl rounded-full shadow-[0_0_30px_rgba(34,197,94,0.3)] hover:shadow-[0_0_50px_rgba(34,197,94,0.5)] transition-all flex items-center gap-3"
+                                        >
+                                            Concluir Dia {activeChip.currentDay} <ChevronRight size={24} />
+                                        </Button>
+                                    </div>
+                                )}
+
+                                {activeChip.currentDay === 10 && isDayComplete && (
+                                    <div className="glass-panel border-success/30 bg-success/5 p-12 rounded-3xl text-center space-y-6 animate-in zoom-in duration-500">
+                                        <div className="w-32 h-32 bg-success/20 rounded-full flex items-center justify-center mx-auto shadow-[0_0_40px_rgba(34,197,94,0.2)]">
+                                            <Trophy size={64} className="text-success" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-4xl font-bold text-white mb-2">Chip Blindado! 🛡️</h3>
+                                            <p className="text-secondary text-xl max-w-xl mx-auto">
+                                                Parabéns! Este número completou todo o protocolo de segurança. Ele está pronto para a guerra.
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
-
-                    {/* Sidebar Overview */}
-                    <div className="space-y-6">
-                        {/* Rules Card */}
-                        <Card className="bg-error/5 border-error/20">
-                            <h3 className="font-bold text-error flex items-center gap-2 mb-4">
-                                <AlertTriangle size={18} /> Regras de Ouro
-                            </h3>
-                            <ul className="space-y-3 text-sm text-secondary list-disc pl-4 marker:text-error/50">
-                                <li>Nunca use WiFi nos primeiros 2 dias.</li>
-                                <li>Intervalo de 2-5 min entre mensagens.</li>
-                                <li>Nunca copie e cole a mesma mensagem.</li>
-                                <li>Pare imediatamente se a taxa de entrega cair.</li>
-                            </ul>
-                        </Card>
-                    </div>
-                </div>
-            ))}
+                )}
+            </div>
 
             <Modal
                 isOpen={showAddModal}
                 onClose={() => setShowAddModal(false)}
-                title="Novo Chip para Aquecimento"
-                footer={
-                    <>
-                        <Button variant="ghost" onClick={() => setShowAddModal(false)}>Cancelar</Button>
-                        <Button variant="primary" onClick={handleAddChip}>Iniciar Protocolo</Button>
-                    </>
-                }
+                title="Novo Chip Blindado"
             >
-                <div className="space-y-4">
+                <div className="space-y-6 py-4">
                     <div>
-                        <label className="block text-sm font-medium mb-1">Nome de Identificação</label>
-                        <Input value={newChipName} onChange={e => setNewChipName(e.target.value)} placeholder="Ex: Chip 03 - Claro (João)" />
+                        <label className="block text-sm font-medium mb-2 text-secondary uppercase tracking-wider">Identificação</label>
+                        <Input
+                            value={newChipName}
+                            onChange={e => setNewChipName(e.target.value)}
+                            placeholder="Ex: Chip 01 - Vivo (João)"
+                            className="bg-white/5 border-white/10 text-lg py-3"
+                        />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium mb-1">Número</label>
-                        <Input value={newChipPhone} onChange={e => setNewChipPhone(e.target.value)} placeholder="(11) 99999-9999" />
+                        <label className="block text-sm font-medium mb-2 text-secondary uppercase tracking-wider">Número do WhatsApp</label>
+                        <Input
+                            value={newChipPhone}
+                            onChange={e => setNewChipPhone(e.target.value)}
+                            placeholder="(11) 99999-9999"
+                            className="bg-white/5 border-white/10 text-lg py-3"
+                        />
                     </div>
-                    <div className="p-3 bg-warning/10 rounded-lg text-xs text-warning border border-warning/20">
-                        Ao adicionar, o protocolo começará do <strong>Dia 0 (Preparação)</strong>. Certifique-se de que o chip está inserido no aparelho.
+                    <div className="p-4 bg-warning/10 border border-warning/20 rounded-xl flex gap-3 text-warning/90">
+                        <AlertTriangle size={24} className="shrink-0" />
+                        <p className="text-sm leading-relaxed">
+                            Ao iniciar o protocolo, este chip começará do <strong>Dia 0</strong>. Certifique-se de que ele está inserido em um aparelho conectado à rede 4G/5G (sem WiFi).
+                        </p>
+                    </div>
+                    <div className="flex justify-end gap-3 pt-4">
+                        <Button variant="ghost" onClick={() => setShowAddModal(false)}>Cancelar</Button>
+                        <Button variant="primary" onClick={handleAddChip} className="bg-warning text-black hover:bg-warning/90 font-bold">Iniciar Protocolo</Button>
                     </div>
                 </div>
             </Modal>
         </div>
     );
 };
-
 export default WarmingPage;

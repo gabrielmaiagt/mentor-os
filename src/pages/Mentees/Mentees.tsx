@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, orderBy, onSnapshot, deleteDoc, doc, addDoc } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, deleteDoc, doc, addDoc, updateDoc } from 'firebase/firestore';
 import { db, auth } from '../../lib/firebase';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -10,7 +10,9 @@ import {
     AlertTriangle,
     MessageSquare,
     Trash2,
-    CreditCard
+    CreditCard,
+    Archive,
+    RotateCcw
 } from 'lucide-react';
 import { Card, Badge, Button } from '../../components/ui';
 import { MENTEE_STAGES, getStageConfig } from '../../types';
@@ -26,6 +28,7 @@ export const MenteesPage: React.FC = () => {
     const toast = useToast();
     const [searchQuery, setSearchQuery] = useState('');
     const [filterStage, setFilterStage] = useState<MenteeStage | 'ALL'>('ALL');
+    const [showInactive, setShowInactive] = useState(false);
     const [mentees, setMentees] = useState<Mentee[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -47,6 +50,7 @@ export const MenteesPage: React.FC = () => {
                 nextCallAt: doc.data().nextCallAt?.toDate(),
                 createdAt: doc.data().createdAt?.toDate(),
                 updatedAt: doc.data().updatedAt?.toDate(),
+                active: doc.data().active !== false // Default to true if undefined
             })) as Mentee[];
             setMentees(fetchedMentees);
             setLoading(false);
@@ -70,6 +74,7 @@ export const MenteesPage: React.FC = () => {
                 currentStage: 'ONBOARDING',
                 stageProgress: 0,
                 blocked: false,
+                active: true,
                 startAt: newMenteeData.startAt || new Date()
             });
             toast.success('Mentorado cadastrado com sucesso!');
@@ -80,12 +85,33 @@ export const MenteesPage: React.FC = () => {
         }
     };
 
+    const handleToggleActive = async (mentee: Mentee, e: React.MouseEvent) => {
+        e.stopPropagation();
+        const newStatus = !mentee.active;
+        const actionName = newStatus ? 'reativado' : 'arquivado';
+
+        if (newStatus === false && !window.confirm(`Deseja arquivar ${mentee.name}? Ele sairá da lista principal.`)) {
+            return;
+        }
+
+        try {
+            await updateDoc(doc(db, 'mentees', mentee.id), {
+                active: newStatus,
+                updatedAt: new Date()
+            });
+            toast.success(`Mentorado ${actionName} com sucesso`);
+        } catch (error) {
+            console.error(`Error toggling active status:`, error);
+            toast.error(`Erro ao atualizar status`);
+        }
+    };
+
     const handleDeleteMentee = async (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
-        if (window.confirm('Tem certeza que deseja remover este mentorado? Esta ação não pode ser desfeita.')) {
+        if (window.confirm('ATENÇÃO: Deseja EXCLUIR DEFINITIVAMENTE este mentorado? Para apenas ocultar, use o botão Arquivar. Esta ação não pode ser desfeita.')) {
             try {
                 await deleteDoc(doc(db, 'mentees', id));
-                toast.success('Mentorado removido');
+                toast.success('Mentorado removido permanentemente');
             } catch (error) {
                 console.error("Error deleting mentee:", error);
                 toast.error('Erro ao remover mentorado');
@@ -96,7 +122,8 @@ export const MenteesPage: React.FC = () => {
     const filteredMentees = mentees.filter(m => {
         const matchesSearch = m.name.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesStage = filterStage === 'ALL' || m.currentStage === filterStage;
-        return matchesSearch && matchesStage;
+        const matchesActive = showInactive ? true : (m.active !== false); // Show active only by default
+        return matchesSearch && matchesStage && matchesActive;
     });
 
     const getDaysSince = (date?: Date) => {
@@ -127,11 +154,25 @@ export const MenteesPage: React.FC = () => {
             <div className="mentees-header">
                 <div>
                     <h1 className="mentees-title">Mentorados</h1>
-                    <p className="mentees-subtitle">{mentees.length} mentorado{mentees.length !== 1 ? 's' : ''} ativos</p>
+                    <p className="mentees-subtitle">
+                        {mentees.filter(m => m.active !== false).length} ativos
+                        {mentees.some(m => m.active === false) && ` • ${mentees.filter(m => m.active === false).length} arquivados`}
+                    </p>
                 </div>
-                <Button variant="primary" icon={<Plus size={18} />} onClick={() => setIsModalOpen(true)}>
-                    Novo Mentorado
-                </Button>
+                <div className="flex gap-2">
+                    <Button
+                        variant="ghost"
+                        onClick={() => setShowInactive(!showInactive)}
+                        className={showInactive ? 'bg-surface-secondary text-primary' : 'text-secondary'}
+                        title={showInactive ? "Ocultar Arquivados" : "Ver Arquivados"}
+                    >
+                        <Archive size={18} />
+                        {showInactive ? 'Ocultar Inativos' : 'Ver Inativos'}
+                    </Button>
+                    <Button variant="primary" icon={<Plus size={18} />} onClick={() => setIsModalOpen(true)}>
+                        Novo Mentorado
+                    </Button>
+                </div>
             </div>
 
             {/* Filters */}
@@ -176,13 +217,14 @@ export const MenteesPage: React.FC = () => {
                     const stageConfig = getStageConfig(MENTEE_STAGES, mentee.currentStage);
                     const daysSinceUpdate = getDaysSince(mentee.lastUpdateAt);
                     const nextCall = formatNextCall(mentee.nextCallAt);
+                    const isActive = mentee.active !== false;
 
                     return (
                         <Card
                             key={mentee.id}
                             variant="interactive"
                             padding="md"
-                            className={`mentee-card ${mentee.blocked ? 'mentee-blocked' : ''}`}
+                            className={`mentee-card ${mentee.blocked ? 'mentee-blocked' : ''} ${!isActive ? 'opacity-75 grayscale' : ''}`}
                             onClick={() => navigate(`/mentee/${mentee.id}`)}
                         >
                             {/* Header */}
@@ -191,7 +233,10 @@ export const MenteesPage: React.FC = () => {
                                     {mentee.name.charAt(0).toUpperCase()}
                                 </div>
                                 <div className="mentee-info">
-                                    <h3 className="mentee-name">{mentee.name}</h3>
+                                    <h3 className="mentee-name">
+                                        {mentee.name}
+                                        {!isActive && <span className="text-secondary text-xs ml-2">(Arquivado)</span>}
+                                    </h3>
                                     <span className="mentee-plan">{mentee.plan}</span>
                                 </div>
                                 {mentee.blocked && (
@@ -259,10 +304,22 @@ export const MenteesPage: React.FC = () => {
                                 >
                                     WhatsApp
                                 </Button>
+
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-secondary hover:text-primary"
+                                    title={isActive ? "Arquivar (Inativar)" : "Reativar"}
+                                    onClick={(e) => handleToggleActive(mentee, e)}
+                                >
+                                    {isActive ? <Archive size={14} /> : <RotateCcw size={14} />}
+                                </Button>
+
                                 <Button
                                     variant="ghost"
                                     size="sm"
                                     className="text-error hover:bg-error-light"
+                                    title="Excluir Permanentemente"
                                     onClick={(e) => handleDeleteMentee(mentee.id, e)}
                                 >
                                     <Trash2 size={14} />
@@ -275,7 +332,7 @@ export const MenteesPage: React.FC = () => {
 
             {filteredMentees.length === 0 && (
                 <div className="mentees-empty">
-                    <p>Nenhum mentorado encontrado. Comece adicionando um novo!</p>
+                    <p>Nenhum mentorado encontrado.</p>
                 </div>
             )}
 

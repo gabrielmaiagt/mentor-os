@@ -186,6 +186,7 @@ export interface Mentee extends FirestoreTimestamps {
     blocked: boolean;
     lastUpdateAt?: Date;
     nextCallAt?: Date;
+    active?: boolean; // active by default (undefined or true)
 }
 
 // Call
