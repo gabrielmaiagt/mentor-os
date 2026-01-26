@@ -18,7 +18,7 @@ import {
 import { Card, Button, Badge, Modal, Input, Skeleton } from '../../components/ui';
 import { useToast } from '../../components/ui/Toast';
 import { collection, query, where, onSnapshot, addDoc, updateDoc, doc, orderBy } from 'firebase/firestore';
-import { db, auth } from '../../lib/firebase';
+import { db } from '../../lib/firebase';
 import { WARMING_PROTOCOL } from '../../data/warmingProtocol';
 import type { Chip, WarmingActionType } from '../../types';
 import { useWarmingScheduler } from '../../hooks/useWarmingScheduler';
