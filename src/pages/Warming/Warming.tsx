@@ -289,44 +289,53 @@ export const WarmingPage: React.FC = () => {
                         {/* Right Column: Active Chip Details (9 cols) */}
                         {activeChip && (
                             <div className="xl:col-span-9 flex flex-col gap-6 animate-slide-in">
-                                {/* Day Status Card - COMPLETE REDESIGN */}
-                                <div className="bg-zinc-900/50 backdrop-blur-xl rounded-3xl border border-zinc-800 overflow-hidden shadow-2xl">
-                                    {/* Header Section with Gradient Background */}
-                                    <div className="bg-gradient-to-br from-purple-900/20 via-blue-900/20 to-zinc-900/20 px-10 py-8 border-b border-zinc-800">
-                                        <div className="flex items-center gap-3 mb-6">
-                                            <Badge variant="default" className="border border-warning/50 text-warning bg-warning/10 px-4 py-2 text-xs uppercase tracking-widest font-bold">
-                                                <Shield size={14} className="mr-2" />
+                                {/* Modern Warming Card - MASSIVE SPACING */}
+                                <div className="bg-gradient-to-br from-zinc-900 via-black to-zinc-900 rounded-3xl overflow-hidden shadow-2xl border border-zinc-800">
+                                    {/* Top Section - Title and Description */}
+                                    <div className="px-16 pt-16 pb-12">
+                                        {/* Badges */}
+                                        <div className="flex items-center gap-4 mb-10">
+                                            <Badge variant="default" className="border border-warning/50 text-warning bg-warning/10 px-5 py-2.5 text-sm uppercase tracking-wider font-bold">
+                                                <Shield size={16} className="mr-2" />
                                                 Dia {activeChip.currentDay} / 10
                                             </Badge>
                                             {isDayComplete && (
-                                                <Badge variant="success" className="px-3 py-1.5 text-xs bg-success/20 text-success border border-success/40">
-                                                    <Check size={14} className="mr-1.5" strokeWidth={2.5} />
+                                                <Badge variant="success" className="px-4 py-2 text-sm bg-success/20 text-success border border-success/40">
+                                                    <Check size={16} className="mr-2" strokeWidth={2.5} />
                                                     COMPLETO
                                                 </Badge>
                                             )}
                                         </div>
 
-                                        <h2 className="text-6xl font-black text-white mb-6 leading-tight">
+                                        {/* Title */}
+                                        <h2 className="text-7xl font-black text-white mb-8 leading-[1.1] tracking-tight">
                                             {currentProtocol?.title.replace(/Dia \d+ - /, '')}
                                         </h2>
 
-                                        <p className="text-zinc-400 text-lg leading-relaxed max-w-3xl">
+                                        {/* Description */}
+                                        <p className="text-zinc-400 text-2xl leading-relaxed max-w-4xl font-light">
                                             {currentProtocol?.description}
                                         </p>
                                     </div>
 
-                                    {/* Progress Section */}
-                                    <div className="px-10 py-10">
+                                    {/* Bottom Section - Progress */}
+                                    <div className="bg-black/30 px-16 py-12 border-t border-zinc-800">
                                         <div className="mb-8">
-                                            <div className="flex items-baseline justify-between mb-3">
-                                                <span className="text-zinc-500 text-xs uppercase tracking-widest font-semibold">Progresso do Dia</span>
-                                                <span className="text-white text-7xl font-black tabular-nums">{Math.round(progress)}%</span>
+                                            <div className="flex items-end justify-between mb-6">
+                                                <div>
+                                                    <span className="text-zinc-600 text-sm uppercase tracking-[0.2em] font-bold block mb-4">
+                                                        Progresso do Dia
+                                                    </span>
+                                                    <span className="text-white text-8xl font-black tabular-nums tracking-tighter">
+                                                        {Math.round(progress)}%
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
 
-                                        {/* Progress Bar */}
+                                        {/* Large Progress Bar */}
                                         <div className="relative">
-                                            <div className="h-10 bg-zinc-800/50 rounded-2xl overflow-hidden border border-zinc-700/50">
+                                            <div className="h-12 bg-zinc-800/80 rounded-2xl overflow-hidden border border-zinc-700/50 shadow-inner">
                                                 <div
                                                     className="h-full bg-gradient-to-r from-purple-500 via-blue-500 to-yellow-400 transition-all duration-1000 ease-out relative"
                                                     style={{ width: `${progress}%` }}
