@@ -64,20 +64,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
         );
 
-        // Safety timeout: stop loading after 5 seconds if auth doesn't respond
-        const timeoutId = setTimeout(() => {
-            setLoading((prev) => {
-                if (prev) {
-                    console.warn("Auth check timed out, forcing loading false");
-                    return false;
-                }
-                return prev;
-            });
-        }, 5000);
-
         return () => {
             unsubscribe();
-            clearTimeout(timeoutId);
         };
     }, []);
 

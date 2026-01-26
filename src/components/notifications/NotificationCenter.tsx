@@ -55,7 +55,9 @@ export const NotificationCenter: React.FC = () => {
     };
 
     const handleClick = (n: AppNotification) => {
-        if (!n.read) handleMarkAsRead(n.id, {} as any);
+        if (!n.read) {
+            handleMarkAsRead(n.id, { stopPropagation: () => { } } as any);
+        }
         if (n.link) {
             navigate(n.link);
             setIsOpen(false);
