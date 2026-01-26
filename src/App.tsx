@@ -42,6 +42,7 @@ function App() {
             {/* Protected universal routes (Mentor & Mentee) */}
             <Route element={<Shell requireAuth allowedRoles={['mentor', 'mentee']} />}>
               <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/me/calls" element={<MenteeCallsPage />} />
             </Route>
 
             {/* Protected mentor routes */}
@@ -67,7 +68,6 @@ function App() {
             {/* Protected mentee routes */}
             <Route element={<Shell requireAuth allowedRoles={['mentee']} />}>
               <Route path="/me" element={<MenteeHomePage />} />
-              <Route path="/me/calls" element={<MenteeCallsPage />} />
               <Route path="/me/tasks" element={<MenteeTasksPage />} />
               <Route path="/me/resources" element={<ResourcesPage />} />
               <Route path="/me/academy" element={<AcademyPage />} />
