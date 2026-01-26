@@ -1,3 +1,55 @@
 .settings-page {
-    /* Container */
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--space-6);
+}
+
+/* Feature toggle groups */
+.settings-page .space-y-6>div {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Large desktop: wider container for better use of space */
+@media (min-width: 1440px) {
+    .settings-page {
+        max-width: 1400px;
+    }
+}
+
+@media (min-width: 1920px) {
+    .settings-page {
+        max-width: 1600px;
+    }
+
+    /* Add 2-column layout for feature toggles on ultra-wide */
+    .settings-page .grid.grid-cols-1 {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: var(--space-6);
+    }
+}
+
+@media (max-width: 768px) {
+    .settings-page {
+        padding: var(--space-4);
+    }
+
+    .settings-page h1 {
+        font-size: var(--text-xl);
+    }
+
+    .settings-page .grid {
+        grid-template-columns: 1fr;
+    }
 }

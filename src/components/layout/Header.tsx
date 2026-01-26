@@ -31,7 +31,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
     const handleKeyDown = useCallback((e: KeyboardEvent) => {
         if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
             e.preventDefault();
-            console.log('Open command palette');
+            // TODO: Implement command palette
         }
     }, []);
 
@@ -43,7 +43,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
         if (searchQuery.trim()) {
-            console.log('Searching:', searchQuery);
+            // TODO: Implement global search
         }
     };
 

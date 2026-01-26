@@ -9,10 +9,6 @@
 }
 
 /* Variants */
-.card-default {
-    /* Base styles */
-}
-
 .card-elevated {
     box-shadow: var(--shadow-lg);
 }
@@ -93,11 +89,6 @@
 
 .card-header-action {
     flex-shrink: 0;
-}
-
-/* Content */
-.card-content {
-    /* Base content area */
 }
 
 /* Footer */

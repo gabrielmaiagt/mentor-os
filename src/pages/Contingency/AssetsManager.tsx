@@ -21,6 +21,7 @@ import { getAssetLabel } from '../../types/assets';
 import { RiskDashboard } from './RiskDashboard';
 import { ContingencyTree } from './ContingencyTree';
 import { RecoveryProtocolModal } from './RecoveryProtocolModal';
+import { EmptyState } from '../../components/common/EmptyState';
 import { AlertTriangle } from 'lucide-react';
 import './AssetsManager.css';
 
@@ -150,61 +151,79 @@ export const AssetsManager: React.FC = () => {
             </div>
 
             <RiskDashboard assets={assets} />
-
             {viewMode === 'TREE' ? (
-                <ContingencyTree assets={assets} />
+                assets.length === 0 ? (
+                    <EmptyState
+                        icon={Shield}
+                        title="Nenhum Ativo Cadastrado"
+                        description="Comece criando seu primeiro ativo. Perfis, BMs e Pixels vão aparecer aqui em uma estrutura visual."
+                        actionLabel="Criar Primeiro Ativo"
+                        onAction={() => setIsModalOpen(true)}
+                    />
+                ) : (
+                    <ContingencyTree assets={assets} />
+                )
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {assets.map(asset => (
-                        <Card key={asset.id} className="asset-card relative group p-4 border-l-4" style={{
-                            borderLeftColor: asset.status === 'ACTIVE' ? 'var(--status-success)' :
-                                asset.status === 'WARMING' ? 'var(--status-warning)' :
-                                    'var(--status-error)'
-                        }}>
-                            <div className="flex justify-between items-start mb-3">
-                                <div className="flex items-center gap-2 text-secondary">
-                                    {getIcon(asset.type)}
-                                    <span className="text-xs font-bold uppercase tracking-wider">{getAssetLabel(asset.type)}</span>
+                assets.length === 0 ? (
+                    <EmptyState
+                        icon={Shield}
+                        title="Nenhum Ativo Cadastrado"
+                        description="Cadastre seus perfis, BMs, contas de anúncios e outros ativos para ter controle total da sua operação."
+                        actionLabel="Adicionar Primeiro Ativo"
+                        onAction={() => setIsModalOpen(true)}
+                    />
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {assets.map(asset => (
+                            <Card key={asset.id} className="asset-card relative group p-4 border-l-4" style={{
+                                borderLeftColor: asset.status === 'ACTIVE' ? 'var(--status-success)' :
+                                    asset.status === 'WARMING' ? 'var(--status-warning)' :
+                                        'var(--status-error)'
+                            }}>
+                                <div className="flex justify-between items-start mb-3">
+                                    <div className="flex items-center gap-2 text-secondary">
+                                        {getIcon(asset.type)}
+                                        <span className="text-xs font-bold uppercase tracking-wider">{getAssetLabel(asset.type)}</span>
+                                    </div>
+                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button onClick={() => { setEditingAsset(asset); setForm(asset); setIsModalOpen(true); }} className="p-1 hover:text-white text-secondary">
+                                            <Edit2 size={14} />
+                                        </button>
+                                        <button onClick={() => handleDelete(asset.id)} className="p-1 hover:text-red-500 text-secondary">
+                                            <Trash2 size={14} />
+                                        </button>
+                                    </div>
                                 </div>
-                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button onClick={() => { setEditingAsset(asset); setForm(asset); setIsModalOpen(true); }} className="p-1 hover:text-white text-secondary">
-                                        <Edit2 size={14} />
-                                    </button>
-                                    <button onClick={() => handleDelete(asset.id)} className="p-1 hover:text-red-500 text-secondary">
-                                        <Trash2 size={14} />
-                                    </button>
+
+                                <h3 className="font-bold text-lg text-white mb-2">{asset.name}</h3>
+
+                                <div className="flex justify-between items-center mt-4">
+                                    <Badge variant={getStatusColor(asset.status) as any}>{asset.status}</Badge>
+                                    {(asset.status === 'RESTRICTED' || asset.status === 'PERMANENT_BAN') && (
+                                        <button
+                                            onClick={() => { setSelectedRecoveryAsset(asset); setIsRecoveryModalOpen(true); }}
+                                            className="text-xs font-bold text-white bg-error/20 px-2 py-1 rounded hover:bg-error/40 transition-colors flex items-center gap-1"
+                                        >
+                                            <AlertTriangle size={12} />
+                                            Protocolo
+                                        </button>
+                                    )}
+                                    {asset.type === 'AD_ACCOUNT' && asset.spendLimit && (
+                                        <span className="text-xs text-secondary font-mono">Limit: R$ {asset.spendLimit}</span>
+                                    )}
                                 </div>
-                            </div>
 
-                            <h3 className="font-bold text-lg text-white mb-2">{asset.name}</h3>
-
-                            <div className="flex justify-between items-center mt-4">
-                                <Badge variant={getStatusColor(asset.status) as any}>{asset.status}</Badge>
-                                {(asset.status === 'RESTRICTED' || asset.status === 'PERMANENT_BAN') && (
-                                    <button
-                                        onClick={() => { setSelectedRecoveryAsset(asset); setIsRecoveryModalOpen(true); }}
-                                        className="text-xs font-bold text-white bg-error/20 px-2 py-1 rounded hover:bg-error/40 transition-colors flex items-center gap-1"
-                                    >
-                                        <AlertTriangle size={12} />
-                                        Protocolo
-                                    </button>
+                                {/* Connection Lines (Visual hint) */}
+                                {asset.parentId && (
+                                    <div className="absolute -top-3 left-6 text-secondary/30">
+                                        <LinkIcon size={12} className="rotate-90" />
+                                    </div>
                                 )}
-                                {asset.type === 'AD_ACCOUNT' && asset.spendLimit && (
-                                    <span className="text-xs text-secondary font-mono">Limit: R$ {asset.spendLimit}</span>
-                                )}
-                            </div>
-
-                            {/* Connection Lines (Visual hint) */}
-                            {asset.parentId && (
-                                <div className="absolute -top-3 left-6 text-secondary/30">
-                                    <LinkIcon size={12} className="rotate-90" />
-                                </div>
-                            )}
-                        </Card>
-                    ))}
-                </div>
+                            </Card>
+                        ))}
+                    </div>
+                )
             )}
-
             <Modal
                 isOpen={isModalOpen}
                 onClose={() => { setIsModalOpen(false); setEditingAsset(null); }}

@@ -46,12 +46,8 @@ export const MenteeHomePage: React.FC = () => {
     const [mentee, setMentee] = useState<Mentee | null>(null);
     const [offers, setOffers] = useState<OfferMined[]>([]);
 
-    // Notifications logic
-    const { token } = useFcmToken(mentee?.id);
-    // Log token to ensure it's used and for debugging
-    React.useEffect(() => {
-        if (token) console.log("Notification Token active:", token);
-    }, [token]);
+    // Notifications logic (token registered in useFcmToken hook)
+    useFcmToken(mentee?.id);
 
     const [nextCall, setNextCall] = useState<any>(null);
     const [pendingTasks, setPendingTasks] = useState<any[]>([]);
@@ -132,7 +128,6 @@ export const MenteeHomePage: React.FC = () => {
                     }
                 } else {
                     // No profile found for this user
-                    console.log("No mentee profile found for email:", email);
                 }
             } catch (error) {
                 console.error("Error fetching mentee:", error);

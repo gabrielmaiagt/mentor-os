@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import type { Asset } from '../../types/assets';
 import { Card } from '../../components/ui';
 import { ShieldAlert, ShieldCheck, AlertCircle, Activity } from 'lucide-react';
+import './RiskDashboard.css';
 
 interface RiskDashboardProps {
     assets: Asset[];

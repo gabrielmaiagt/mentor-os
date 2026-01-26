@@ -27,7 +27,7 @@ const useFcmToken = (menteeId?: string) => {
 
                         if (currentToken) {
                             setToken(currentToken);
-                            console.log('FCM Token:', currentToken);
+                            // FCM Token retrieved successfully
 
                             if (menteeId) {
                                 await updateDoc(doc(db, 'mentees', menteeId), {
@@ -35,7 +35,7 @@ const useFcmToken = (menteeId?: string) => {
                                 });
                             }
                         } else {
-                            console.log('No registration token available.');
+                            // No registration token available
                         }
                     }
                 }

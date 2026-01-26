@@ -1,0 +1,55 @@
+/* General desktop-first improvements */
+
+/* Dashboard improvements for large screens */
+@media (min-width: 1440px) {
+    .dashboard-container {
+        max-width: 1600px;
+        margin: 0 auto;
+    }
+
+    .dashboard-grid {
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)) !important;
+        gap: var(--space-6);
+    }
+}
+
+@media (min-width: 1920px) {
+    .dashboard-container {
+        max-width: 1800px;
+    }
+}
+
+/* CRM page optimization */
+@media (min-width: 1440px) {
+    .crm-container {
+        max-width: 1600px;
+        margin: 0 auto;
+    }
+
+    .crm-leads-grid {
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)) !important;
+    }
+}
+
+/* Finance page for wider tables */
+@media (min-width: 1440px) {
+    .finance-container {
+        max-width: 1600px;
+        margin: 0 auto;
+    }
+}
+
+/* Global container max-width for consistency */
+@media (min-width: 1440px) {
+    .shell-content>div {
+        max-width: 1600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+}
+
+@media (min-width: 1920px) {
+    .shell-content>div {
+        max-width: 1800px;
+    }
+}

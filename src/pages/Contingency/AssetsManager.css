@@ -1,5 +1,7 @@
 .assets-manager {
-    /* Container styles */
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
 }
 
 .asset-card {
@@ -9,4 +11,53 @@
 .asset-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Large desktop optimization */
+@media (min-width: 1440px) {
+    .assets-manager {
+        max-width: 1600px;
+        margin: 0 auto;
+    }
+
+    /* 4 columns on very large screens */
+    .assets-manager .grid {
+        grid-template-columns: repeat(4, 1fr) !important;
+    }
+}
+
+@media (min-width: 1920px) {
+    .assets-manager {
+        max-width: 1800px;
+    }
+
+    /* Even more space on ultra-wide */
+    .assets-manager .grid {
+        grid-template-columns: repeat(5, 1fr) !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .assets-manager {
+        gap: var(--space-4);
+    }
+
+    .assets-header {
+        flex-direction: column;
+        align-items: stretch !important;
+        gap: var(--space-4);
+    }
+
+    .assets-header>div:first-child {
+        text-align: center;
+    }
+
+    .assets-header .flex.gap-3 {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .assets-header .flex.gap-3>* {
+        width: 100%;
+    }
 }

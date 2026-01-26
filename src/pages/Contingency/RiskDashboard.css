@@ -1,0 +1,22 @@
+@media (min-width: 1440px) {
+    .risk-dashboard {
+        gap: var(--space-8) !important;
+    }
+
+    /* Increase card sizes proportionally on large screens */
+    .risk-dashboard .card {
+        padding: var(--space-8) !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .risk-dashboard {
+        grid-template-columns: 1fr !important;
+        gap: var(--space-4) !important;
+    }
+
+    /* Stack cards vertically on mobile */
+    .risk-dashboard .col-span-1 {
+        grid-column: span 1 !important;
+    }
+}
