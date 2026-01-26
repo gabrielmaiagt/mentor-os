@@ -19,6 +19,8 @@ import { MENTEE_STAGES, getStageConfig } from '../../types';
 import type { Mentee, MenteeStage } from '../../types';
 import { AddMenteeModal } from './AddMenteeModal';
 import { useToast } from '../../components/ui/Toast';
+import { exportToCSV, formatMenteesForExport } from '../../utils/export';
+import { Download } from 'lucide-react';
 import './Mentees.css';
 
 // ... (mockMiningSummaries remains same)
@@ -83,6 +85,11 @@ export const MenteesPage: React.FC = () => {
             console.error("Error creating mentee:", error);
             toast.error('Erro ao cadastrar mentorado');
         }
+    }
+    const handleExport = () => {
+        const formatted = formatMenteesForExport(mentees);
+        exportToCSV(formatted, 'mentorados');
+        toast.success(`Lista de mentorados exportada!`);
     };
 
     const handleToggleActive = async (mentee: Mentee, e: React.MouseEvent) => {
@@ -160,6 +167,9 @@ export const MenteesPage: React.FC = () => {
                     </p>
                 </div>
                 <div className="flex gap-2">
+                    <Button variant="secondary" icon={<Download size={18} />} onClick={handleExport}>
+                        Exportar
+                    </Button>
                     <Button
                         variant="ghost"
                         onClick={() => setShowInactive(!showInactive)}
@@ -344,5 +354,4 @@ export const MenteesPage: React.FC = () => {
         </div>
     );
 };
-
 export default MenteesPage;

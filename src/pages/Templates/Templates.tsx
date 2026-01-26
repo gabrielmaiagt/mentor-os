@@ -3,6 +3,8 @@ import { Search, FileText, DollarSign, Scale, Users, CheckCircle, Plus } from 'l
 import { TemplateCard } from '../../components/templates';
 import type { TemplateCategory, Template } from '../../types';
 import { AddTemplateModal } from './AddTemplateModal';
+import { EditTemplateModal } from '../../components/templates/EditTemplateModal';
+import { DeleteConfirmModal } from '../../components/templates/DeleteConfirmModal';
 import { Button } from '../../components/ui';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
@@ -21,6 +23,8 @@ export const TemplatesPage: React.FC = () => {
     const [selectedCategory, setSelectedCategory] = useState<TemplateCategory | 'ALL'>('ALL');
     const [searchQuery, setSearchQuery] = useState('');
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
+    const [deletingTemplate, setDeletingTemplate] = useState<Template | null>(null);
     const [dbTemplates, setDbTemplates] = useState<Template[]>([]);
 
     // Real-time listener for templates
@@ -104,7 +108,12 @@ export const TemplatesPage: React.FC = () => {
 
                 <div className="templates-grid">
                     {filteredTemplates.map(template => (
-                        <TemplateCard key={template.id} template={template} />
+                        <TemplateCard
+                            key={template.id}
+                            template={template}
+                            onEdit={(t) => setEditingTemplate(t)}
+                            onDelete={(t) => setDeletingTemplate(t)}
+                        />
                     ))}
 
                     {filteredTemplates.length === 0 && (
@@ -118,6 +127,20 @@ export const TemplatesPage: React.FC = () => {
             <AddTemplateModal
                 isOpen={isAddModalOpen}
                 onClose={() => setIsAddModalOpen(false)}
+            />
+
+            {/* Edit Modal */}
+            <EditTemplateModal
+                isOpen={!!editingTemplate}
+                template={editingTemplate}
+                onClose={() => setEditingTemplate(null)}
+            />
+
+            {/* Delete Modal */}
+            <DeleteConfirmModal
+                isOpen={!!deletingTemplate}
+                template={deletingTemplate}
+                onClose={() => setDeletingTemplate(null)}
             />
         </div>
     );

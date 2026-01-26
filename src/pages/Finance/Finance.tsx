@@ -26,13 +26,15 @@ import {
     ChevronRight,
     Calendar as CalendarIcon
 } from 'lucide-react';
-import { format, subMonths, startOfMonth, endOfMonth, isWithinInterval, addMonths, isSameMonth } from 'date-fns';
+import { format, subMonths, startOfMonth, endOfMonth, isWithinInterval, addMonths, isSameMonth, eachMonthOfInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 import { Card, Button, Badge, Modal } from '../../components/ui';
 // Mock data removed
 import type { PaymentStatus } from '../../types/finance';
 import { useToast } from '../../components/ui/Toast';
+import { exportToCSV, formatTransactionsForExport } from '../../utils/export';
+import { Download } from 'lucide-react';
 import './Finance.css';
 
 const formatCurrency = (value: number) => {
@@ -130,6 +132,32 @@ const FinancePage: React.FC = () => {
         };
     }, [transactions, selectedDate]);
 
+    // Chart Data (Last 6 Months)
+    const chartData = useMemo(() => {
+        const end = new Date();
+        const start = subMonths(end, 5);
+        const months = eachMonthOfInterval({ start, end });
+
+        return months.map(month => {
+            const startMonth = startOfMonth(month);
+            const endMonth = endOfMonth(month);
+
+            const revenue = transactions
+                .filter(t => t.status === 'PAID' && t.paidAt && isWithinInterval(t.paidAt, { start: startMonth, end: endMonth }))
+                .reduce((sum, t) => sum + t.amount, 0);
+
+            const pending = transactions
+                .filter(t => t.status === 'PENDING' && t.dueDate && isWithinInterval(t.dueDate, { start: startMonth, end: endMonth }))
+                .reduce((sum, t) => sum + t.amount, 0);
+
+            return {
+                month: format(month, 'MMM', { locale: ptBR }).toUpperCase(),
+                revenue,
+                projected: revenue + pending
+            };
+        });
+    }, [transactions]);
+
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [viewAll, setViewAll] = useState(false);
     const [showOnlyPending, setShowOnlyPending] = useState(false);
@@ -206,6 +234,13 @@ const FinancePage: React.FC = () => {
         }
     };
 
+    const handleExport = () => {
+        const formatted = formatTransactionsForExport(filteredTransactions);
+        const fileName = `transacoes_${format(selectedDate, 'yyyy-MM', { locale: ptBR })}`;
+        exportToCSV(formatted, fileName);
+        toast.success(`${filteredTransactions.length} transações exportadas!`);
+    };
+
     // Filter and Sort Transactions
     const filteredTransactions = transactions
         .filter(t => {
@@ -268,17 +303,23 @@ const FinancePage: React.FC = () => {
                 <div className="finance-actions">
                     <Button
                         variant="secondary"
+                        icon={<Download size={16} />}
+                        onClick={handleExport}
+                    >
+                        Exportar CSV
+                    </Button>
+                    <Button
+                        variant="secondary"
                         icon={<Filter size={16} />}
                         onClick={() => {
                             setShowOnlyPending(!showOnlyPending);
                             toast.info(showOnlyPending ? 'Mostrando mês atual' : 'Filtrando pendentes (Geral)');
                         }}
-                        className={showOnlyPending ? 'bg-secondary-hover border-accent' : ''}
                     >
-                        {showOnlyPending ? 'Ver Mês' : 'Ver Pendentes'}
+                        {showOnlyPending ? 'Remover' : 'Pendentes'}
                     </Button>
                     <Button variant="primary" icon={<Plus size={16} />} onClick={() => setIsModalOpen(true)}>
-                        Nova Transação
+                        Adicionar
                     </Button>
                 </div>
             </div>
@@ -331,7 +372,7 @@ const FinancePage: React.FC = () => {
 
                     <div style={{ width: '100%', height: 350 }}>
                         <ResponsiveContainer>
-                            <BarChart data={[] /* Charts now use real data, future impl */}>
+                            <BarChart data={chartData}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-subtle)" />
                                 <XAxis
                                     dataKey="month"

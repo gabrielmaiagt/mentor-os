@@ -104,6 +104,31 @@ export interface Template extends FirestoreTimestamps {
     description?: string;
 }
 
+// Message Template (Quick Replies)
+export interface MessageTemplate extends FirestoreTimestamps {
+    id: string;
+    title: string;
+    content: string;
+    category: 'WHATSAPP' | 'EMAIL' | 'GENERIC';
+    variables?: string[];
+    usageCount?: number;
+    createdBy?: string;
+}
+
+export interface SmartTask {
+    id: string;
+    type: 'LEAD_FOLLOW_UP' | 'DEAL_CLOSE' | 'MENTEE_UPDATE';
+    priority: 'CRITICAL' | 'HIGH' | 'NORMAL';
+    entityId: string;
+    entityName: string;
+    description: string;
+    actionParams: {
+        whatsapp?: string;
+        link?: string;
+    };
+    date: Date;
+}
+
 
 // Base interface for Firestore timestamps
 export interface FirestoreTimestamps {

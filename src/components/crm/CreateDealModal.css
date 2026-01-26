@@ -1,0 +1,55 @@
+.create-deal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.deal-lead-info {
+    padding: 1rem;
+    background: var(--surface-secondary);
+    border-radius: var(--radius-md);
+    border-left: 3px solid var(--accent-primary);
+}
+
+.deal-lead-info h4 {
+    margin: 0 0 0.25rem 0;
+    font-size: var(--text-md);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.deal-lead-info p {
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+}
+
+.create-deal-form .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.create-deal-form label {
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.create-deal-form .required {
+    color: var(--error);
+}
+
+.create-deal-form textarea.input-field {
+    resize: vertical;
+    font-family: inherit;
+}
+
+.create-deal-form .modal-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    margin-top: 0.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-subtle);
+}

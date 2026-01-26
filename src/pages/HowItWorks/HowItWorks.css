@@ -1,0 +1,201 @@
+.how-it-works-page {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+}
+
+/* Hero */
+.how-hero {
+    text-align: center;
+    padding: 3rem 1rem;
+    background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+    border-radius: var(--radius-xl);
+    color: white;
+}
+
+.how-title {
+    font-size: var(--text-4xl);
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.how-subtitle {
+    font-size: var(--text-lg);
+    opacity: 0.95;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* Video */
+.how-video-card {
+    overflow: hidden;
+}
+
+.how-video-placeholder {
+    aspect-ratio: 16 / 9;
+    background: var(--surface-secondary);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.how-video-placeholder:hover {
+    background: var(--surface-tertiary);
+    color: var(--accent-primary);
+}
+
+.how-video-duration {
+    font-size: var(--text-sm);
+    font-weight: 500;
+}
+
+/* Sections */
+.how-section {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.how-section-title {
+    font-size: var(--text-2xl);
+    font-weight: 600;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+}
+
+/* Steps */
+.how-steps-grid {
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.how-step-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 1rem;
+    transition: transform 0.2s;
+}
+
+.how-step-card:hover {
+    transform: translateY(-4px);
+}
+
+.how-step-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.how-step-title {
+    font-size: var(--text-lg);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.how-step-description {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+/* FAQ */
+.how-faq-grid {
+    display: grid;
+    gap: 1rem;
+}
+
+.how-faq-card {
+    transition: transform 0.2s;
+}
+
+.how-faq-card:hover {
+    transform: translateX(4px);
+}
+
+.how-faq-question {
+    font-size: var(--text-md);
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+}
+
+.how-faq-answer {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+/* CTA */
+.how-cta-card {
+    background: linear-gradient(135deg, var(--surface-secondary) 0%, var(--surface-tertiary) 100%);
+    border: 2px solid var(--accent-primary);
+}
+
+.how-cta-content {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.how-cta-content h2 {
+    font-size: var(--text-3xl);
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.how-cta-content p {
+    font-size: var(--text-lg);
+    color: var(--text-secondary);
+}
+
+.how-cta-button {
+    padding: 1rem 2.5rem;
+    font-size: var(--text-md);
+    font-weight: 600;
+    background: var(--accent-primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.how-cta-button:hover {
+    background: var(--accent-primary-hover);
+    transform: scale(1.05);
+}
+
+@media (max-width: 768px) {
+    .how-it-works-page {
+        padding: 1rem;
+        gap: 2rem;
+    }
+
+    .how-title {
+        font-size: var(--text-3xl);
+    }
+
+    .how-steps-grid {
+        grid-template-columns: 1fr;
+    }
+}

@@ -19,8 +19,12 @@ import { useParams } from 'react-router-dom';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { Card, CardHeader, CardContent, Badge, Button, Modal } from '../../components/ui';
+import { CreateDealModal } from '../../components/crm/CreateDealModal';
+import { TemplateSelector } from '../../components/templates/TemplateSelector';
+import { MessageTemplatesModal } from '../../components/templates/MessageTemplatesModal';
 import { useToast } from '../../components/ui/Toast';
 import { LEAD_STAGES, DEAL_STAGES, getStageConfig } from '../../types';
+import { openWhatsApp, copyToClipboard } from '../../utils/whatsapp';
 import type { Lead, Deal } from '../../types';
 import './LeadProfile.css';
 
@@ -35,6 +39,8 @@ export const LeadProfilePage: React.FC = () => {
     const [deal, setDeal] = useState<Deal | null>(null);
     const [loading, setLoading] = useState(true);
     const [showNoteModal, setShowNoteModal] = useState(false);
+    const [showCreateDealModal, setShowCreateDealModal] = useState(false);
+    const [showTemplatesModal, setShowTemplatesModal] = useState(false);
 
     React.useEffect(() => {
         const fetchLeadData = async () => {
@@ -113,8 +119,24 @@ export const LeadProfilePage: React.FC = () => {
     };
 
     const copyMessage = async (message: string) => {
-        await navigator.clipboard.writeText(message);
-        toast.success('Copiado!');
+        const success = await copyToClipboard(message);
+        if (success) {
+            toast.success('Copiado!');
+        } else {
+            toast.error('Erro ao copiar');
+        }
+    };
+
+    const handleTemplateSelect = (content: string) => {
+        if (!lead) return;
+        const firstName = lead.name.split(' ')[0];
+        const processed = content
+            .replace(/{{nome}}/g, firstName) // Most common use case is first name for "nome" actually, or we can use specific var
+            .replace(/{{primeiro_nome}}/g, firstName)
+            .replace(/{{nome_completo}}/g, lead.name)
+            .replace(/{{empresa}}/g, 'sua empresa');
+
+        openWhatsApp(lead.whatsapp, processed);
     };
 
     const hoursSinceContact = getHoursSince(lead.lastContactAt);
@@ -230,14 +252,22 @@ export const LeadProfilePage: React.FC = () => {
 
                     {/* Quick Actions */}
                     <Card padding="md">
-                        <CardHeader title="Ações Rápidas" />
+                        <CardHeader
+                            title="Ações Rápidas"
+                            action={
+                                <Button variant="ghost" size="sm" onClick={() => setShowTemplatesModal(true)}>
+                                    Configurar
+                                </Button>
+                            }
+                        />
                         <CardContent>
                             <div className="quick-actions-grid">
+                                <TemplateSelector onSelect={handleTemplateSelect} />
                                 <Button
                                     variant="primary"
                                     fullWidth
                                     icon={<MessageSquare size={16} />}
-                                    onClick={() => window.open(`https://wa.me/55${lead.whatsapp}`, '_blank')}
+                                    onClick={() => openWhatsApp(lead.whatsapp, `Fala ${lead.name.split(' ')[0]}! Tudo bem?`)}
                                 >
                                     Abrir WhatsApp
                                 </Button>
@@ -256,6 +286,16 @@ export const LeadProfilePage: React.FC = () => {
                                 >
                                     Agendar Call
                                 </Button>
+                                {lead.stage !== 'WON' && !deal && (
+                                    <Button
+                                        variant="secondary"
+                                        fullWidth
+                                        icon={<Flame size={16} />}
+                                        onClick={() => setShowCreateDealModal(true)}
+                                    >
+                                        Criar Deal
+                                    </Button>
+                                )}
                                 <Button
                                     variant="secondary"
                                     fullWidth
@@ -351,6 +391,19 @@ export const LeadProfilePage: React.FC = () => {
                     rows={5}
                 />
             </Modal>
+
+            <CreateDealModal
+                isOpen={showCreateDealModal}
+                onClose={() => setShowCreateDealModal(false)}
+                leadId={lead.id}
+                leadName={lead.name}
+                leadWhatsapp={lead.whatsapp}
+            />
+
+            <MessageTemplatesModal
+                isOpen={showTemplatesModal}
+                onClose={() => setShowTemplatesModal(false)}
+            />
         </div>
     );
 };

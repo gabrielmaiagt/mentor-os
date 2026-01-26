@@ -16,10 +16,12 @@ import { collection, query, onSnapshot, getDocs } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 
 import { Card, Badge, Button, Skeleton } from '../../components/ui';
+import { SmartTasksWidget } from '../../components/dashboard/SmartTasksWidget';
 import { useToast } from '../../components/ui/Toast';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { ActionItem, FinanceSnapshot } from '../../types';
+import { openWhatsApp, copyToClipboard } from '../../utils/whatsapp';
 import './Dashboard.css';
 
 // Mocks removed. Using calculated data.
@@ -240,10 +242,10 @@ export const DashboardPage: React.FC = () => {
     };
 
     const copyMessage = async (message: string, name: string) => {
-        try {
-            await navigator.clipboard.writeText(message);
+        const success = await copyToClipboard(message);
+        if (success) {
             toast.success('Mensagem copiada!', `Pronto para enviar para ${name}`);
-        } catch (err) {
+        } else {
             toast.error('Erro ao copiar', 'Tente novamente');
         }
     };
@@ -360,6 +362,11 @@ export const DashboardPage: React.FC = () => {
 
             {/* Main Grid */}
             <div className="dashboard-grid">
+                {/* Smart Tasks (Priorities) */}
+                <section className="dashboard-section">
+                    <SmartTasksWidget />
+                </section>
+
                 {/* VENDER HOJE */}
                 <section className="dashboard-section">
                     <div className="section-header">
@@ -409,7 +416,10 @@ export const DashboardPage: React.FC = () => {
                                         variant="ghost"
                                         size="sm"
                                         icon={<MessageSquare size={14} />}
-                                        onClick={() => window.open(`https://wa.me/55${action.whatsapp}`, '_blank')}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            openWhatsApp(action.whatsapp || '', action.suggestedMessage);
+                                        }}
                                     >
                                         WhatsApp
                                     </Button>

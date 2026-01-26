@@ -1,199 +1,185 @@
-import React, { useState } from 'react';
-import { Card, Button, Modal } from '../../components/ui';
+import React, { useState, useEffect } from 'react';
+import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
+import { auth, db } from '../../lib/firebase';
+import { Card, CardContent, Badge, Button } from '../../components/ui';
+import { Calendar, Clock, Play, Video, ChevronRight } from 'lucide-react';
 import { useToast } from '../../components/ui/Toast';
-import { Calendar, Clock, Video, MessageSquare, Plus } from 'lucide-react';
+import type { Call } from '../../types';
 import './MenteeCalls.css';
 
-import { collection, query, onSnapshot, addDoc } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
-import { Loader } from 'lucide-react';
-
 export const MenteeCallsPage: React.FC = () => {
-    const toast = useToast();
-    const [showScheduleModal, setShowScheduleModal] = useState(false);
-    const [calls, setCalls] = useState<any[]>([]);
+    const [calls, setCalls] = useState<Call[]>([]);
     const [loading, setLoading] = useState(true);
+    const [menteeId, setMenteeId] = useState<string | null>(null);
+    const toast = useToast();
 
-    const [scheduleData, setScheduleData] = useState({
-        type: 'ONBOARDING',
-        date: '',
-        time: '10:00'
-    });
+    // 1. Get Mentee ID from current User
+    useEffect(() => {
+        const fetchMenteeId = async () => {
+            if (!auth.currentUser) return;
 
-    React.useEffect(() => {
-        // Fetch calls for current mentee (fallback 'm1')
-        // Ideally: where('menteeId', '==', auth.currentUser?.uid)
-        const q = query(collection(db, 'calls')); // Fetching all for demo if auth not ready, or filter by 'menteeId'
-        // Ideally: query(collection(db, 'calls'), where('menteeId', '==', 'm1'));
-
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const fetched = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data(),
-                date: doc.data().scheduledAt?.toDate() // Mapping scheduledAt -> date
-            }));
-            setCalls(fetched);
-            setLoading(false);
-        });
-        return () => unsubscribe();
+            // Try to find mentee linked to this user
+            const q = query(collection(db, 'mentees'), where('userId', '==', auth.currentUser.uid));
+            // Real-time listener not strictly needed for ID lookup but good for consistency
+            const unsubscribe = onSnapshot(q, (snapshot) => {
+                if (!snapshot.empty) {
+                    setMenteeId(snapshot.docs[0].id);
+                } else {
+                    setLoading(false); // User is not a mentee or not linked
+                }
+            });
+            return () => unsubscribe();
+        };
+        fetchMenteeId();
     }, []);
 
-    const handleSchedule = async () => {
-        if (!scheduleData.date) {
-            toast.error('Selecione uma data para a call');
-            return;
-        }
+    // 2. Fetch Calls
+    useEffect(() => {
+        if (!menteeId) return;
 
-        try {
-            const scheduledAt = new Date(`${scheduleData.date}T${scheduleData.time}`);
-            await addDoc(collection(db, 'calls'), {
-                menteeId: 'm1', // Fallback
-                menteeName: 'Carlos Lima', // Fallback
-                title: `Call: ${scheduleData.type}`,
-                scheduledAt: scheduledAt,
-                duration: 45,
-                status: 'SCHEDULED', // Or REQUESTED if supported
-                meetingLink: '',
-                createdAt: new Date()
-            });
+        const q = query(
+            collection(db, 'calls'),
+            where('menteeId', '==', menteeId),
+            orderBy('scheduledAt', 'desc')
+        );
 
-            toast.success('Solicitação enviada!', 'O mentor confirmará o horário em breve.');
-            setShowScheduleModal(false);
-            setScheduleData({ type: 'ONBOARDING', date: '', time: '10:00' });
-        } catch (error) {
-            console.error("Error scheduling call:", error);
-            toast.error("Erro ao agendar call");
-        }
-    };
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            setCalls(snapshot.docs.map(d => ({
+                id: d.id,
+                ...d.data(),
+                scheduledAt: d.data().scheduledAt?.toDate(),
+                endAt: d.data().endAt?.toDate(),
+                createdAt: d.data().createdAt?.toDate(),
+            })) as Call[]);
+            setLoading(false);
+        });
+
+        return () => unsubscribe();
+    }, [menteeId]);
 
     const formatDate = (date: Date) => {
         return new Intl.DateTimeFormat('pt-BR', {
             day: '2-digit',
             month: 'long',
-            year: 'numeric',
             hour: '2-digit',
-            minute: '2-digit'
+            minute: '2-digit',
         }).format(date);
     };
 
-    return (
-        <div className="mentee-calls">
-            <div className="calls-header">
-                <div>
-                    <h1>Minhas Calls</h1>
-                    <p>Acompanhe e agende suas sessões de mentoria</p>
-                </div>
-                <Button variant="primary" icon={<Plus size={16} />} onClick={() => setShowScheduleModal(true)}>
-                    Agendar Nova Call
-                </Button>
-            </div>
+    if (loading) return <div className="p-8 text-center text-secondary animate-pulse">Carregando suas calls...</div>;
 
-            <div className="calls-grid">
-                <div className="calls-main">
-                    <h2 className="section-title">Próximas Sessões</h2>
-                    <div className="calls-list">
-                        {loading ? <Loader className="animate-spin" /> :
-                            calls.filter(c => c.status === 'SCHEDULED').map(call => (
-                                <Card key={call.id} className="call-card next" padding="lg">
-                                    <div className="call-date-badge">
-                                        <Calendar size={20} />
-                                        <span>{formatDate(call.date)}</span>
-                                    </div>
-                                    <div className="call-info">
-                                        <h3>{call.title}</h3>
-                                        <div className="call-meta">
-                                            <span><Clock size={14} /> {call.duration} min</span>
-                                            <span><Video size={14} /> Google Meet</span>
+    if (!menteeId) {
+        return (
+            <div className="p-8 text-center">
+                <h2 className="text-xl font-bold mb-2">Acesso Restrito</h2>
+                <p className="text-secondary">Seu usuário não está vinculado a um perfil de mentorado.</p>
+            </div>
+        );
+    }
+
+    const nextCall = calls.find(c => c.status === 'SCHEDULED');
+    const pastCalls = calls.filter(c => c.status === 'DONE' || c.status === 'MISSED' || c.status === 'CANCELED');
+
+    return (
+        <div className="mentee-calls-page space-y-8 p-6 max-w-5xl mx-auto">
+            <header className="mb-6">
+                <h1 className="text-3xl font-bold tracking-tight mb-2">Mentorias</h1>
+                <p className="text-secondary text-lg">Acompanhe sua agenda e reveja as gravações dos encontros.</p>
+            </header>
+
+            {/* Next Call Highlight */}
+            {nextCall && (
+                <Card className="border-accent-primary/20 bg-accent-primary/5">
+                    <CardContent className="p-6 flex flex-col md:flex-row items-center justify-between gap-6">
+                        <div className="flex items-center gap-4">
+                            <div className="w-16 h-16 rounded-full bg-accent-primary/20 flex items-center justify-center text-accent-primary">
+                                <Calendar size={32} />
+                            </div>
+                            <div>
+                                <div className="flex items-center gap-2 mb-1">
+                                    <Badge variant="info">Próxima Call</Badge>
+                                    <span className="text-sm text-secondary uppercase tracking-wider font-semibold">
+                                        {nextCall.type}
+                                    </span>
+                                </div>
+                                <h3 className="text-2xl font-bold mb-1">
+                                    {formatDate(nextCall.scheduledAt)}
+                                </h3>
+                                <div className="flex items-center gap-2 text-secondary">
+                                    <Clock size={16} />
+                                    <span>{nextCall.durationMinutes} minutos</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="w-full md:w-auto">
+                            <Button
+                                variant="primary"
+                                size="lg"
+                                className="w-full md:w-auto shadow-lg shadow-accent-primary/20"
+                                onClick={() => nextCall.meetLink ? window.open(nextCall.meetLink, '_blank') : toast.info('Link não disponível', 'O link da reunião será liberado próximo ao horário.')}
+                            >
+                                <Video size={18} />
+                                Entrar na Sala
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+
+            {/* History */}
+            <div className="space-y-4">
+                <h2 className="text-xl font-semibold flex items-center gap-2">
+                    <Play size={20} className="text-secondary" />
+                    Histórico de Encontros
+                </h2>
+
+                {pastCalls.length === 0 ? (
+                    <Card padding="lg" className="text-center py-12 border-dashed">
+                        <div className="bg-surface-hover w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-tertiary">
+                            <Video size={32} />
+                        </div>
+                        <p className="text-secondary text-lg">Nenhuma mentoria realizada ainda.</p>
+                    </Card>
+                ) : (
+                    <div className="grid grid-cols-1 gap-4">
+                        {pastCalls.map(call => (
+                            <Card key={call.id} className="hover:border-white/10 transition-colors group">
+                                <CardContent className="p-5 flex items-center justify-between">
+                                    <div className="flex items-center gap-4">
+                                        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${call.status === 'DONE' ? 'bg-success/10 text-success' : 'bg-surface-hover text-tertiary'}`}>
+                                            {call.status === 'DONE' ? <Play size={24} fill="currentColor" className="opacity-20" /> : <Video size={24} />}
+                                            {call.status === 'DONE' && <Play size={20} className="absolute" />}
+                                        </div>
+                                        <div>
+                                            <h4 className="font-semibold text-lg">{formatDate(call.scheduledAt)}</h4>
+                                            <div className="flex items-center gap-3 text-sm text-secondary">
+                                                <Badge variant={call.status === 'DONE' ? 'success' : 'default'} size="sm">
+                                                    {call.status === 'DONE' ? 'Concluída' : call.status}
+                                                </Badge>
+                                                <span>{call.durationMinutes} min</span>
+                                                <span>•</span>
+                                                <span className="capitalize">{call.type.toLowerCase()}</span>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="call-actions">
-                                        <Button variant="primary" onClick={() => window.open(call.link)}>
-                                            Acessar Sala
-                                        </Button>
-                                        <Button variant="ghost" onClick={() => {
-                                            toast.info('Reagendando call', 'Escolha um novo horário.');
-                                            setShowScheduleModal(true);
-                                        }}>
-                                            Reagendar
-                                        </Button>
-                                    </div>
-                                </Card>
-                            ))}
-                    </div>
 
-                    <h2 className="section-title mt-10">Histórico e Gravações</h2>
-                    <div className="calls-list">
-                        {calls.filter(c => c.status === 'COMPLETED').map(call => (
-                            <Card key={call.id} className="call-card past" padding="md">
-                                <div className="call-info">
-                                    <h3>{call.title}</h3>
-                                    <span className="call-date">{formatDate(call.date)}</span>
-                                </div>
-                                <div className="call-past-actions">
-                                    {call.recordingUrl && (
+                                    {call.recordingUrl ? (
                                         <Button
                                             variant="secondary"
-                                            size="sm"
                                             onClick={() => window.open(call.recordingUrl, '_blank')}
+                                            className="group-hover:bg-white group-hover:text-black transition-colors"
                                         >
-                                            Ver Gravação
+                                            Ver Gravação <ChevronRight size={16} />
                                         </Button>
+                                    ) : (
+                                        <span className="text-sm text-tertiary italic">Sem gravação</span>
                                     )}
-                                    <Button variant="ghost" size="sm" icon={<MessageSquare size={14} />}>Notas</Button>
-                                </div>
+                                </CardContent>
                             </Card>
                         ))}
                     </div>
-                </div>
-
+                )}
             </div>
-
-            {/* Schedule Modal */}
-            <Modal
-                isOpen={showScheduleModal}
-                onClose={() => setShowScheduleModal(false)}
-                title="Agendar Call"
-                footer={
-                    <>
-                        <Button variant="ghost" onClick={() => setShowScheduleModal(false)}>Cancelar</Button>
-                        <Button variant="primary" onClick={handleSchedule}>Solicitar Agendamento</Button>
-                    </>
-                }
-            >
-                <div className="schedule-form">
-                    <div className="form-field">
-                        <label>Tipo de Call</label>
-                        <select
-                            value={scheduleData.type}
-                            onChange={e => setScheduleData({ ...scheduleData, type: e.target.value })}
-                        >
-                            <option value="ONBOARDING">Onboarding (Inicial)</option>
-                            <option value="STRATEGY">Estratégia</option>
-                            <option value="REVIEW">Revisão de Campanhas</option>
-                            <option value="DOUBTS">Tira-dúvidas</option>
-                        </select>
-                    </div>
-                    <div className="form-row">
-                        <div className="form-field">
-                            <label>Data Sugerida</label>
-                            <input
-                                type="date"
-                                min={new Date().toISOString().split('T')[0]}
-                                value={scheduleData.date}
-                                onChange={e => setScheduleData({ ...scheduleData, date: e.target.value })}
-                            />
-                        </div>
-                        <div className="form-field">
-                            <label>Horário</label>
-                            <input
-                                type="time"
-                                value={scheduleData.time}
-                                onChange={e => setScheduleData({ ...scheduleData, time: e.target.value })}
-                            />
-                        </div>
-                    </div>
-                </div>
-            </Modal>
         </div>
     );
 };

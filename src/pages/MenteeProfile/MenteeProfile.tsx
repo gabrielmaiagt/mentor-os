@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { doc, onSnapshot, collection, query, where, orderBy, addDoc } from 'firebase/firestore';
+import { doc, onSnapshot, collection, query, where, orderBy, addDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import {
     ArrowLeft,
@@ -62,6 +62,15 @@ export const MenteeProfilePage: React.FC = () => {
     const [showTaskModal, setShowTaskModal] = useState(false);
     const [showCallModal, setShowCallModal] = useState(false);
 
+    // Edit Modal State
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [editFormData, setEditFormData] = useState({
+        name: '',
+        whatsapp: '',
+        email: '',
+        plan: ''
+    });
+
     // Fetch Mentee Data
     useEffect(() => {
         if (!id) return;
@@ -117,11 +126,34 @@ export const MenteeProfilePage: React.FC = () => {
     }, [id]);
 
     // New Task State
+    // New Task State
     const [newTask, setNewTask] = useState({
         title: '',
         description: '',
         dueAt: new Date().toISOString().split('T')[0]
     });
+
+    // Templates State
+    const [templates, setTemplates] = useState<any[]>([]);
+
+    useEffect(() => {
+        const q = query(collection(db, 'templates'), orderBy('title', 'asc'));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            setTemplates(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+        });
+        return () => unsubscribe();
+    }, []);
+
+    const handleTemplateSelect = (templateId: string) => {
+        const template = templates.find(t => t.id === templateId);
+        if (template) {
+            setNewTask({
+                ...newTask,
+                title: template.title,
+                description: template.content || template.description || ''
+            });
+        }
+    };
 
     // Onboarding Data (Mock retrieval)
     const onboardingProgress: OnboardingProgress | null = useMemo(() => {
@@ -180,27 +212,90 @@ export const MenteeProfilePage: React.FC = () => {
         toast.success('Tarefa criada!', `Testar oferta: ${offer.name}`);
     };
 
+    const handleSaveMentee = async () => {
+        if (!mentee || !id) return;
+        try {
+            await updateDoc(doc(db, 'mentees', id), {
+                name: editFormData.name,
+                whatsapp: editFormData.whatsapp,
+                email: editFormData.email,
+                plan: editFormData.plan,
+                updatedAt: new Date()
+            });
+            toast.success('Perfil atualizado com sucesso!');
+            setShowEditModal(false);
+        } catch (error) {
+            console.error(error);
+            toast.error('Erro ao atualizar perfil');
+        }
+    };
+
+    const handleSendNotification = async (title: string, message: string, type: 'INFO' | 'WARNING' | 'ERROR' | 'SUCCESS' = 'INFO') => {
+        if (!mentee?.userId) {
+            toast.error('Erro', 'Mentorado não possui usuário vinculado.');
+            return;
+        }
+        try {
+            await addDoc(collection(db, 'notifications'), {
+                userId: mentee.userId,
+                title,
+                message,
+                type,
+                read: false,
+                createdAt: new Date(),
+                updatedAt: new Date()
+            });
+            toast.success('Notificação enviada!');
+        } catch (error) {
+            console.error(error);
+            toast.error('Erro ao enviar notificação');
+        }
+    };
+
+    const openEditModal = () => {
+        if (mentee) {
+            setEditFormData({
+                name: mentee.name || '',
+                whatsapp: mentee.whatsapp || '',
+                email: mentee.email || '',
+                plan: mentee.plan || ''
+            });
+            setShowEditModal(true);
+        }
+    };
+
     const daysSinceUpdate = getDaysSince(mentee.lastUpdateAt);
 
     return (
-        <div className="mentee-profile">
+        <div className="mentee-profile-page">
             {/* Header */}
-            <div className="mentee-profile-header">
-                <button className="back-btn" onClick={() => navigate(-1)}>
-                    <ArrowLeft size={20} />
+            <div className="page-header">
+                <Button variant="ghost" icon={<ArrowLeft size={20} />} onClick={() => navigate('/mentees')}>
                     Voltar
-                </button>
-
-                <div className="mentee-profile-actions">
+                </Button>
+                <div className="flex items-center gap-3">
                     <Button
                         variant="ghost"
                         size="sm"
                         icon={<Edit size={16} />}
-                        onClick={() => toast.info('Em breve', 'A edição completa do perfil estará disponível na próxima versão.')}
+                        onClick={openEditModal}
                     >
                         Editar
                     </Button>
+                    {/* Test Notification Button */}
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        icon={<AlertTriangle size={16} />}
+                        onClick={() => handleSendNotification('Teste de Notificação', 'Esta é uma notificação de teste enviada pelo mentor.', 'INFO')}
+                    >
+                        Testar Notificação
+                    </Button>
                 </div>
+            </div>
+
+            <div className="profile-header-card">
+                {/* ... existing header content ... */}
             </div>
 
             {/* Main Info */}
@@ -343,7 +438,11 @@ export const MenteeProfilePage: React.FC = () => {
                                         <p>{daysSinceUpdate} dias sem atualização. Última atividade: {formatDate(mentee.lastUpdateAt!)}</p>
                                     </div>
                                 </div>
-                                <Button variant="primary" size="sm">
+                                <Button
+                                    variant="primary"
+                                    size="sm"
+                                    onClick={() => handleSendNotification('Atenção: Atualize seu progresso', 'Notamos que você não atualiza seu status há mais de 7 dias. Está tudo bem?', 'WARNING')}
+                                >
                                     Enviar Cobrança
                                 </Button>
                             </Card>
@@ -673,9 +772,13 @@ export const MenteeProfilePage: React.FC = () => {
                         <label>Usar Template (Opcional)</label>
                         <select
                             className="bg-secondary border border-subtle rounded-md px-3 py-2 text-primary outline-none"
-                            disabled
+                            onChange={(e) => handleTemplateSelect(e.target.value)}
+                            defaultValue=""
                         >
-                            <option value="">Templates indisponíveis (WIP)</option>
+                            <option value="" disabled>Selecione um template...</option>
+                            {templates.map(t => (
+                                <option key={t.id} value={t.id}>{t.title}</option>
+                            ))}
                         </select>
                     </div>
 
@@ -740,6 +843,63 @@ export const MenteeProfilePage: React.FC = () => {
                     <div className="form-field">
                         <label>Link da Gravação (Loom, YouTube, etc)</label>
                         <input type="url" placeholder="https://..." />
+                    </div>
+                </div>
+            </Modal>
+
+            {/* Edit Mentee Modal */}
+            <Modal
+                isOpen={showEditModal}
+                onClose={() => setShowEditModal(false)}
+                title="Editar Mentorado"
+                footer={
+                    <>
+                        <Button variant="ghost" onClick={() => setShowEditModal(false)}>Cancelar</Button>
+                        <Button variant="primary" onClick={handleSaveMentee}>Salvar Alterações</Button>
+                    </>
+                }
+            >
+                <div className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-secondary mb-1">Nome Completo</label>
+                        <input
+                            type="text"
+                            className="w-full bg-[#111] border border-white/10 rounded p-3 text-white placeholder-zinc-500 focus:border-white/20 transition-all outline-none"
+                            value={editFormData.name}
+                            onChange={e => setEditFormData({ ...editFormData, name: e.target.value })}
+                        />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-secondary mb-1">WhatsApp</label>
+                            <input
+                                type="text"
+                                className="w-full bg-[#111] border border-white/10 rounded p-3 text-white placeholder-zinc-500 focus:border-white/20 transition-all outline-none"
+                                value={editFormData.whatsapp}
+                                onChange={e => setEditFormData({ ...editFormData, whatsapp: e.target.value })}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-secondary mb-1">Plano</label>
+                            <select
+                                className="w-full bg-[#111] border border-white/10 rounded p-3 text-white placeholder-zinc-500 focus:border-white/20 transition-all outline-none"
+                                value={editFormData.plan}
+                                onChange={e => setEditFormData({ ...editFormData, plan: e.target.value })}
+                            >
+                                <option value="Trimestral">Trimestral</option>
+                                <option value="Semestral">Semestral</option>
+                                <option value="Anual">Anual</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-secondary mb-1">Email</label>
+                        <input
+                            type="email"
+                            className="w-full bg-[#111] border border-white/10 rounded p-3 text-white placeholder-zinc-500 focus:border-white/20 transition-all outline-none"
+                            value={editFormData.email}
+                            onChange={e => setEditFormData({ ...editFormData, email: e.target.value })}
+                        />
                     </div>
                 </div>
             </Modal>

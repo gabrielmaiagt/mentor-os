@@ -1,16 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, Check } from 'lucide-react';
+import { Bell, Check, AlertCircle, AlertTriangle, Info } from 'lucide-react';
 import { collection, query, where, onSnapshot, orderBy, limit, updateDoc, doc, writeBatch } from 'firebase/firestore';
 import { db, auth } from '../../lib/firebase';
 import type { AppNotification } from '../../types';
 import { useNavigate } from 'react-router-dom';
 import './NotificationCenter.css';
+import { useAutomatedChecks } from '../../hooks/useAutomatedChecks';
 
 export const NotificationCenter: React.FC = () => {
     const [notifications, setNotifications] = useState<AppNotification[]>([]);
     const [isOpen, setIsOpen] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
     const navigate = useNavigate();
+
+    // System Alerts Hook
+    const { alerts } = useAutomatedChecks();
 
     useEffect(() => {
         if (!auth.currentUser) return;
@@ -25,11 +29,17 @@ export const NotificationCenter: React.FC = () => {
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AppNotification));
             setNotifications(data);
-            setUnreadCount(data.filter(n => !n.read).length);
+
+            // Count unread (Firestore + System Alerts)
+            const firestoreUnread = data.filter(n => !n.read).length;
+            setUnreadCount(firestoreUnread + alerts.length);
         });
 
         return () => unsubscribe();
-    }, []);
+    }, [alerts.length]);
+
+    // Derived unread count for display
+    const totalUnreadCount = notifications.filter(n => !n.read).length + alerts.length;
 
     const handleMarkAsRead = async (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
@@ -64,14 +74,22 @@ export const NotificationCenter: React.FC = () => {
         }
     };
 
+    const getAlertIcon = (type: string) => {
+        switch (type) {
+            case 'critical': return <AlertCircle size={16} className="text-error" />;
+            case 'warning': return <AlertTriangle size={16} className="text-warning" />;
+            default: return <Info size={16} className="text-info" />;
+        }
+    };
+
     return (
         <div className="relative notification-center">
             <button
                 className="relative p-2 rounded-full hover:bg-white/10 transition-colors"
                 onClick={() => setIsOpen(!isOpen)}
             >
-                <Bell size={20} className={unreadCount > 0 ? 'text-white' : 'text-secondary'} />
-                {unreadCount > 0 && (
+                <Bell size={20} className={totalUnreadCount > 0 ? 'text-white' : 'text-secondary'} />
+                {totalUnreadCount > 0 && (
                     <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-error rounded-full border-2 border-[#09090b]" />
                 )}
             </button>
@@ -82,7 +100,7 @@ export const NotificationCenter: React.FC = () => {
                     <div className="absolute right-0 top-full mt-2 w-80 md:w-96 bg-[var(--bg-card)] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                         <div className="p-4 border-b border-white/5 flex justify-between items-center">
                             <h3 className="font-bold">Notificações</h3>
-                            {unreadCount > 0 && (
+                            {notifications.filter(n => !n.read).length > 0 && (
                                 <button
                                     onClick={handleMarkAllRead}
                                     className="text-xs text-primary hover:text-primary/80 transition-colors"
@@ -93,7 +111,33 @@ export const NotificationCenter: React.FC = () => {
                         </div>
 
                         <div className="max-h-[60vh] overflow-y-auto">
-                            {notifications.length === 0 ? (
+                            {/* System Alerts Section */}
+                            {alerts.map(alert => (
+                                <div
+                                    key={alert.id}
+                                    onClick={() => {
+                                        if (alert.actionLink) {
+                                            navigate(alert.actionLink);
+                                            setIsOpen(false);
+                                        }
+                                    }}
+                                    className="p-4 border-b border-white/5 cursor-pointer bg-error/10 hover:bg-error/20 transition-colors flex gap-3"
+                                >
+                                    <div className="mt-1 shrink-0">
+                                        {getAlertIcon(alert.type)}
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="text-sm font-medium mb-1">{alert.type === 'critical' ? 'Atenção Necessária' : 'Aviso do Sistema'}</p>
+                                        <p className="text-xs text-secondary leading-relaxed">{alert.message}</p>
+                                        <p className="text-[10px] text-muted mt-2">
+                                            Agora
+                                        </p>
+                                    </div>
+                                </div>
+                            ))}
+
+                            {/* Standard Notifications */}
+                            {notifications.length === 0 && alerts.length === 0 ? (
                                 <div className="p-8 text-center text-secondary">
                                     <Bell size={32} className="mx-auto mb-2 opacity-20" />
                                     <p className="text-sm">Nenhuma notificação</p>

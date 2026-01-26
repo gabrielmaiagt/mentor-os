@@ -7,9 +7,10 @@ import { useToast } from '../../components/ui/Toast';
 interface TemplateCardProps {
     template: Template;
     onEdit?: (template: Template) => void;
+    onDelete?: (template: Template) => void;
 }
 
-export const TemplateCard: React.FC<TemplateCardProps> = ({ template, onEdit }) => {
+export const TemplateCard: React.FC<TemplateCardProps> = ({ template, onEdit, onDelete }) => {
     const toast = useToast();
 
     const handleCopy = () => {
@@ -34,11 +35,18 @@ export const TemplateCard: React.FC<TemplateCardProps> = ({ template, onEdit }) 
             </div>
 
             <div className="template-footer">
-                {onEdit && (
-                    <Button variant="ghost" size="sm" icon={<Edit2 size={16} />} onClick={() => onEdit(template)}>
-                        Editar
-                    </Button>
-                )}
+                <div className="flex gap-2">
+                    {onEdit && (
+                        <Button variant="ghost" size="sm" icon={<Edit2 size={16} />} onClick={() => onEdit(template)}>
+                            Editar
+                        </Button>
+                    )}
+                    {onDelete && (
+                        <Button variant="ghost" size="sm" className="text-error hover:text-error hover:bg-error/10" onClick={() => onDelete(template)}>
+                            Excluir
+                        </Button>
+                    )}
+                </div>
                 <Button variant="secondary" size="sm" icon={<Copy size={16} />} onClick={handleCopy}>
                     Copiar
                 </Button>

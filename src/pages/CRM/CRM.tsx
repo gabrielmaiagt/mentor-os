@@ -12,6 +12,8 @@ import { Card, Badge, Button, Modal } from '../../components/ui';
 import { useToast } from '../../components/ui/Toast';
 import type { Deal, DealStage, DealHeat } from '../../types';
 import { DEAL_STAGES } from '../../types';
+import { exportToCSV, formatDealsForExport } from '../../utils/export';
+import { Download } from 'lucide-react';
 import './CRM.css';
 
 // Mock data removed
@@ -109,6 +111,12 @@ export const CRMPage: React.FC = () => {
             console.error("Error creating deal:", error);
             toast.error("Erro ao criar deal");
         }
+    };
+
+    const handleExport = () => {
+        const formatted = formatDealsForExport(deals);
+        exportToCSV(formatted, 'pipeline_deals');
+        toast.success(`Exportados ${deals.length} deals`);
     };
 
     const formatCurrency = (value: number) => {
@@ -228,9 +236,14 @@ export const CRMPage: React.FC = () => {
                     <h1 className="crm-title">CRM - Funil de Vendas</h1>
                     <p className="crm-subtitle">Arraste os cards para mudar de etapa</p>
                 </div>
-                <Button variant="primary" icon={<Plus size={18} />} onClick={() => setIsModalOpen(true)}>
-                    Novo Deal
-                </Button>
+                <div className="flex gap-2">
+                    <Button variant="secondary" icon={<Download size={18} />} onClick={handleExport}>
+                        Exportar
+                    </Button>
+                    <Button variant="primary" icon={<Plus size={18} />} onClick={() => setIsModalOpen(true)}>
+                        Novo Deal
+                    </Button>
+                </div>
             </div>
 
             {/* Pipeline */}

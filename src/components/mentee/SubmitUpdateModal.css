@@ -1,0 +1,41 @@
+.submit-update-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.submit-update-form .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.submit-update-form label {
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.submit-update-form .required {
+    color: var(--error);
+}
+
+.submit-update-form textarea.input-field {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.submit-update-form .input-hint {
+    font-size: var(--text-xs);
+    color: var(--text-tertiary);
+    font-style: italic;
+}
+
+.submit-update-form .modal-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-subtle);
+}

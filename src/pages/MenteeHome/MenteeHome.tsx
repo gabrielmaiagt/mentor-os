@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { Card, Badge, Button, Modal, Skeleton } from '../../components/ui';
 import { OnboardingChecklist, TourGuide } from '../../components/onboarding';
+import { SubmitUpdateModal } from '../../components/mentee/SubmitUpdateModal';
 import { useToast } from '../../components/ui/Toast';
 import { MENTEE_STAGES, getStageConfig, DEFAULT_ONBOARDING_TEMPLATE, FIRST_LOGIN_TOUR } from '../../types';
 import { db, auth } from '../../lib/firebase';
@@ -494,6 +495,14 @@ export const MenteeHomePage: React.FC = () => {
                     </div>
                 </div>
             </Modal>
+
+            {/* Submit Update Modal */}
+            <SubmitUpdateModal
+                isOpen={showUpdateModal}
+                onClose={() => setShowUpdateModal(false)}
+                menteeId={mentee.id}
+                userId={firebaseUser?.uid || ''}
+            />
 
             {/* Tour Guide */}
             <TourGuide

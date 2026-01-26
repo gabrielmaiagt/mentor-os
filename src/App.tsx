@@ -1,4 +1,3 @@
-import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { ToastProvider } from './components/ui/Toast';
@@ -26,24 +25,7 @@ import AcademyPage from './pages/Academy/Academy';
 import ManageAcademyPage from './pages/Academy/ManageAcademy';
 import WarmingPage from './pages/Warming/Warming';
 import MiningPage from './pages/Mining/Mining';
-
-// Placeholder pages for remaining routes
-const PlaceholderPage: React.FC<{ title: string }> = ({ title }) => (
-  <div style={{
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: '50vh',
-    flexDirection: 'column',
-    gap: '1rem'
-  }}>
-    <h1 style={{ color: 'var(--text-primary)', fontSize: 'var(--text-2xl)' }}>{title}</h1>
-    <p style={{ color: 'var(--text-secondary)' }}>Esta página será implementada em breve.</p>
-  </div>
-);
-
-// Mentee Portal pages
-const MenteeHowItWorksPage = () => <PlaceholderPage title="Como Funciona" />;
+import HowItWorksPage from './pages/HowItWorks/HowItWorks';
 
 function App() {
   return (
@@ -86,7 +68,7 @@ function App() {
               <Route path="/me/mining" element={<MiningPage />} />
               <Route path="/me/warming" element={<WarmingPage />} />
               <Route path="/warming" element={<WarmingPage />} />
-              <Route path="/me/how-it-works" element={<MenteeHowItWorksPage />} />
+              <Route path="/me/how-it-works" element={<HowItWorksPage />} />
             </Route>
 
             {/* Default redirect */}

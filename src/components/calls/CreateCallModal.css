@@ -1,0 +1,45 @@
+.create-call-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.create-call-form .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.create-call-form .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.create-call-form label {
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.create-call-form .required {
+    color: var(--error);
+}
+
+.create-call-form .input-field {
+    width: 100%;
+}
+
+.create-call-form textarea.input-field {
+    resize: vertical;
+    font-family: inherit;
+}
+
+.create-call-form .modal-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    margin-top: 0.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-subtle);
+}
