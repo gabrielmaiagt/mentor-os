@@ -166,14 +166,36 @@ export const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({
                     </Badge>
                 </div>
                 <div className="onboarding-progress">
-                    <div className="onboarding-progress-bar">
-                        <div
-                            className="onboarding-progress-fill"
-                            style={{ width: `${progressPercent}%` }}
-                        />
+                    <div className="progress-circle-container">
+                        <svg className="progress-circle" viewBox="0 0 100 100">
+                            <defs>
+                                <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stopColor="#8b5cf6" />
+                                    <stop offset="100%" stopColor="#3b82f6" />
+                                </linearGradient>
+                            </defs>
+                            <circle
+                                className="progress-circle-bg"
+                                cx="50"
+                                cy="50"
+                                r="40"
+                            />
+                            <circle
+                                className="progress-circle-fill"
+                                cx="50"
+                                cy="50"
+                                r="40"
+                                strokeDasharray={`${2 * Math.PI * 40}`}
+                                strokeDashoffset={`${2 * Math.PI * 40 * (1 - progressPercent / 100)}`}
+                            />
+                        </svg>
+                        <div className="progress-circle-center">
+                            <div className="progress-percentage">{progressPercent}%</div>
+                            <div className="progress-label">Concluído</div>
+                        </div>
                     </div>
                     <span className="onboarding-progress-text">
-                        {completedCount} de {steps.length} concluídos
+                        {completedCount} de {steps.length} passos completos
                     </span>
                 </div>
             </div>
