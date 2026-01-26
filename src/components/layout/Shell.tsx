@@ -1,6 +1,8 @@
 import React from 'react';
 import { Outlet, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useWarmingScheduler } from '../../hooks/useWarmingScheduler';
+import MobileNav from './MobileNav';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import './Shell.css';
@@ -16,6 +18,7 @@ export const Shell: React.FC<ShellProps> = ({
 }) => {
     const { user, loading } = useAuth();
     const location = useLocation();
+    useWarmingScheduler();
 
     // Show loading state
     if (loading) {
@@ -42,11 +45,14 @@ export const Shell: React.FC<ShellProps> = ({
         return <Navigate to="/dashboard" replace />;
     }
 
+    const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+
     return (
         <div className="shell">
-            <Sidebar />
+            <Sidebar isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
+            <MobileNav />
             <div className="shell-main">
-                <Header />
+                <Header onMenuClick={() => setMobileMenuOpen(!mobileMenuOpen)} />
                 <main className="shell-content">
                     <Outlet />
                 </main>

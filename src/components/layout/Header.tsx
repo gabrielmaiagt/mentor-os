@@ -1,20 +1,23 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Command, Bell, Menu, User as UserIcon, LogOut } from 'lucide-react';
+import { Search, Command, Menu, User as UserIcon, LogOut } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../components/ui/Toast';
+import { NotificationCenter } from '../notifications/NotificationCenter';
 import './Header.css';
 
-export const Header: React.FC = () => {
+interface HeaderProps {
+    onMenuClick?: () => void;
+}
+
+export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
     const { user, signOut } = useAuth();
     const navigate = useNavigate();
     const toast = useToast();
     const [searchQuery, setSearchQuery] = useState('');
-    const [showMobileMenu, setShowMobileMenu] = useState(false);
     const [showUserMenu, setShowUserMenu] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
 
-    // Close menu when clicking outside
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -54,16 +57,12 @@ export const Header: React.FC = () => {
         }
     };
 
-    const handleNotificationClick = () => {
-        toast.info('Você não tem novas notificações.');
-    };
-
     return (
         <header className="header">
             <div className="header-left">
                 <button
                     className="header-mobile-menu"
-                    onClick={() => setShowMobileMenu(!showMobileMenu)}
+                    onClick={onMenuClick}
                     aria-label="Menu"
                 >
                     <Menu size={20} />
@@ -86,13 +85,7 @@ export const Header: React.FC = () => {
             </div>
 
             <div className="header-right">
-                <button
-                    className="header-action-btn"
-                    aria-label="Notificações"
-                    onClick={handleNotificationClick}
-                >
-                    <Bell size={20} />
-                </button>
+                <NotificationCenter />
 
                 <div className="header-user-dropdown" ref={menuRef}>
                     <div

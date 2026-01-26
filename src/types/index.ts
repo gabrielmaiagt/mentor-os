@@ -328,3 +328,86 @@ export * from './onboarding';
 
 // Re-export finance types
 export * from './finance';
+
+// Resources
+export type ResourceCategory = 'GENERAL' | 'CONTRACTS' | 'X1' | 'SPREADSHEET';
+export type ResourceType = 'PDF' | 'DOC' | 'SHEET' | 'LINK' | 'VIDEO' | 'IMAGE';
+
+export interface Resource extends FirestoreTimestamps {
+    id: string;
+    title: string;
+    description?: string;
+    url: string;
+    category: ResourceCategory;
+    type: ResourceType;
+    downloads?: number;
+}
+
+// Academy
+export interface AcademyModule extends FirestoreTimestamps {
+    id: string;
+    title: string;
+    description?: string;
+    order: number;
+    published: boolean;
+}
+
+export interface AcademyLesson extends FirestoreTimestamps {
+    id: string;
+    moduleId: string;
+    title: string;
+    description?: string;
+    videoUrl: string;
+    durationMinutes?: number;
+    order: number;
+    published: boolean;
+}
+
+export interface AcademyProgress extends FirestoreTimestamps {
+    id: string;
+    menteeId: string;
+    completedLessonIds: string[];
+    lastWatchedLessonId?: string;
+}
+
+// Warming / X1
+export type WarmingActionType = 'MESSAGE' | 'CALL' | 'STATUS' | 'GROUP' | 'AUDIO' | 'CONFIG';
+export type ChipStatus = 'WARMING' | 'READY' | 'BANNED' | 'COOLING';
+
+export interface WarmingAction {
+    id: string;
+    time: string; // "09:00"
+    type: WarmingActionType;
+    title: string;
+    description?: string;
+    required?: boolean;
+}
+
+export interface WarmingDay {
+    day: number; // 0 to 10
+    title: string;
+    description: string;
+    actions: WarmingAction[];
+}
+
+export interface Chip extends FirestoreTimestamps {
+    id: string;
+    userId: string;
+    name: string; // "Chip 01 - Vivo"
+    phoneNumber: string;
+    status: ChipStatus;
+    currentDay: number; // 0 to 10
+    startDate: Date;
+    completedActions: { [day: number]: string[] }; // Map day -> list of actionIds completed
+}
+
+export interface AppNotification extends FirestoreTimestamps {
+    id: string;
+    userId: string; // Recipient
+    title: string;
+    message: string;
+    read: boolean;
+    type: 'INFO' | 'SUCCESS' | 'WARNING' | 'ERROR';
+    link?: string;
+    createdAt: any;
+}

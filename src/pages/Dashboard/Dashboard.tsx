@@ -15,7 +15,7 @@ import {
 import { collection, query, onSnapshot, getDocs } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 
-import { Card, Badge, Button } from '../../components/ui';
+import { Card, Badge, Button, Skeleton } from '../../components/ui';
 import { useToast } from '../../components/ui/Toast';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -27,6 +27,8 @@ import './Dashboard.css';
 export const DashboardPage: React.FC = () => {
     const navigate = useNavigate();
     const toast = useToast();
+
+    const [loading, setLoading] = React.useState(true);
 
     // State for aggregated data
     const [finance, setFinance] = React.useState<FinanceSnapshot>({
@@ -40,6 +42,9 @@ export const DashboardPage: React.FC = () => {
 
     React.useEffect(() => {
         const fetchData = async () => {
+            // Simulate initial load for Skeleton
+            setTimeout(() => setLoading(false), 1000);
+
             // 1. Finance (Transactions)
             // We'll listen to transactions to calculate totals
             const unsubFinance = onSnapshot(query(collection(db, 'transactions')), (snapshot) => {
@@ -242,6 +247,51 @@ export const DashboardPage: React.FC = () => {
             toast.error('Erro ao copiar', 'Tente novamente');
         }
     };
+
+    if (loading) {
+        return (
+            <div className="dashboard">
+                {/* Header Skeleton */}
+                <div className="dashboard-header mb-6">
+                    <div>
+                        <Skeleton width={200} height={32} className="mb-2" />
+                        <Skeleton width={150} height={20} />
+                    </div>
+                    <Skeleton width={120} height={40} />
+                </div>
+
+                {/* Finance Skeleton */}
+                <div className="finance-grid mb-8">
+                    <Skeleton width="100%" height={120} variant="card" />
+                    <Skeleton width="100%" height={120} variant="card" />
+                    <Skeleton width="100%" height={120} variant="card" />
+                    <Skeleton width="100%" height={120} variant="card" />
+                </div>
+
+                {/* Main Grid Skeleton */}
+                <div className="dashboard-grid mb-8">
+                    <div className="dashboard-section">
+                        <div className="flex justify-between mb-4">
+                            <Skeleton width={150} height={28} />
+                            <Skeleton width={80} height={20} />
+                        </div>
+                        <Skeleton width="100%" height={80} className="mb-3" variant="card" />
+                        <Skeleton width="100%" height={80} className="mb-3" variant="card" />
+                        <Skeleton width="100%" height={80} variant="card" />
+                    </div>
+                    <div className="dashboard-section">
+                        <div className="flex justify-between mb-4">
+                            <Skeleton width={150} height={28} />
+                            <Skeleton width={80} height={20} />
+                        </div>
+                        <Skeleton width="100%" height={80} className="mb-3" variant="card" />
+                        <Skeleton width="100%" height={80} className="mb-3" variant="card" />
+                        <Skeleton width="100%" height={80} variant="card" />
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="dashboard">

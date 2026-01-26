@@ -1,0 +1,16 @@
+.manage-academy .module-card {
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.manage-academy .module-header {
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+.manage-academy .lesson-item {
+    transition: background-color 0.2s;
+}
+
+.manage-academy .lesson-item:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}

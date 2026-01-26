@@ -17,6 +17,7 @@ export const Card: React.FC<CardProps> = ({
 }) => {
     const classes = [
         'card',
+        'glass-card',
         `card-${variant}`,
         `card-padding-${padding}`,
         noBorder && 'card-no-border',

@@ -1,0 +1,22 @@
+.notification-center {
+    position: relative;
+    z-index: 50;
+}
+
+/* Custom scrollbar for notification list */
+.notification-center ::-webkit-scrollbar {
+    width: 6px;
+}
+
+.notification-center ::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.notification-center ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+
+.notification-center ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+}

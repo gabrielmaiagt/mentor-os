@@ -1,7 +1,6 @@
 .card {
-    background-color: var(--bg-card);
+    /* Background and Border handled by glass-card or variants */
     border-radius: var(--radius-lg);
-    border: 1px solid var(--border-subtle);
     transition: all var(--transition-base);
 }
 

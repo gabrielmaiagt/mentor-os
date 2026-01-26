@@ -36,28 +36,49 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
-
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
-            setFirebaseUser(fbUser);
-
-            if (fbUser) {
-                // Fetch user data from Firestore
-                const userDoc = await getDoc(doc(db, 'users', fbUser.uid));
-                if (userDoc.exists()) {
-                    setUser({ id: fbUser.uid, ...userDoc.data() } as User);
-                } else {
-                    // User exists in Auth but not in Firestore (shouldn't happen normally)
-                    setUser(null);
+        const unsubscribe = onAuthStateChanged(
+            auth,
+            async (fbUser) => {
+                try {
+                    setFirebaseUser(fbUser);
+                    if (fbUser) {
+                        const userDoc = await getDoc(doc(db, 'users', fbUser.uid));
+                        if (userDoc.exists()) {
+                            setUser({ id: fbUser.uid, ...userDoc.data() } as User);
+                        } else {
+                            setUser(null);
+                        }
+                    } else {
+                        setUser(null);
+                    }
+                } catch (error) {
+                    console.error("Error fetching user profile:", error);
+                } finally {
+                    setLoading(false);
                 }
-            } else {
-                setUser(null);
+            },
+            (error) => {
+                console.error("Auth initialization error:", error);
+                setLoading(false);
             }
+        );
 
-            setLoading(false);
-        });
+        // Safety timeout: stop loading after 5 seconds if auth doesn't respond
+        const timeoutId = setTimeout(() => {
+            setLoading((prev) => {
+                if (prev) {
+                    console.warn("Auth check timed out, forcing loading false");
+                    return false;
+                }
+                return prev;
+            });
+        }, 5000);
 
-        return () => unsubscribe();
+        return () => {
+            unsubscribe();
+            clearTimeout(timeoutId);
+        };
     }, []);
 
     const signIn = async (email: string, password: string) => {

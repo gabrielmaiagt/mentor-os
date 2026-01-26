@@ -21,6 +21,11 @@ import TemplatesPage from './pages/Templates';
 import ProfilePage from './pages/Profile';
 import MenteeCallsPage from './pages/MenteeCalls';
 import MenteeTasksPage from './pages/MenteeTasks';
+import ResourcesPage from './pages/Resources/Resources';
+import AcademyPage from './pages/Academy/Academy';
+import ManageAcademyPage from './pages/Academy/ManageAcademy';
+import WarmingPage from './pages/Warming/Warming';
+import MiningPage from './pages/Mining/Mining';
 
 // Placeholder pages for remaining routes
 const PlaceholderPage: React.FC<{ title: string }> = ({ title }) => (
@@ -65,6 +70,9 @@ function App() {
               <Route path="/calendar" element={<CalendarPage />} />
               <Route path="/finance" element={<FinancePage />} />
               <Route path="/templates" element={<TemplatesPage />} />
+              <Route path="/resources" element={<ResourcesPage />} />
+              <Route path="/warming" element={<WarmingPage />} />
+              <Route path="/academy/manage" element={<ManageAcademyPage />} />
               <Route path="/onboarding-editor" element={<OnboardingEditorPage />} />
             </Route>
 
@@ -73,6 +81,11 @@ function App() {
               <Route path="/me" element={<MenteeHomePage />} />
               <Route path="/me/calls" element={<MenteeCallsPage />} />
               <Route path="/me/tasks" element={<MenteeTasksPage />} />
+              <Route path="/me/resources" element={<ResourcesPage />} />
+              <Route path="/me/academy" element={<AcademyPage />} />
+              <Route path="/me/mining" element={<MiningPage />} />
+              <Route path="/me/warming" element={<WarmingPage />} />
+              <Route path="/warming" element={<WarmingPage />} />
               <Route path="/me/how-it-works" element={<MenteeHowItWorksPage />} />
             </Route>
 

@@ -12,6 +12,10 @@
     transition: width var(--transition-base);
 }
 
+.sidebar-close-btn {
+    display: none;
+}
+
 /* Header */
 .sidebar-header {
     display: flex;
@@ -188,6 +192,53 @@
 
 @media (max-width: 768px) {
     .sidebar {
-        display: none;
+        display: flex;
+        transform: translateX(-100%);
+        width: 80%;
+        /* Or fixed width like 280px */
+        max-width: 320px;
+        box-shadow: none;
+    }
+
+    .sidebar.open {
+        transform: translateX(0);
+        box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .sidebar-logo-text,
+    .sidebar-nav-label,
+    .sidebar-user-info {
+        display: block;
+        /* Show labels on mobile menu */
+    }
+
+    .sidebar-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(4px);
+        z-index: 45;
+        /* Below sidebar (50) */
+        animation: fadeIn 0.2s ease;
+    }
+
+    .sidebar-close-btn {
+        display: block;
+        background: transparent;
+        border: none;
+        color: var(--text-secondary);
+        font-size: 24px;
+        cursor: pointer;
+        padding: 4px;
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
     }
 }

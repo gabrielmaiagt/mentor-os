@@ -1,0 +1,26 @@
+.resources-page {
+    /* Standard Layout using global padding */
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.resource-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.resource-card:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+}
+
+/* Custom Select Styling to match theme */
+select {
+    color: var(--text-primary);
+}
+
+select option {
+    background-color: var(--bg-card);
+    color: var(--text-primary);
+}

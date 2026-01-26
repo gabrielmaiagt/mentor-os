@@ -10,7 +10,11 @@ import {
     FileText,
     Target,
     Crosshair,
-    Home
+    Home,
+    FolderOpen,
+    GraduationCap,
+    Flame,
+    Pickaxe
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import './Sidebar.css';
@@ -29,69 +33,89 @@ const mentorNavItems: NavItem[] = [
     { path: '/mentees', label: 'Mentorados', icon: <Users size={20} /> },
     { path: '/calendar', label: 'Calendário', icon: <Calendar size={20} /> },
     { path: '/finance', label: 'Financeiro', icon: <DollarSign size={20} /> },
+    { path: '/academy/manage', label: 'Academy', icon: <GraduationCap size={20} /> },
     { path: '/templates', label: 'Templates', icon: <FileText size={20} /> },
+    { path: '/warming', label: 'Aquecimento X1', icon: <Flame size={20} /> },
+    { path: '/resources', label: 'Recursos', icon: <FolderOpen size={20} /> },
     { path: '/onboarding-editor', label: 'Onboarding', icon: <UserCircle size={20} /> },
 ];
 
 const menteeNavItems: NavItem[] = [
     { path: '/me', label: 'Minha Jornada', icon: <Home size={20} /> },
+    { path: '/me/mining', label: 'Mineração', icon: <Pickaxe size={20} /> },
+    { path: '/me/academy', label: 'Academy', icon: <GraduationCap size={20} /> },
+    { path: '/me/warming', label: 'Aquecimento X1', icon: <Flame size={20} /> },
     { path: '/me/calls', label: 'Minhas Calls', icon: <Calendar size={20} /> },
+    { path: '/me/resources', label: 'Recursos', icon: <FolderOpen size={20} /> },
     { path: '/profile', label: 'Meu Perfil', icon: <UserCircle size={20} /> },
 ];
 
-export const Sidebar: React.FC = () => {
+interface SidebarProps {
+    isOpen?: boolean;
+    onClose?: () => void;
+}
+
+export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => {
     const { user, signOut } = useAuth();
 
     const navItems = user?.role === 'mentee' ? menteeNavItems : mentorNavItems;
 
     return (
-        <aside className="sidebar">
-            <div className="sidebar-header">
-                <div className="sidebar-logo">
-                    <Crosshair size={28} className="sidebar-logo-icon" />
-                    <span className="sidebar-logo-text">MentorOS</span>
-                </div>
-            </div>
-
-            <nav className="sidebar-nav">
-                <ul className="sidebar-nav-list">
-                    {navItems.map((item) => (
-                        <li key={item.path}>
-                            <NavLink
-                                to={item.path}
-                                className={({ isActive }) =>
-                                    `sidebar-nav-item ${isActive ? 'active' : ''}`
-                                }
-                            >
-                                <span className="sidebar-nav-icon">{item.icon}</span>
-                                <span className="sidebar-nav-label">{item.label}</span>
-                            </NavLink>
-                        </li>
-                    ))}
-                </ul>
-            </nav>
-
-            <div className="sidebar-footer">
-                <div className="sidebar-user">
-                    <div className="sidebar-user-avatar">
-                        {user?.displayName?.charAt(0).toUpperCase() || 'U'}
+        <>
+            {isOpen && <div className="sidebar-overlay" onClick={onClose} />}
+            <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
+                <div className="sidebar-header">
+                    <div className="sidebar-logo">
+                        <Crosshair size={28} className="sidebar-logo-icon" />
+                        <span className="sidebar-logo-text">MentorOS</span>
                     </div>
-                    <div className="sidebar-user-info">
-                        <span className="sidebar-user-name">{user?.displayName || 'Usuário'}</span>
-                        <span className="sidebar-user-role">
-                            {user?.role === 'mentor' ? 'Mentor' : 'Mentorado'}
-                        </span>
-                    </div>
+                    {/* Close button for mobile */}
+                    <button className="sidebar-close-btn" onClick={onClose}>
+                        ×
+                    </button>
                 </div>
-                <button
-                    className="sidebar-logout-btn"
-                    onClick={signOut}
-                    title="Sair"
-                >
-                    Sair
-                </button>
-            </div>
-        </aside>
+
+                <nav className="sidebar-nav">
+                    <ul className="sidebar-nav-list">
+                        {navItems.map((item) => (
+                            <li key={item.path}>
+                                <NavLink
+                                    to={item.path}
+                                    className={({ isActive }) =>
+                                        `sidebar-nav-item ${isActive ? 'active' : ''}`
+                                    }
+                                    onClick={onClose} // Close menu on nav click
+                                >
+                                    <span className="sidebar-nav-icon">{item.icon}</span>
+                                    <span className="sidebar-nav-label">{item.label}</span>
+                                </NavLink>
+                            </li>
+                        ))}
+                    </ul>
+                </nav>
+
+                <div className="sidebar-footer">
+                    <div className="sidebar-user">
+                        <div className="sidebar-user-avatar">
+                            {user?.displayName?.charAt(0).toUpperCase() || 'U'}
+                        </div>
+                        <div className="sidebar-user-info">
+                            <span className="sidebar-user-name">{user?.displayName || 'Usuário'}</span>
+                            <span className="sidebar-user-role">
+                                {user?.role === 'mentor' ? 'Mentor' : 'Mentorado'}
+                            </span>
+                        </div>
+                    </div>
+                    <button
+                        className="sidebar-logout-btn"
+                        onClick={signOut}
+                        title="Sair"
+                    >
+                        Sair
+                    </button>
+                </div>
+            </aside>
+        </>
     );
 };
 

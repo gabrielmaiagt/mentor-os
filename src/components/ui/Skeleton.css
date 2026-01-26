@@ -1,0 +1,49 @@
+.skeleton {
+    background-color: rgba(255, 255, 255, 0.05);
+    /* Base generic color */
+    border-radius: var(--radius-md);
+    position: relative;
+    overflow: hidden;
+    /* Optional: maintain layout flow */
+    transform: translateZ(0);
+}
+
+.skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg,
+            transparent 0%,
+            rgba(255, 255, 255, 0.05) 50%,
+            transparent 100%);
+    animation: skeleton-shimmer 1.5s infinite;
+}
+
+@keyframes skeleton-shimmer {
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+/* Variants */
+.skeleton-text {
+    height: 1em;
+    border-radius: var(--radius-sm);
+    margin-bottom: 0.5em;
+}
+
+.skeleton-circular {
+    border-radius: 50%;
+}
+
+.skeleton-rectangular {
+    /* Uses explicit width/height or fills parent */
+    height: 100%;
+}
+
+.skeleton-card {
+    /* Mimic a card */
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+}

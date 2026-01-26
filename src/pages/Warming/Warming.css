@@ -1,0 +1,47 @@
+/* Custom Scrollbar for Chips */
+.warming-page .no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+.warming-page .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.shadow-glow-success {
+    box-shadow: 0 0 20px rgba(var(--success-rgb), 0.4);
+}
+
+.warming-page .chip-card {
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.warming-page .chip-card:hover {
+    transform: translateY(-2px);
+}
+
+/* Empty State Styles */
+.empty-warming-state {
+    text-align: center;
+    padding: 6rem 2rem;
+    background: linear-gradient(180deg, rgba(234, 179, 8, 0.03) 0%, rgba(255, 255, 255, 0.02) 100%);
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.empty-icon-wrapper {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    background: rgba(234, 179, 8, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 24px;
+    border: 1px solid rgba(234, 179, 8, 0.2);
+    box-shadow: 0 0 20px rgba(234, 179, 8, 0.1);
+}
