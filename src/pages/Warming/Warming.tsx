@@ -315,73 +315,31 @@ export const WarmingPage: React.FC = () => {
                                             )}
                                         </div>
 
-                                        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-10">
-                                            {/* Left Content */}
-                                            <div className="flex-1 space-y-6">
-                                                <div>
-                                                    <h2 className="text-4xl lg:text-6xl font-bold text-white mb-4 tracking-tight leading-none bg-gradient-to-br from-white via-white to-zinc-300 bg-clip-text text-transparent">
-                                                        {currentProtocol?.title.replace(/Dia \d+ - /, '')}
-                                                    </h2>
-                                                    <p className="text-zinc-300 text-lg lg:text-xl max-w-2xl leading-relaxed">
-                                                        {currentProtocol?.description}
-                                                    </p>
-                                                </div>
-
-                                                {/* Progress Bar - Modern Linear */}
-                                                <div className="w-full max-w-md">
-                                                    <div className="flex items-center justify-between text-sm mb-3">
-                                                        <span className="text-zinc-400 font-medium">Progresso do Dia</span>
-                                                        <span className="text-white font-bold text-lg">{Math.round(progress)}%</span>
-                                                    </div>
-                                                    <div className="h-3 bg-white/5 rounded-full overflow-hidden backdrop-blur-sm border border-white/10">
-                                                        <div
-                                                            className="h-full bg-gradient-to-r from-warning via-yellow-400 to-warning transition-all duration-1000 ease-out relative overflow-hidden"
-                                                            style={{ width: `${progress}%` }}
-                                                        >
-                                                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                        {/* Content Section */}
+                                        <div className="space-y-8">
+                                            <div>
+                                                <h2 className="text-4xl lg:text-6xl font-bold text-white mb-4 tracking-tight leading-none">
+                                                    {currentProtocol?.title.replace(/Dia \d+ - /, '')}
+                                                </h2>
+                                                <p className="text-zinc-300 text-lg lg:text-xl max-w-3xl leading-relaxed">
+                                                    {currentProtocol?.description}
+                                                </p>
                                             </div>
 
-                                            {/* Right - Circular Progress (Larger & Premium) */}
-                                            <div className="relative w-48 h-48 lg:w-56 lg:h-56 flex-shrink-0 group">
-                                                {/* Glow effect */}
-                                                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/30 via-blue-500/30 to-warning/30 blur-2xl rounded-full opacity-60 group-hover:opacity-100 transition-opacity duration-700 animate-pulse-slow" />
-
-                                                {/* SVG Circle */}
-                                                <svg className="w-full h-full transform -rotate-90 drop-shadow-2xl relative z-10">
-                                                    <defs>
-                                                        <linearGradient id="progressGradientWarming" x1="0%" y1="0%" x2="100%" y2="100%">
-                                                            <stop offset="0%" stopColor="#8b5cf6" />
-                                                            <stop offset="50%" stopColor="#3b82f6" />
-                                                            <stop offset="100%" stopColor="#eab308" />
-                                                        </linearGradient>
-                                                    </defs>
-                                                    <circle
-                                                        cx="50%" cy="50%" r="45%"
-                                                        stroke="currentColor" strokeWidth="8"
-                                                        fill="transparent" className="text-white/5"
-                                                    />
-                                                    <circle
-                                                        cx="50%" cy="50%" r="45%"
-                                                        stroke="url(#progressGradientWarming)" strokeWidth="8"
-                                                        fill="transparent"
-                                                        strokeDasharray={`${2 * Math.PI * (0.45 * 224)}`}
-                                                        strokeDashoffset={`${2 * Math.PI * (0.45 * 224) * (1 - progress / 100)}`}
-                                                        className="transition-all duration-1000 ease-out"
-                                                        strokeLinecap="round"
-                                                    />
-                                                </svg>
-
-                                                {/* Center Content */}
-                                                <div className="absolute inset-0 flex flex-col items-center justify-center text-center z-20">
-                                                    <span className="text-5xl lg:text-6xl font-black text-white tracking-tighter mb-1 drop-shadow-lg">
-                                                        {Math.round(progress)}%
-                                                    </span>
-                                                    <span className="text-xs text-zinc-400 uppercase tracking-widest font-bold">
-                                                        Concluído
-                                                    </span>
+                                            {/* Large Progress Bar - Full Width */}
+                                            <div className="w-full space-y-4">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-zinc-400 font-semibold text-base">Progresso do Dia</span>
+                                                    <span className="text-white font-black text-4xl tabular-nums">{Math.round(progress)}%</span>
+                                                </div>
+                                                <div className="h-6 bg-white/5 rounded-full overflow-hidden backdrop-blur-sm border border-white/10 shadow-inner">
+                                                    <div
+                                                        className="h-full bg-gradient-to-r from-purple-500 via-blue-500 to-warning transition-all duration-1000 ease-out relative overflow-hidden shadow-lg"
+                                                        style={{ width: `${progress}%` }}
+                                                    >
+                                                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
+                                                        <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent" />
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
