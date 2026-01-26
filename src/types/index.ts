@@ -177,6 +177,8 @@ export interface Deal extends FirestoreTimestamps {
     leadName?: string;
     leadWhatsapp?: string;
     email?: string;
+    source?: string;
+    tags?: string[];
 }
 
 // Payment

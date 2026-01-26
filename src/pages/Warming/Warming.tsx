@@ -290,47 +290,58 @@ export const WarmingPage: React.FC = () => {
                         {activeChip && (
                             <div className="xl:col-span-9 flex flex-col gap-6 animate-slide-in">
                                 {/* Day Status Card */}
-                                <div className="glass-panel rounded-2xl p-6 relative overflow-hidden bg-gradient-to-br from-white/5 to-transparent">
-                                    <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-6">
-                                        <div className="flex-1">
-                                            <div className="flex items-center gap-3 mb-2">
-                                                <Badge variant="default" className="border-warning/50 text-warning bg-warning/5 px-2 py-0.5 text-xs">
-                                                    DIA {activeChip.currentDay} / 10
+                                <div className="glass-panel rounded-2xl p-8 relative overflow-hidden bg-gradient-to-br from-zinc-900 via-black to-zinc-950 border border-white/10 shadow-2xl">
+                                    <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-warning/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+
+                                    <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-8">
+                                        <div className="flex-1 space-y-4">
+                                            <div className="flex items-center gap-3">
+                                                <Badge variant="default" className="border border-warning text-warning bg-transparent px-3 py-1 text-xs uppercase tracking-widest font-bold">
+                                                    Dia {activeChip.currentDay} / 10
                                                 </Badge>
-                                                {isDayComplete && (
-                                                    <Badge variant="success" className="px-2 py-0.5 text-xs animate-in fade-in zoom-in">
-                                                        <Check size={10} className="mr-1" /> COMPLETO
+                                                {isDayComplete ? (
+                                                    <Badge variant="success" className="px-3 py-1 text-xs animate-in fade-in bg-success/20 text-success border border-success/30">
+                                                        <Check size={12} className="mr-1.5" /> COMPLETO
                                                     </Badge>
+                                                ) : (
+                                                    <span className="text-xs text-secondary animate-pulse">
+                                                        Em andamento...
+                                                    </span>
                                                 )}
                                             </div>
-                                            <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
-                                                {currentProtocol?.title.replace(/Dia \d+ - /, '')}
-                                            </h2>
-                                            <p className="text-secondary text-base max-w-xl leading-relaxed">
-                                                {currentProtocol?.description}
-                                            </p>
+
+                                            <div>
+                                                <h2 className="text-3xl md:text-5xl font-bold text-white mb-3 tracking-tight">
+                                                    {currentProtocol?.title.replace(/Dia \d+ - /, '')}
+                                                </h2>
+                                                <p className="text-zinc-400 text-lg md:text-xl max-w-2xl leading-relaxed font-light">
+                                                    {currentProtocol?.description}
+                                                </p>
+                                            </div>
                                         </div>
 
-                                        {/* Progress Circle - Compact */}
-                                        <div className="relative w-20 h-20 flex-shrink-0">
-                                            <svg className="w-full h-full transform -rotate-90">
+                                        {/* Progress Circle - Larger & Cleaner */}
+                                        <div className="relative w-32 h-32 flex-shrink-0 group">
+                                            <div className="absolute inset-0 bg-warning/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                                            <svg className="w-full h-full transform -rotate-90 drop-shadow-2xl">
                                                 <circle
-                                                    cx="40" cy="40" r="36"
+                                                    cx="64" cy="64" r="58"
                                                     stroke="currentColor" strokeWidth="6"
                                                     fill="transparent" className="text-white/5"
                                                 />
                                                 <circle
-                                                    cx="40" cy="40" r="36"
+                                                    cx="64" cy="64" r="58"
                                                     stroke="currentColor" strokeWidth="6"
                                                     fill="transparent"
-                                                    strokeDasharray={226}
-                                                    strokeDashoffset={226 - (226 * progress) / 100}
+                                                    strokeDasharray={364}
+                                                    strokeDashoffset={364 - (364 * progress) / 100}
                                                     className="text-warning transition-all duration-1000 ease-out"
                                                     strokeLinecap="round"
                                                 />
                                             </svg>
                                             <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                                                <span className="text-sm font-bold text-white">{Math.round(progress)}%</span>
+                                                <span className="text-3xl font-bold text-white tracking-tighter">{Math.round(progress)}%</span>
+                                                <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mt-1">Concluído</span>
                                             </div>
                                         </div>
                                     </div>

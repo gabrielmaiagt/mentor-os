@@ -145,23 +145,16 @@ export const ResourcesPage: React.FC = () => {
             </div>
 
             {/* Controls Bar (Tabs & Search) */}
-            <div className="flex flex-col lg:flex-row gap-4 mb-8 items-center bg-card/50 p-2 rounded-xl border border-white/5 backdrop-blur-sm">
-
-                {/* Tabs - Scrollable on mobile */}
-                <div className="flex gap-1 overflow-x-auto w-full lg:w-auto pb-2 lg:pb-0 no-scrollbar">
+            <div className="resources-controls">
+                {/* Tabs */}
+                <div className="resources-tabs">
                     {TABS.map(tab => {
                         const isActive = activeTab === tab.key;
                         return (
                             <button
                                 key={tab.key}
                                 onClick={() => setActiveTab(tab.key)}
-                                className={`
-                                    px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 whitespace-nowrap
-                                    ${isActive
-                                        ? 'bg-primary text-white shadow-lg shadow-primary/20 scale-[1.02]'
-                                        : 'text-secondary hover:text-white hover:bg-white/5'
-                                    }
-                                `}
+                                className={`filter-tab ${isActive ? 'active' : ''}`}
                             >
                                 <tab.icon size={16} className={isActive ? 'animate-pulse-slow' : 'opacity-70'} />
                                 {tab.label}
@@ -173,14 +166,12 @@ export const ResourcesPage: React.FC = () => {
                 <div className="flex-1" />
 
                 {/* Search */}
-                <div className="relative w-full lg:w-72 group">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted group-hover:text-primary transition-colors" size={16} />
+                <div className="resources-search group">
+                    <Search className="search-icon" size={16} />
                     <input
                         type="text"
                         placeholder="Buscar arquivo..."
-                        className="w-full bg-black/20 border border-white/10 rounded-lg pl-10 pr-4 py-2.5 text-sm 
-                                   focus:outline-none focus:border-primary/50 focus:bg-black/40 transition-all
-                                   group-hover:border-white/20 placeholder:text-muted/70"
+                        className="search-input"
                         value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
                     />

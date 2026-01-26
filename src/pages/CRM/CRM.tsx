@@ -6,7 +6,8 @@ import {
     Plus,
     Clock,
     CheckCircle,
-    Flame
+    Flame,
+    Search
 } from 'lucide-react';
 import { Card, Badge, Button, Modal } from '../../components/ui';
 import { useToast } from '../../components/ui/Toast';
@@ -86,7 +87,9 @@ export const CRMPage: React.FC = () => {
         leadWhatsapp: '',
         offerName: 'Mentoria Tráfego Direto',
         pitchAmount: 2000,
-        heat: 'HOT' as DealHeat
+        heat: 'HOT' as DealHeat,
+        source: 'INSTAGRAM',
+        tags: ''
     });
 
     const handleCreateDeal = async (e: React.FormEvent) => {
@@ -94,6 +97,7 @@ export const CRMPage: React.FC = () => {
         try {
             await addDoc(collection(db, 'deals'), {
                 ...newDeal,
+                tags: newDeal.tags.split(',').map(t => t.trim()).filter(t => t),
                 email: newDeal.email,
                 leadId: `l-${Date.now()}`, // Still mocking lead ID relation as we don't have Leads module fully strict yet
                 paymentPreference: 'UNKNOWN',
@@ -104,9 +108,17 @@ export const CRMPage: React.FC = () => {
                 createdBy: auth.currentUser?.uid
             });
             setIsModalOpen(false);
-            setIsModalOpen(false);
             toast.success('Deal criado com sucesso!');
-            setNewDeal({ leadName: '', email: '', leadWhatsapp: '', offerName: 'Mentoria Tráfego Direto', pitchAmount: 2000, heat: 'HOT' });
+            setNewDeal({
+                leadName: '',
+                email: '',
+                leadWhatsapp: '',
+                offerName: 'Mentoria Tráfego Direto',
+                pitchAmount: 2000,
+                heat: 'HOT',
+                source: 'INSTAGRAM',
+                tags: ''
+            });
         } catch (error) {
             console.error("Error creating deal:", error);
             toast.error("Erro ao criar deal");
@@ -216,8 +228,22 @@ export const CRMPage: React.FC = () => {
         }
     };
 
+    const [filters, setFilters] = useState({
+        search: '',
+        heat: 'ALL',
+        source: 'ALL',
+    });
+
     const getDealsByStage = (stage: DealStage) =>
-        deals.filter(d => d.stage === stage);
+        deals.filter(d => {
+            const matchesStage = d.stage === stage;
+            const matchesHeat = filters.heat === 'ALL' || d.heat === filters.heat;
+            const matchesSource = filters.source === 'ALL' || d.source === filters.source;
+            const matchesSearch = (d.leadName || '').toLowerCase().includes(filters.search.toLowerCase()) ||
+                (d.email && d.email.toLowerCase().includes(filters.search.toLowerCase()));
+
+            return matchesStage && matchesHeat && matchesSource && matchesSearch;
+        });
 
     const getStageTotals = (stage: DealStage) => {
         const stageDeals = getDealsByStage(stage);
@@ -244,6 +270,46 @@ export const CRMPage: React.FC = () => {
                         Novo Deal
                     </Button>
                 </div>
+            </div>
+
+            {/* Filter Bar */}
+            <div className="crm-filters mb-6 flex gap-4 items-center bg-card/30 p-4 rounded-xl border border-white/5 backdrop-blur-sm overflow-x-auto no-scrollbar">
+                <div className="flex items-center gap-2 min-w-[200px]">
+                    <Search size={16} className="text-secondary" />
+                    <input
+                        type="text"
+                        placeholder="Buscar por nome ou email..."
+                        className="bg-transparent border-none outline-none text-sm text-primary w-full placeholder:text-secondary/50"
+                        value={filters.search}
+                        onChange={e => setFilters({ ...filters, search: e.target.value })}
+                    />
+                </div>
+                <div className="h-6 w-px bg-white/10" />
+
+                <select
+                    className="bg-transparent text-sm text-secondary outline-none cursor-pointer hover:text-primary transition-colors"
+                    value={filters.heat}
+                    onChange={e => setFilters({ ...filters, heat: e.target.value as any })}
+                >
+                    <option value="ALL">Todas Temperaturas</option>
+                    <option value="HOT">Quente 🔥</option>
+                    <option value="WARM">Morno 😐</option>
+                    <option value="COLD">Frio ❄️</option>
+                </select>
+
+                <select
+                    className="bg-transparent text-sm text-secondary outline-none cursor-pointer hover:text-primary transition-colors"
+                    value={filters.source}
+                    onChange={e => setFilters({ ...filters, source: e.target.value })}
+                >
+                    <option value="ALL">Todas Origens</option>
+                    <option value="INSTAGRAM">Instagram</option>
+                    <option value="YOUTUBE">YouTube</option>
+                    <option value="TIKTOK">TikTok</option>
+                    <option value="ADS">Ads (Tráfego)</option>
+                    <option value="INDICATION">Indicação</option>
+                    <option value="OUTBOUND">Outbound</option>
+                </select>
             </div>
 
             {/* Pipeline */}
@@ -441,6 +507,34 @@ export const CRMPage: React.FC = () => {
                                 <option value="WARM">Morno 😐</option>
                                 <option value="COLD">Frio ❄️</option>
                             </select>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-secondary mb-1">Origem (Source)</label>
+                            <select
+                                className="w-full bg-secondary border border-subtle rounded-md px-3 py-2 text-primary focus:border-accent outline-none"
+                                value={newDeal.source}
+                                onChange={e => setNewDeal({ ...newDeal, source: e.target.value })}
+                            >
+                                <option value="INSTAGRAM">Instagram</option>
+                                <option value="YOUTUBE">YouTube</option>
+                                <option value="TIKTOK">TikTok</option>
+                                <option value="ADS">Ads (Tráfego)</option>
+                                <option value="INDICATION">Indicação</option>
+                                <option value="OUTBOUND">Outbound</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-secondary mb-1">Tags (separar por vírgula)</label>
+                            <input
+                                type="text"
+                                className="w-full bg-secondary border border-subtle rounded-md px-3 py-2 text-primary focus:border-accent outline-none"
+                                placeholder="Ex: urgente, vip"
+                                value={newDeal.tags}
+                                onChange={e => setNewDeal({ ...newDeal, tags: e.target.value })}
+                            />
                         </div>
                     </div>
                     <div className="flex justify-end gap-2 mt-6">
