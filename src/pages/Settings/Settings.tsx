@@ -19,7 +19,7 @@ const Toggle = ({ enabled, onChange }: { enabled: boolean; onChange: (val: boole
 );
 
 export const SettingsPage: React.FC = () => {
-    const { features, toggleFeature } = useFeatureFlags();
+    const { features, loading, toggleFeature } = useFeatureFlags();
 
     const featureList = [
         { key: 'enableMining', label: 'Mineração', icon: <Hammer />, desc: 'Aba de ferramentas de mineração' },
@@ -29,6 +29,14 @@ export const SettingsPage: React.FC = () => {
         { key: 'enableRanking', label: 'Ranking', icon: <Trophy />, desc: 'Ranking de gamificação' },
         { key: 'enableResources', label: 'Materiais', icon: <FolderOpen />, desc: 'Área de downloads e links' },
     ];
+
+    if (loading) {
+        return (
+            <div className="settings-page p-6 max-w-4xl mx-auto">
+                <div className="text-center text-secondary py-12">Carregando configurações...</div>
+            </div>
+        );
+    }
 
     return (
         <div className="settings-page p-6 max-w-4xl mx-auto">

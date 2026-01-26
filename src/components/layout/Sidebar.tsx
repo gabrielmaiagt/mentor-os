@@ -14,7 +14,10 @@ import {
     FolderOpen,
     GraduationCap,
     Flame,
-    Pickaxe
+    Pickaxe,
+    Shield,
+    Layers,
+    Settings
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useFeatureFlags } from '../../hooks/useFeatureFlags';
@@ -36,9 +39,12 @@ const mentorNavItems: NavItem[] = [
     { path: '/finance', label: 'Financeiro', icon: <DollarSign size={20} /> },
     { path: '/academy/manage', label: 'Academy', icon: <GraduationCap size={20} /> },
     { path: '/templates', label: 'Templates', icon: <FileText size={20} /> },
+    { path: '/swipe-file', label: 'Swipe File', icon: <Layers size={20} /> },
+    { path: '/assets', label: 'Ativos', icon: <Shield size={20} /> },
     { path: '/warming', label: 'Aquecimento X1', icon: <Flame size={20} /> },
     { path: '/resources', label: 'Recursos', icon: <FolderOpen size={20} /> },
     { path: '/onboarding-editor', label: 'Onboarding', icon: <UserCircle size={20} /> },
+    { path: '/settings', label: 'Configurações', icon: <Settings size={20} /> },
 ];
 
 const menteeNavItems: NavItem[] = [
