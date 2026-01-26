@@ -1,0 +1,105 @@
+.mentor-login-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    padding: var(--space-6);
+}
+
+.mentor-login-container {
+    max-width: 480px;
+    width: 100%;
+}
+
+.mentor-login-card {
+    padding: var(--space-8);
+}
+
+.mentor-login-header {
+    text-align: center;
+    margin-bottom: var(--space-8);
+}
+
+.mentor-login-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto var(--space-4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(249, 115, 22, 0.1) 100%);
+    color: #f97316;
+}
+
+.mentor-login-title {
+    font-size: var(--text-2xl);
+    font-weight: var(--font-bold);
+    color: var(--text-primary);
+    margin-bottom: var(--space-2);
+}
+
+.mentor-login-subtitle {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+}
+
+.mentor-login-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.form-group label {
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+    color: var(--text-secondary);
+}
+
+.input-with-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-with-icon svg {
+    position: absolute;
+    left: var(--space-3);
+    color: var(--text-tertiary);
+    pointer-events: none;
+}
+
+.input-with-icon input {
+    padding-left: var(--space-10);
+}
+
+.mentor-login-footer {
+    margin-top: var(--space-6);
+    text-align: center;
+}
+
+.back-link {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: var(--text-sm);
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.back-link:hover {
+    color: var(--text-primary);
+}
+
+@media (max-width: 768px) {
+    .mentor-login-card {
+        padding: var(--space-6);
+    }
+}

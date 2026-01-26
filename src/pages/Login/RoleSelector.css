@@ -1,0 +1,135 @@
+.role-selector-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    padding: var(--space-6);
+}
+
+.role-selector-container {
+    max-width: 1000px;
+    width: 100%;
+}
+
+.role-selector-header {
+    text-align: center;
+    margin-bottom: var(--space-10);
+}
+
+.role-selector-title {
+    font-size: 2.5rem;
+    font-weight: var(--font-bold);
+    color: var(--text-primary);
+    margin-bottom: var(--space-3);
+    background: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.role-selector-subtitle {
+    font-size: var(--text-lg);
+    color: var(--text-secondary);
+}
+
+.role-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: var(--space-6);
+}
+
+.role-card {
+    padding: var(--space-8);
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid var(--border-subtle);
+    position: relative;
+    overflow: hidden;
+}
+
+.role-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--accent-primary) 0%, var(--accent-primary-hover) 100%);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+}
+
+.role-card:hover::before {
+    transform: scaleX(1);
+}
+
+.role-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 24px rgba(139, 92, 246, 0.3);
+    border-color: var(--accent-primary);
+}
+
+.role-card-icon {
+    width: 96px;
+    height: 96px;
+    margin: 0 auto var(--space-6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
+    color: var(--accent-primary);
+}
+
+.role-card-mentor .role-card-icon {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(249, 115, 22, 0.1) 100%);
+    color: #f97316;
+}
+
+.role-card-mentee .role-card-icon {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+    color: #3b82f6;
+}
+
+.role-card-title {
+    font-size: var(--text-2xl);
+    font-weight: var(--font-bold);
+    color: var(--text-primary);
+    margin-bottom: var(--space-3);
+}
+
+.role-card-description {
+    font-size: var(--text-base);
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: var(--space-6);
+}
+
+.role-card-action {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-weight: var(--font-semibold);
+    color: var(--accent-primary);
+    transition: gap 0.3s ease;
+}
+
+.role-card:hover .role-card-action {
+    gap: var(--space-4);
+}
+
+@media (max-width: 768px) {
+    .role-selector-title {
+        font-size: 2rem;
+    }
+
+    .role-cards-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .role-card {
+        padding: var(--space-6);
+    }
+}

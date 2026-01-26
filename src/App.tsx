@@ -5,7 +5,6 @@ import { Shell } from './components/layout';
 import './styles/global.css';
 
 // Page imports
-import LoginPage from './pages/Login';
 import DashboardPage from './pages/Dashboard';
 import ExecutionPage from './pages/Execution';
 import CRMPage from './pages/CRM';
@@ -29,6 +28,9 @@ import HowItWorksPage from './pages/HowItWorks/HowItWorks';
 import { SwipeFileLib } from './pages/SwipeFile/SwipeFileLib';
 import { AssetsManager } from './pages/Contingency/AssetsManager';
 import { SettingsPage } from './pages/Settings/Settings';
+import { RoleSelector } from './pages/Login/RoleSelector';
+import { MentorLogin } from './pages/Login/MentorLogin';
+import { MenteeLogin } from './pages/Login/MenteeLogin';
 
 function App() {
   return (
@@ -36,8 +38,10 @@ function App() {
       <AuthProvider>
         <ToastProvider>
           <Routes>
-            {/* Public route */}
-            <Route path="/login" element={<LoginPage />} />
+            {/* Public routes */}
+            <Route path="/login" element={<RoleSelector />} />
+            <Route path="/mentor/login" element={<MentorLogin />} />
+            <Route path="/mentee/login" element={<MenteeLogin />} />
 
             {/* Protected universal routes (Mentor & Mentee) */}
             <Route element={<Shell requireAuth allowedRoles={['mentor', 'mentee']} />}>
