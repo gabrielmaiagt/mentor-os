@@ -87,7 +87,69 @@ export const SettingsPage: React.FC = () => {
                         ))}
                     </div>
                 </Card>
+
+                <NotificationTester />
             </div>
         </div>
+    );
+};
+
+const NotificationTester = () => {
+    const [title, setTitle] = React.useState('Teste de Notificação');
+    const [body, setBody] = React.useState('Se você está vendo isso, as notificações estão funcionando!');
+
+    const handleTest = () => {
+        if (!("Notification" in window)) {
+            alert("Este navegador não suporta notificações de desktop.");
+            return;
+        }
+
+        if (Notification.permission === "granted") {
+            new Notification(title, { body, icon: '/favicon.ico' });
+        } else if (Notification.permission !== "denied") {
+            Notification.requestPermission().then((permission) => {
+                if (permission === "granted") {
+                    new Notification(title, { body, icon: '/favicon.ico' });
+                }
+            });
+        } else {
+            alert("Permissão para notificações foi negada. Verifique as configurações do navegador.");
+        }
+    };
+
+    return (
+        <Card className="p-6">
+            <h2 className="text-lg font-bold text-white mb-4 border-b border-white/10 pb-2">Teste de Notificações</h2>
+            <p className="text-secondary mb-4 text-sm">
+                Use esta área para verificar se o navegador está exibindo alertas corretamente.
+                Certifique-se de que o site tem permissão e que o "Não Perturbe" do Windows está desligado.
+            </p>
+            <div className="flex flex-col gap-4">
+                <div>
+                    <label className="block text-sm text-secondary mb-1">Título</label>
+                    <input
+                        type="text"
+                        value={title}
+                        onChange={e => setTitle(e.target.value)}
+                        className="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-white focus:outline-none focus:border-white/30"
+                    />
+                </div>
+                <div>
+                    <label className="block text-sm text-secondary mb-1">Mensagem</label>
+                    <input
+                        type="text"
+                        value={body}
+                        onChange={e => setBody(e.target.value)}
+                        className="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-white focus:outline-none focus:border-white/30"
+                    />
+                </div>
+                <button
+                    onClick={handleTest}
+                    className="self-start px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded font-medium transition-colors"
+                >
+                    Enviar Notificação de Teste
+                </button>
+            </div>
+        </Card>
     );
 };
