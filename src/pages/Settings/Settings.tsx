@@ -4,16 +4,37 @@ import { Card } from '../../components/ui';
 import { Shield, Hammer, BookOpen, Layers, Trophy, FolderOpen } from 'lucide-react';
 import './Settings.css';
 
-// Simple Toggle Component if Headless is not installed or configured
+// Simple Toggle Component with inline styles
 const Toggle = ({ enabled, onChange }: { enabled: boolean; onChange: (val: boolean) => void }) => (
     <button
+        type="button"
         onClick={() => onChange(!enabled)}
-        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${enabled ? 'bg-success' : 'bg-gray-700'
-            }`}
+        aria-pressed={enabled}
+        style={{
+            position: 'relative',
+            display: 'inline-flex',
+            height: '28px',
+            width: '52px',
+            alignItems: 'center',
+            borderRadius: '9999px',
+            border: 'none',
+            cursor: 'pointer',
+            transition: 'background-color 0.2s ease',
+            backgroundColor: enabled ? '#10b981' : '#374151',
+            padding: '2px',
+        }}
     >
         <span
-            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${enabled ? 'translate-x-6' : 'translate-x-1'
-                }`}
+            style={{
+                display: 'inline-block',
+                height: '22px',
+                width: '22px',
+                borderRadius: '9999px',
+                backgroundColor: 'white',
+                transition: 'transform 0.2s ease',
+                transform: enabled ? 'translateX(24px)' : 'translateX(2px)',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+            }}
         />
     </button>
 );
