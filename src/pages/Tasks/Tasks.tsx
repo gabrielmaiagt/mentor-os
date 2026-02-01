@@ -31,42 +31,70 @@ import { ptBR } from 'date-fns/locale';
 interface ParsedInput {
     title: string;
     startTime?: string;
+    endTime?: string;
     targetValue?: number;
 }
 
 const parseInput = (text: string): ParsedInput => {
     let title = text;
     let startTime: string | undefined;
+    let endTime: string | undefined;
     let targetValue: number | undefined;
 
-    // 1. Detect Time (e.g. "14:00", "09:30", "9h", "15h")
-    const timeMatch = text.match(/(\d{1,2}:\d{2})/);
-    if (timeMatch) {
-        startTime = timeMatch[1];
-        title = title.replace(timeMatch[0], '').trim();
-    } else {
-        const hourMatch = text.match(/\b(\d{1,2})[hH]\b/);
-        if (hourMatch) {
-            const h = parseInt(hourMatch[1]);
-            if (h >= 0 && h <= 23) {
-                startTime = `${h.toString().padStart(2, '0')}:00`;
-                title = title.replace(hourMatch[0], '').trim();
+    // 1. Detect Time Range (e.g. "21 e 22", "21-22", "21h as 22h", "14:00 ate 15:00")
+    // Regex logic: 
+    // Group 1: Start Time (HH:mm or HH)
+    // Group 2: Separator (e, -, ate, as)
+    // Group 3: End Time (HH:mm or HH)
+
+    // Complex Regex for Range:
+    const rangeMatch = text.match(/(\d{1,2}(?::\d{2})?)\s*(?:e|-|at[eé]|as|às)\s*(\d{1,2}(?::\d{2})?)/i);
+
+    const parseTime = (raw: string): string | undefined => {
+        if (raw.includes(':')) return raw.padStart(5, '0'); // 9:00 -> 09:00
+        const h = parseInt(raw);
+        if (h >= 0 && h <= 23) return `${h.toString().padStart(2, '0')}:00`;
+        return undefined;
+    };
+
+    if (rangeMatch) {
+        const start = parseTime(rangeMatch[1]);
+        const end = parseTime(rangeMatch[2]);
+
+        if (start && end) {
+            startTime = start;
+            endTime = end;
+            title = title.replace(rangeMatch[0], '').trim();
+        }
+    }
+
+    // 2. If no range, look for single start time
+    if (!startTime) {
+        const timeMatch = text.match(/(\d{1,2}:\d{2})/);
+        if (timeMatch) {
+            startTime = timeMatch[1];
+            title = title.replace(timeMatch[0], '').trim();
+        } else {
+            const hourMatch = text.match(/\b(\d{1,2})[hH]\b/);
+            if (hourMatch) {
+                const h = parseInt(hourMatch[1]);
+                if (h >= 0 && h <= 23) {
+                    startTime = `${h.toString().padStart(2, '0')}:00`;
+                    title = title.replace(hourMatch[0], '').trim();
+                }
             }
         }
     }
 
-    // 2. Detect Target (Explicit start OR Keyword anywhere)
-    // a) Start with number: "5 videos"
+    // 3. Detect Target
     const startMatch = text.match(/^(\d+)\s/);
     if (startMatch) {
         targetValue = parseInt(startMatch[1]);
     } else {
-        // b) Keyword match: "Gravar 5 videos"
         const keywordMatch = text.match(/(\d+)\s+(v[ií]de|venda|lead|call|post|story|stories|reuni[aã]o|p[aá]gina|aula)/i);
         if (keywordMatch) {
             targetValue = parseInt(keywordMatch[1]);
         } else {
-            // c) Slash syntax: "/5"
             const slashMatch = text.match(/\/(\d+)/);
             if (slashMatch) {
                 targetValue = parseInt(slashMatch[1]);
@@ -75,7 +103,7 @@ const parseInput = (text: string): ParsedInput => {
         }
     }
 
-    return { title, startTime, targetValue };
+    return { title, startTime, endTime, targetValue };
 };
 
 export const TasksPage: React.FC = () => {
@@ -179,13 +207,14 @@ export const TasksPage: React.FC = () => {
             return;
         }
 
-        const { title, startTime, targetValue } = parseInput(inputValue);
+        const { title, startTime, endTime, targetValue } = parseInput(inputValue);
 
         try {
             const taskData = {
                 ownerId: user.id || 'unknown', // Ensure ID
                 title,
                 startTime: startTime || null,
+                endTime: endTime || null,
                 status: 'TODO',
                 priority: 'MEDIUM',
                 dueAt: Timestamp.fromDate(new Date()),
@@ -324,7 +353,11 @@ export const TasksPage: React.FC = () => {
                 {parsedPreview && (parsedPreview.startTime || parsedPreview.targetValue) && (
                     <div className="smart-tags">
                         {parsedPreview.startTime && (
-                            <span className="smart-tag"><Clock size={12} /> {parsedPreview.startTime}</span>
+                            <span className="smart-tag">
+                                <Clock size={12} />
+                                {parsedPreview.startTime}
+                                {parsedPreview.endTime ? ` - ${parsedPreview.endTime}` : ''}
+                            </span>
                         )}
                         {parsedPreview.targetValue && (
                             <span className="smart-tag"><Target size={12} /> Meta: {parsedPreview.targetValue}</span>
@@ -350,7 +383,10 @@ export const TasksPage: React.FC = () => {
                             {/* Left: Time */}
                             <div className="task-left">
                                 {task.startTime ? (
-                                    <span className="task-time">{task.startTime}</span>
+                                    <div className="task-time-col">
+                                        <span className="task-time">{task.startTime}</span>
+                                        {task.endTime && <span className="task-endtime">{task.endTime}</span>}
+                                    </div>
                                 ) : (
                                     <span className="task-time">--:--</span>
                                 )}
