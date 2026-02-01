@@ -82,29 +82,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
         );
 
-        // Safety Timeout (Force stop loading after 10s)
+        // Safety Timeout (Force stop loading after 20s instead of 10s)
+        const intermediateTimeout = setTimeout(() => {
+            if (mounted) {
+                console.log("Auth still processing after 5s, continuing to wait...");
+            }
+        }, 5000);
+
         const timeout = setTimeout(() => {
             if (mounted) {
                 setLoading((prev) => {
                     if (prev) {
-                        console.warn("Auth processing timed out from 10s safety valve.");
+                        console.warn("Auth processing timed out after 20s safety valve.");
                         // Fallback check: if we have a current user in auth but listener didn't fire?
                         if (auth.currentUser) {
                             console.log("AuthProvider: Fallback found currentUser:", auth.currentUser.uid);
-                            // We don't force false yet, maybe give it a moment? 
-                            // But actually if 10s passed, something is stuck.
                         }
                         return false;
                     }
                     return prev;
                 });
             }
-        }, 10000);
+        }, 20000); // Increased from 10s to 20s
 
         return () => {
             mounted = false;
             unsubscribe();
             clearTimeout(timeout);
+            clearTimeout(intermediateTimeout);
         };
     }, []);
 
