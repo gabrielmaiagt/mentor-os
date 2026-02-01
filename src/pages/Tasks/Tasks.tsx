@@ -185,7 +185,7 @@ export const TasksPage: React.FC = () => {
             const taskData = {
                 ownerId: user.id || 'unknown', // Ensure ID
                 title,
-                startTime,
+                startTime: startTime || null,
                 status: 'TODO',
                 priority: 'MEDIUM',
                 dueAt: Timestamp.fromDate(new Date()),

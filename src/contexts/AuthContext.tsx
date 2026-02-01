@@ -39,51 +39,73 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
     useEffect(() => {
+        let mounted = true;
+        console.log("AuthProvider: Initializing...");
+
         // Ensure persistence is Local
-        setPersistence(auth, browserLocalPersistence).catch(err =>
-            console.error("Persistence error:", err)
-        );
+        setPersistence(auth, browserLocalPersistence)
+            .then(() => console.log("AuthProvider: Persistence set to local"))
+            .catch(err => console.error("AuthProvider: Persistence error:", err));
 
         const unsubscribe = onAuthStateChanged(
             auth,
             async (fbUser) => {
+                console.log("AuthProvider: Auth state changed:", fbUser?.uid || 'null');
+                if (!mounted) return;
+
                 try {
                     setFirebaseUser(fbUser);
                     if (fbUser) {
+                        console.log("AuthProvider: Fetching user doc for", fbUser.uid);
                         const userDoc = await getDoc(doc(db, 'users', fbUser.uid));
-                        if (userDoc.exists()) {
-                            setUser({ id: fbUser.uid, ...userDoc.data() } as User);
-                        } else {
-                            setUser(null);
+                        if (mounted) {
+                            if (userDoc.exists()) {
+                                console.log("AuthProvider: User doc found");
+                                setUser({ id: fbUser.uid, ...userDoc.data() } as User);
+                            } else {
+                                console.warn("AuthProvider: User doc missing for", fbUser.uid);
+                                setUser(null);
+                            }
                         }
                     } else {
-                        setUser(null);
+                        if (mounted) setUser(null);
                     }
                 } catch (error) {
-                    console.error("Error fetching user profile:", error);
+                    console.error("AuthProvider: Error fetching user profile:", error);
                 } finally {
-                    setLoading(false);
+                    if (mounted) setLoading(false);
                 }
+            },
+            (error) => {
+                console.error("AuthProvider: Auth Error:", error);
+                if (mounted) setLoading(false);
             }
         );
 
         // Safety Timeout (Force stop loading after 10s)
         const timeout = setTimeout(() => {
-            setLoading((prev) => {
-                if (prev) {
-                    console.warn("Auth processing timed out, forcing app load.");
-                    return false;
-                }
-                return prev;
-            });
+            if (mounted) {
+                setLoading((prev) => {
+                    if (prev) {
+                        console.warn("Auth processing timed out from 10s safety valve.");
+                        // Fallback check: if we have a current user in auth but listener didn't fire?
+                        if (auth.currentUser) {
+                            console.log("AuthProvider: Fallback found currentUser:", auth.currentUser.uid);
+                            // We don't force false yet, maybe give it a moment? 
+                            // But actually if 10s passed, something is stuck.
+                        }
+                        return false;
+                    }
+                    return prev;
+                });
+            }
         }, 10000);
 
         return () => {
+            mounted = false;
             unsubscribe();
             clearTimeout(timeout);
         };
-
-
     }, []);
 
     const signIn = async (email: string, password: string) => {
