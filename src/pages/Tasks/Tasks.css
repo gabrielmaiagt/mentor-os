@@ -1,0 +1,309 @@
+/* Tasks.css - Field Marshal Styling */
+
+/* Variables & Theme */
+:root {
+    --task-bg-color: #0d0d0d;
+    --task-card-bg: rgba(255, 255, 255, 0.03);
+    --task-card-border: rgba(255, 255, 255, 0.08);
+    --task-accent: #3b82f6;
+    /* Blue for Intelligence */
+    --task-success: #10b981;
+    /* Green for Success */
+    --task-warning: #f59e0b;
+    /* Amber for Warning */
+    --task-late: #ef4444;
+    /* Red for Late */
+    --task-glass: blur(12px);
+}
+
+.tasks-page {
+    padding: 1.5rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    min-height: 80vh;
+    /* Premium Dark Theme Override if needed */
+    color: #e5e5e5;
+}
+
+/* Header & Input Section */
+.tasks-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.tasks-header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    background: linear-gradient(90deg, #fff, #94a3b8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin: 0;
+}
+
+.tasks-subtitle {
+    color: #64748b;
+    font-size: 0.95rem;
+    margin-top: 0.25rem;
+}
+
+/* Smart Input Wrapper */
+.smart-input-container {
+    position: relative;
+    margin-bottom: 2rem;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+}
+
+.smart-input-container:focus-within {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--task-accent);
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
+}
+
+.smart-input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 1.1rem;
+    padding: 1rem 1.25rem;
+    outline: none;
+}
+
+.smart-input::placeholder {
+    color: rgba(255, 255, 255, 0.3);
+}
+
+.smart-tags {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0 1rem 0.75rem;
+    min-height: 32px;
+}
+
+.smart-tag {
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: rgba(59, 130, 246, 0.2);
+    color: #93c5fd;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    animation: fadeIn 0.3s ease;
+}
+
+/* Task List Container */
+.tasks-grid {
+    display: grid;
+    gap: 1rem;
+}
+
+/* Individual Task Card */
+.task-card {
+    display: flex;
+    align-items: center;
+    background: var(--task-card-bg);
+    border: 1px solid var(--task-card-border);
+    padding: 1rem;
+    border-radius: 12px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Priority: Active/Current */
+.task-card.is-active {
+    background: rgba(59, 130, 246, 0.05);
+    border-color: rgba(59, 130, 246, 0.4);
+    transform: scale(1.01);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.task-card.is-active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--task-accent);
+    box-shadow: 0 0 10px var(--task-accent);
+}
+
+/* Priority: Late */
+.task-card.is-late {
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.task-card.is-late .task-time {
+    color: var(--task-late);
+}
+
+/* State: Done */
+.task-card.is-done {
+    opacity: 0.5;
+    background: transparent;
+    border-style: dashed;
+}
+
+.task-card.is-done .task-title {
+    text-decoration: line-through;
+    color: #64748b;
+}
+
+/* Content Layout */
+.task-left {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-right: 1.25rem;
+    min-width: 60px;
+}
+
+.task-time {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #94a3b8;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.task-center {
+    flex: 1;
+}
+
+.task-title {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #f1f5f9;
+    margin-bottom: 0.25rem;
+}
+
+.task-meta {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
+/* Actions */
+.task-right {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+/* Progressive Tracker */
+.progressive-tracker {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 4px 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.tracker-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9rem;
+    color: #e5e5e5;
+}
+
+.tracker-btn {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    transition: all 0.2s;
+}
+
+.tracker-btn:hover {
+    background: var(--task-accent);
+}
+
+/* Checkbox Replacement */
+.check-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid #475569;
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: transparent;
+    transition: all 0.2s ease;
+}
+
+.check-btn:hover {
+    border-color: var(--task-success);
+    color: rgba(16, 185, 129, 0.5);
+}
+
+.check-btn.checked {
+    background: var(--task-success);
+    border-color: var(--task-success);
+    color: white;
+    animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #64748b;
+    border: 2px dashed rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes popIn {
+    from {
+        transform: scale(0.8);
+    }
+
+    to {
+        transform: scale(1);
+    }
+}
+
+/* Progressive Bar */
+.task-progress-bar {
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    margin-top: 6px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--task-success);
+    transition: width 0.3s ease;
+}

@@ -220,6 +220,7 @@ export interface Mentee extends FirestoreTimestamps {
     level?: number;
     badges?: string[];
     nextLevelXp?: number;
+    status?: 'PENDING' | 'ACTIVE' | 'ARCHIVED';
 }
 
 // Call
@@ -255,6 +256,18 @@ export interface Task extends FirestoreTimestamps {
     dueAt: Date;
     priority: TaskPriority;
     status: TaskStatus;
+
+    // Time Tracking
+    startTime?: string; // HH:mm
+    endTime?: string; // HH:mm
+    completedAt?: Date;
+    performance?: 'EARLY' | 'ON_TIME' | 'LATE';
+    notify?: boolean;
+
+    // Progressive Tracking (Subtasks/Counters)
+    targetValue?: number; // e.g. 5 (calls)
+    currentValue?: number; // e.g. 2 (calls done)
+
     suggestedWhatsAppText?: string;
     quickActions: string[];
     // Denormalized for display

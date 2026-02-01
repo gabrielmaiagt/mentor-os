@@ -6,6 +6,7 @@ import './styles/global.css';
 
 // Page imports
 import DashboardPage from './pages/Dashboard';
+import TasksPage from './pages/Tasks/Tasks';
 import ExecutionPage from './pages/Execution';
 import CRMPage from './pages/CRM';
 import MenteesPage from './pages/Mentees';
@@ -52,6 +53,7 @@ function App() {
             {/* Protected mentor routes */}
             <Route element={<Shell requireAuth allowedRoles={['mentor']} />}>
               <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/tasks" element={<TasksPage />} />
               <Route path="/execution" element={<ExecutionPage />} />
               <Route path="/crm" element={<CRMPage />} />
               <Route path="/lead/:id" element={<LeadProfilePage />} />

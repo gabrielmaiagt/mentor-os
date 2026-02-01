@@ -17,7 +17,8 @@ import {
     Pickaxe,
     Shield,
     Layers,
-    Settings
+    Settings,
+    CheckSquare
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useFeatureFlags } from '../../hooks/useFeatureFlags';
@@ -33,6 +34,7 @@ interface NavItem {
 const mentorNavItems: NavItem[] = [
     { path: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
     { path: '/execution', label: 'Execução', icon: <Zap size={20} /> },
+    { path: '/tasks', label: 'Missões', icon: <CheckSquare size={20} /> },
     { path: '/crm', label: 'CRM', icon: <Target size={20} /> },
     { path: '/mentees', label: 'Mentorados', icon: <Users size={20} /> },
     { path: '/calendar', label: 'Calendário', icon: <Calendar size={20} /> },

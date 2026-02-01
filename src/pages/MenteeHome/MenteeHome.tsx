@@ -7,7 +7,8 @@ import {
     MessageSquare,
     Search,
     TrendingUp,
-    ArrowUpDown
+    ArrowUpDown,
+    Lock
 } from 'lucide-react';
 import { Card, Badge, Button, Modal, Skeleton } from '../../components/ui';
 import { OnboardingChecklist, TourGuide } from '../../components/onboarding';
@@ -303,6 +304,27 @@ export const MenteeHomePage: React.FC = () => {
                     </p>
                     <Button variant="secondary" fullWidth onClick={() => auth.signOut()}>
                         Sair e tentar outro email
+                    </Button>
+                </Card>
+            </div>
+        );
+    }
+
+    if (mentee.status === 'PENDING') {
+        return (
+            <div className="flex h-screen items-center justify-center p-4">
+                <Card padding="lg" className="max-w-md w-full text-center">
+                    <div className="mb-4 text-warning flex justify-center">
+                        <Lock size={48} />
+                    </div>
+                    <h2 className="text-xl font-bold mb-2">Aprovação Pendente</h2>
+                    <p className="text-secondary mb-6">
+                        Olá {mentee.name.split(' ')[0]}, seu cadastro foi recebido com sucesso!
+                        <br /><br />
+                        Um mentor irá analisar sua solicitação em breve. Você receberá um aviso assim que seu acesso for liberado.
+                    </p>
+                    <Button variant="secondary" fullWidth onClick={() => auth.signOut()}>
+                        Sair
                     </Button>
                 </Card>
             </div>

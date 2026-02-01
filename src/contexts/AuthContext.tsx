@@ -4,6 +4,8 @@ import {
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
     signOut as firebaseSignOut,
+    setPersistence,
+    browserLocalPersistence
 } from 'firebase/auth';
 import type { User as FirebaseUser } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
@@ -37,6 +39,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
     useEffect(() => {
+        // Ensure persistence is Local
+        setPersistence(auth, browserLocalPersistence).catch(err =>
+            console.error("Persistence error:", err)
+        );
+
         const unsubscribe = onAuthStateChanged(
             auth,
             async (fbUser) => {
@@ -58,60 +65,79 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     setLoading(false);
                 }
             },
-            (error) => {
-                console.error("Auth initialization error:", error);
-                setLoading(false);
-            }
-        );
-
-        return () => {
-            unsubscribe();
-        };
-    }, []);
-
-    const signIn = async (email: string, password: string) => {
-        await signInWithEmailAndPassword(auth, email, password);
-    };
-
-    const signUp = async (email: string, password: string, displayName: string, role: UserRole) => {
-        const { user: fbUser } = await createUserWithEmailAndPassword(auth, email, password);
-
-        // Create user document in Firestore
-        const userData: Omit<User, 'id'> = {
-            displayName,
-            email,
-            role,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-        };
-
-        await setDoc(doc(db, 'users', fbUser.uid), userData);
-    };
-
-    const signOut = async () => {
-        await firebaseSignOut(auth);
-        setUser(null);
-    };
-
-    const isAdmin = user?.role === 'mentor';
-    const isMentee = user?.role === 'mentee';
-
-    return (
-        <AuthContext.Provider
-            value={{
-                user,
-                firebaseUser,
-                loading,
-                signIn,
-                signUp,
-                signOut,
-                isAdmin,
-                isMentee,
-            }}
-        >
-            {children}
-        </AuthContext.Provider>
+            setLoading(false);
+    }
     );
+
+    // Safety Timeout (Force stop loading after 10s)
+    const timeout = setTimeout(() => {
+        setLoading((prev) => {
+            if (prev) {
+                console.warn("Auth processing timed out, forcing app load.");
+                return false;
+            }
+            return prev;
+        });
+    }, 10000);
+
+    return () => {
+        unsubscribe();
+        clearTimeout(timeout);
+    };
+
+    return () => {
+        unsubscribe();
+    };
+}, []);
+
+const signIn = async (email: string, password: string) => {
+    await signInWithEmailAndPassword(auth, email, password);
+};
+
+const signUp = async (email: string, password: string, displayName: string, role: UserRole) => {
+    const { user: fbUser } = await createUserWithEmailAndPassword(auth, email, password);
+
+    // Create user document in Firestore
+    const userData: Omit<User, 'id'> = {
+        displayName,
+        email,
+        role,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+    };
+
+    await setDoc(doc(db, 'users', fbUser.uid), userData);
+
+    // MANUALLY set state to avoid race condition where onAuthStateChanged fires before doc is written/readable
+    // or if onAuthStateChanged executed too early and found no doc.
+    setUser({ id: fbUser.uid, ...userData } as User);
+    setFirebaseUser(fbUser);
+};
+
+const signOut = async () => {
+    await firebaseSignOut(auth);
+    setUser(null);
+};
+
+const isAdmin = user?.role === 'mentor';
+const isMentee = user?.role === 'mentee';
+
+return (
+    <AuthContext.Provider
+        value={{
+            user,
+            firebaseUser,
+            loading,
+            signIn,
+            signUp,
+            signOut,
+            isAdmin,
+            isMentee,
+        }}
+    >
+        {children}
+    </AuthContext.Provider>
+);
 };
 
 export default AuthProvider;

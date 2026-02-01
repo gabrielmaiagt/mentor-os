@@ -12,7 +12,9 @@ import {
     Trash2,
     CreditCard,
     Archive,
-    RotateCcw
+    RotateCcw,
+    Check,
+    X
 } from 'lucide-react';
 import { Card, Badge, Button } from '../../components/ui';
 import { MENTEE_STAGES, getStageConfig } from '../../types';
@@ -30,7 +32,7 @@ export const MenteesPage: React.FC = () => {
     const toast = useToast();
     const [searchQuery, setSearchQuery] = useState('');
     const [filterStage, setFilterStage] = useState<MenteeStage | 'ALL'>('ALL');
-    const [showInactive, setShowInactive] = useState(false);
+    const [viewMode, setViewMode] = useState<'ACTIVE' | 'PENDING' | 'ARCHIVED'>('ACTIVE');
     const [mentees, setMentees] = useState<Mentee[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -52,7 +54,8 @@ export const MenteesPage: React.FC = () => {
                 nextCallAt: doc.data().nextCallAt?.toDate(),
                 createdAt: doc.data().createdAt?.toDate(),
                 updatedAt: doc.data().updatedAt?.toDate(),
-                active: doc.data().active !== false // Default to true if undefined
+                active: doc.data().active !== false, // Default to true if undefined
+                status: doc.data().status || (doc.data().active === false ? 'ARCHIVED' : 'ACTIVE')
             })) as Mentee[];
             setMentees(fetchedMentees);
             setLoading(false);
@@ -92,6 +95,40 @@ export const MenteesPage: React.FC = () => {
         toast.success(`Lista de mentorados exportada!`);
     };
 
+    const handleApproveMentee = async (mentee: Mentee, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!window.confirm(`Deseja aprovar a entrada de ${mentee.name}?`)) return;
+
+        try {
+            await updateDoc(doc(db, 'mentees', mentee.id), {
+                status: 'ACTIVE',
+                active: true,
+                updatedAt: new Date()
+            });
+            toast.success(`Mentorado aprovado com sucesso!`);
+        } catch (error) {
+            console.error("Error approving mentee:", error);
+            toast.error("Erro ao aprovar mentorado");
+        }
+    };
+
+    const handleRejectMentee = async (mentee: Mentee, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!window.confirm(`Deseja rejeitar e arquivar a solicitação de ${mentee.name}?`)) return;
+
+        try {
+            await updateDoc(doc(db, 'mentees', mentee.id), {
+                status: 'ARCHIVED',
+                active: false,
+                updatedAt: new Date()
+            });
+            toast.success(`Solicitação rejeitada e arquivada.`);
+        } catch (error) {
+            console.error("Error rejecting mentee:", error);
+            toast.error("Erro ao rejeitar solicitação");
+        }
+    };
+
     const handleToggleActive = async (mentee: Mentee, e: React.MouseEvent) => {
         e.stopPropagation();
         const newStatus = !mentee.active;
@@ -104,6 +141,7 @@ export const MenteesPage: React.FC = () => {
         try {
             await updateDoc(doc(db, 'mentees', mentee.id), {
                 active: newStatus,
+                status: newStatus ? 'ACTIVE' : 'ARCHIVED',
                 updatedAt: new Date()
             });
             toast.success(`Mentorado ${actionName} com sucesso`);
@@ -129,8 +167,13 @@ export const MenteesPage: React.FC = () => {
     const filteredMentees = mentees.filter(m => {
         const matchesSearch = m.name.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesStage = filterStage === 'ALL' || m.currentStage === filterStage;
-        const matchesActive = showInactive ? true : (m.active !== false); // Show active only by default
-        return matchesSearch && matchesStage && matchesActive;
+
+        let matchesStatus = false;
+        if (viewMode === 'ACTIVE') matchesStatus = m.status === 'ACTIVE' || (m.status === undefined && m.active !== false);
+        if (viewMode === 'PENDING') matchesStatus = m.status === 'PENDING';
+        if (viewMode === 'ARCHIVED') matchesStatus = m.status === 'ARCHIVED' || (m.status !== 'PENDING' && m.active === false);
+
+        return matchesSearch && matchesStage && matchesStatus;
     });
 
     const getDaysSince = (date?: Date) => {
@@ -162,23 +205,39 @@ export const MenteesPage: React.FC = () => {
                 <div>
                     <h1 className="mentees-title">Mentorados</h1>
                     <p className="mentees-subtitle">
-                        {mentees.filter(m => m.active !== false).length} ativos
-                        {mentees.some(m => m.active === false) && ` • ${mentees.filter(m => m.active === false).length} arquivados`}
+                        {mentees.filter(m => m.status === 'ACTIVE' || (m.status === undefined && m.active !== false)).length} ativos
+                        {mentees.some(m => m.status === 'PENDING') && ` • ${mentees.filter(m => m.status === 'PENDING').length} pendentes`}
                     </p>
                 </div>
                 <div className="flex gap-2">
                     <Button variant="secondary" icon={<Download size={18} />} onClick={handleExport}>
                         Exportar
                     </Button>
-                    <Button
-                        variant="ghost"
-                        onClick={() => setShowInactive(!showInactive)}
-                        className={showInactive ? 'bg-surface-secondary text-primary' : 'text-secondary'}
-                        title={showInactive ? "Ocultar Arquivados" : "Ver Arquivados"}
-                    >
-                        <Archive size={18} />
-                        {showInactive ? 'Ocultar Inativos' : 'Ver Inativos'}
-                    </Button>
+                    <div className="flex bg-surface-primary rounded-lg p-1 border border-border">
+                        <button
+                            className={`px-3 py-1.5 text-sm rounded-md transition-colors ${viewMode === 'ACTIVE' ? 'bg-primary text-white font-medium shadow-sm' : 'text-secondary hover:text-primary hover:bg-surface-secondary'}`}
+                            onClick={() => setViewMode('ACTIVE')}
+                        >
+                            Ativos
+                        </button>
+                        <button
+                            className={`px-3 py-1.5 text-sm rounded-md transition-colors flex items-center gap-2 ${viewMode === 'PENDING' ? 'bg-primary text-white font-medium shadow-sm' : 'text-secondary hover:text-primary hover:bg-surface-secondary'}`}
+                            onClick={() => setViewMode('PENDING')}
+                        >
+                            Pendentes
+                            {mentees.some(m => m.status === 'PENDING') && (
+                                <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${viewMode === 'PENDING' ? 'bg-white/20 text-white' : 'bg-primary/10 text-primary'}`}>
+                                    {mentees.filter(m => m.status === 'PENDING').length}
+                                </span>
+                            )}
+                        </button>
+                        <button
+                            className={`px-3 py-1.5 text-sm rounded-md transition-colors ${viewMode === 'ARCHIVED' ? 'bg-primary text-white font-medium shadow-sm' : 'text-secondary hover:text-primary hover:bg-surface-secondary'}`}
+                            onClick={() => setViewMode('ARCHIVED')}
+                        >
+                            Arquivados
+                        </button>
+                    </div>
                     <Button variant="primary" icon={<Plus size={18} />} onClick={() => setIsModalOpen(true)}>
                         Novo Mentorado
                     </Button>
@@ -303,37 +362,64 @@ export const MenteesPage: React.FC = () => {
                                     {/* TODO: Real Payment Method Check */}
                                     Pix
                                 </span>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    icon={<MessageSquare size={14} />}
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        window.open(`https://wa.me/55${mentee.whatsapp}`, '_blank');
-                                    }}
-                                >
-                                    WhatsApp
-                                </Button>
+                                {viewMode === 'PENDING' ? (
+                                    <>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="text-success hover:bg-success-light"
+                                            title="Aprovar Entrada"
+                                            onClick={(e) => handleApproveMentee(mentee, e)}
+                                        >
+                                            <Check size={18} />
+                                            Aprovar
+                                        </Button>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="text-error hover:bg-error-light"
+                                            title="Rejeitar Solicitação"
+                                            onClick={(e) => handleRejectMentee(mentee, e)}
+                                        >
+                                            <X size={18} />
+                                            Rejeitar
+                                        </Button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            icon={<MessageSquare size={14} />}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                window.open(`https://wa.me/55${mentee.whatsapp}`, '_blank');
+                                            }}
+                                        >
+                                            WhatsApp
+                                        </Button>
 
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="text-secondary hover:text-primary"
-                                    title={isActive ? "Arquivar (Inativar)" : "Reativar"}
-                                    onClick={(e) => handleToggleActive(mentee, e)}
-                                >
-                                    {isActive ? <Archive size={14} /> : <RotateCcw size={14} />}
-                                </Button>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="text-secondary hover:text-primary"
+                                            title={isActive ? "Arquivar (Inativar)" : "Reativar"}
+                                            onClick={(e) => handleToggleActive(mentee, e)}
+                                        >
+                                            {isActive ? <Archive size={14} /> : <RotateCcw size={14} />}
+                                        </Button>
 
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="text-error hover:bg-error-light"
-                                    title="Excluir Permanentemente"
-                                    onClick={(e) => handleDeleteMentee(mentee.id, e)}
-                                >
-                                    <Trash2 size={14} />
-                                </Button>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="text-error hover:bg-error-light"
+                                            title="Excluir Permanentemente"
+                                            onClick={(e) => handleDeleteMentee(mentee.id, e)}
+                                        >
+                                            <Trash2 size={14} />
+                                        </Button>
+                                    </>
+                                )}
                             </div>
                         </Card>
                     );

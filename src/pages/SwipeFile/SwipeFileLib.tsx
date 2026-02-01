@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
 import { collection, query, orderBy, onSnapshot, addDoc } from 'firebase/firestore';
 import { db, auth } from '../../lib/firebase';
 import { Button, Modal } from '../../components/ui';
@@ -10,6 +11,7 @@ import './SwipeFileLib.css';
 const CATEGORIES: SwipeFileCategory[] = ['X1', 'Venda Direta', 'VSL', 'High Ticket', 'Criativos', 'Copy'];
 
 export const SwipeFileLib: React.FC = () => {
+    const { user } = useAuth();
     const toast = useToast();
     const [items, setItems] = useState<SwipeFileItem[]>([]);
     const [loading, setLoading] = useState(true);
@@ -41,10 +43,7 @@ export const SwipeFileLib: React.FC = () => {
         return () => unsubscribe();
     }, []);
 
-    // Helper: Is Admin? (Simple check for now, can be improved)
-    // For now, let's assume specific email or just allow everyone to post if authorized (which is everyone logged in this context)
-    // To restrict, we would check auth.currentUser.email
-    const canUpload = true;
+    const canUpload = user?.role === 'mentor';
 
     const handleUpload = async (e: React.FormEvent) => {
         e.preventDefault();
