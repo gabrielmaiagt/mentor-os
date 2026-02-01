@@ -172,7 +172,7 @@ export const FIRST_LOGIN_TOUR: TourStep[] = [
     {
         id: 't1',
         target: '.mentee-home-header',
-        title: 'Bem-vindo ao MentorOS! 🎉',
+        title: 'Bem-vindo ao Cérebro Exposto! 🎉',
         content: 'Esta é sua central de controle. Aqui você acompanha seu progresso na mentoria.',
         placement: 'bottom',
     },

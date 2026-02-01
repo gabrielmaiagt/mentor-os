@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Image Resizer</title>
+</head>
+
+<body>
+    <img id="source" src="logo-original.png" style="display:none;" />
+    <canvas id="canvas192" width="192" height="192"></canvas>
+    <canvas id="canvas512" width="512" height="512"></canvas>
+    <canvas id="canvas64" width="64" height="64"></canvas>
+    <div id="status">Waiting...</div>
+
+    <script>
+        const img = document.getElementById('source');
+        img.onload = () => {
+            const sizes = [192, 512, 64];
+            sizes.forEach(size => {
+                const canvas = document.getElementById(`canvas${size}`);
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, size, size);
+            });
+            document.getElementById('status').innerText = 'Ready';
+        };
+
+        window.getIconData = (size) => {
+            const canvas = document.getElementById(`canvas${size}`);
+            return canvas.toDataURL('image/png').replace(/^data:image\/png;base64,/, "");
+        };
+    </script>
+</body>
+
+</html>

@@ -369,6 +369,8 @@ export function getStageConfig(stages: StageConfig[], key: string): StageConfig 
 
 // Re-export mining types
 export * from './mining';
+import type { OfferMined } from './mining';
+export type Offer = OfferMined;
 
 // Re-export onboarding types
 export * from './onboarding';

@@ -90,7 +90,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => 
                 <div className="sidebar-header">
                     <div className="sidebar-logo">
                         <Crosshair size={28} className="sidebar-logo-icon" />
-                        <span className="sidebar-logo-text">MentorOS</span>
+                        <span className="sidebar-logo-text">Cérebro Exposto</span>
                     </div>
                     {/* Close button for mobile */}
                     <button className="sidebar-close-btn" onClick={onClose}>

@@ -6,7 +6,7 @@ import {
     ArrowUpDown
 } from 'lucide-react';
 import { Card, Button, Modal } from '../../components/ui';
-import { OfferMinedCard } from '../../components/mining';
+import { OfferMinedCard, OfferValidation } from '../../components/mining';
 import { useToast } from '../../components/ui/Toast';
 import { OFFER_PLATFORMS } from '../../types';
 import { db, auth } from '../../lib/firebase';
@@ -50,6 +50,10 @@ export const MiningPage: React.FC = () => {
         count: 0,
         date: new Date().toISOString().split('T')[0]
     });
+
+    // Validation Modal
+    const [showValidationModal, setShowValidationModal] = useState(false);
+    const [validatingOffer, setValidatingOffer] = useState<OfferMined | null>(null);
 
     // Form state
     const [formData, setFormData] = useState({
@@ -161,6 +165,11 @@ export const MiningPage: React.FC = () => {
             notes: offer.notes || '',
         });
         setShowAddModal(true);
+    };
+
+    const handleValidate = (offer: OfferMined) => {
+        setValidatingOffer(offer);
+        setShowValidationModal(true);
     };
 
     const handleSaveOffer = async () => {
@@ -296,6 +305,7 @@ export const MiningPage: React.FC = () => {
                         offer={offer}
                         onIncrementAds={() => handleOpenHistoryModal(offer)}
                         onEdit={handleEdit}
+                        onValidate={handleValidate}
                         onChangeStatus={handleChangeStatus}
                     />
                 ))}
@@ -375,6 +385,19 @@ export const MiningPage: React.FC = () => {
                     />
                     <Button variant="primary" fullWidth onClick={handleUpdateAdHistory}>Atualizar</Button>
                 </div>
+            </Modal>
+
+            <Modal isOpen={showValidationModal} onClose={() => setShowValidationModal(false)} title="Validar Oferta (ROI)">
+                {validatingOffer && (
+                    <OfferValidation
+                        offer={validatingOffer}
+                        onUpdate={() => {
+                            // Close modal after efficient save? Or keep open for edits?
+                            // Let's keep it open to see the history update instantly if we were real-time, 
+                            // but for now maybe just let user close it manually.
+                        }}
+                    />
+                )}
             </Modal>
         </div>
     );

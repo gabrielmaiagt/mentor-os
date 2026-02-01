@@ -1,17 +1,31 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import { Card } from '../../components/ui';
 import { GraduationCap, Target, ArrowRight } from 'lucide-react';
 import './RoleSelector.css';
 
 export const RoleSelector: React.FC = () => {
     const navigate = useNavigate();
+    const { user, loading } = useAuth(); // Import useAuth above
+
+    React.useEffect(() => {
+        if (!loading && user) {
+            if (user.role === 'mentee') {
+                navigate('/me');
+            } else {
+                navigate('/dashboard');
+            }
+        }
+    }, [user, loading, navigate]);
+
+    if (loading) return null; // Or a spinner
 
     return (
         <div className="role-selector-page">
             <div className="role-selector-container">
                 <div className="role-selector-header">
-                    <h1 className="role-selector-title">Bem-vindo ao MentorOS</h1>
+                    <h1 className="role-selector-title">Bem-vindo ao Cérebro Exposto</h1>
                     <p className="role-selector-subtitle">Escolha como você quer acessar a plataforma</p>
                 </div>
 

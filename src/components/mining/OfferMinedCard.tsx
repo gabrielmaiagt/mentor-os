@@ -1,5 +1,5 @@
 import React from 'react';
-import { ExternalLink, Clock, Edit, Trash2 } from 'lucide-react';
+import { ExternalLink, Clock, Edit, Trash2, DollarSign } from 'lucide-react';
 import { Card, Badge, Button } from '../ui';
 import { getOfferStatusConfig } from '../../types';
 import type { OfferMined, OfferStatus } from '../../types';
@@ -9,6 +9,7 @@ interface OfferMinedCardProps {
     offer: OfferMined;
     onIncrementAds: (offerId: string) => void;
     onEdit: (offer: OfferMined) => void;
+    onValidate: (offer: OfferMined) => void;
     onChangeStatus: (offerId: string, status: OfferStatus) => void;
     onDelete?: (offerId: string) => void;
     showMentorActions?: boolean;
@@ -18,6 +19,7 @@ export const OfferMinedCard: React.FC<OfferMinedCardProps> = ({
     offer,
     onIncrementAds,
     onEdit,
+    onValidate,
     onChangeStatus,
     onDelete,
     showMentorActions = false,
@@ -115,6 +117,18 @@ export const OfferMinedCard: React.FC<OfferMinedCardProps> = ({
                     }}
                 >
                     <Clock size={14} /> Atualizar
+                </Button>
+
+                <Button
+                    variant="secondary"
+                    size="sm"
+                    className="validate-roi-btn"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onValidate(offer);
+                    }}
+                >
+                    <DollarSign size={14} /> ROI
                 </Button>
 
                 <Button

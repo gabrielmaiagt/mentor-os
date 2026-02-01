@@ -70,7 +70,7 @@ export const LoginPage: React.FC = () => {
                     <div className="login-logo">
                         <Crosshair size={40} className="login-logo-icon" />
                     </div>
-                    <h1 className="login-title">MentorOS</h1>
+                    <h1 className="login-title">CÉREBRO EXPOSTO</h1>
                     <p className="login-subtitle">
                         {isSignUp ? 'Crie sua conta para começar' : 'Entre para acessar seu cockpit'}
                     </p>

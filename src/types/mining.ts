@@ -8,6 +8,14 @@ export interface AdHistoryEntry {
     count: number;
 }
 
+export interface DailyStat {
+    date: string; // YYYY-MM-DD
+    spend: number;
+    revenue: number;
+    profit: number;
+    roi: number;
+}
+
 export interface OfferMined {
     id: string;
     name: string;
@@ -19,6 +27,8 @@ export interface OfferMined {
     notesMentor?: string; // Mentor's internal notes
     status: OfferStatus;
     adHistory: AdHistoryEntry[]; // History of ad counts over time
+    dailyStats?: DailyStat[];
+    lastValidationAt?: Date;
     createdAt: Date;
     updatedAt: Date;
     lastTouchedAt: Date;
