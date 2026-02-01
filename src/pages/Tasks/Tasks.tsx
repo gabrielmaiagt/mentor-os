@@ -40,13 +40,11 @@ const parseInput = (text: string): ParsedInput => {
     let targetValue: number | undefined;
 
     // 1. Detect Time (e.g. "14:00", "09:30", "9h", "15h")
-    // Regex for HH:mm
     const timeMatch = text.match(/(\d{1,2}:\d{2})/);
     if (timeMatch) {
         startTime = timeMatch[1];
         title = title.replace(timeMatch[0], '').trim();
     } else {
-        // Regex for "9h" or "15h"
         const hourMatch = text.match(/\b(\d{1,2})[hH]\b/);
         if (hourMatch) {
             const h = parseInt(hourMatch[1]);
@@ -57,22 +55,23 @@ const parseInput = (text: string): ParsedInput => {
         }
     }
 
-    // 2. Detect Target (e.g. "5 calls", "10 videos", "3 sales")
-    // Look for number at start of string or number followed by space
-    const targetMatch = text.match(/^(\d+)\s/); // "5 videos..."
-    if (targetMatch) {
-        targetValue = parseInt(targetMatch[1]);
-        // We generally keep the number in the title for context "5 videos", 
-        // but we add the progressive capability.
-        // If we want to clean it: title = title.replace(targetMatch[0], '').trim(); 
-        // Let's keep it in title for readability but set the counter.
+    // 2. Detect Target (Explicit start OR Keyword anywhere)
+    // a) Start with number: "5 videos"
+    const startMatch = text.match(/^(\d+)\s/);
+    if (startMatch) {
+        targetValue = parseInt(startMatch[1]);
     } else {
-        // Try finding "meta: 5" or "(5)" patterns if preferred, but "5 videos" is natural.
-        // Let's stick to simple leading number detection or specific pattern like "/5"
-        const slashedMatch = text.match(/\/(\d+)/); // "Read book /50"
-        if (slashedMatch) {
-            targetValue = parseInt(slashedMatch[1]);
-            title = title.replace(slashedMatch[0], '').trim();
+        // b) Keyword match: "Gravar 5 videos"
+        const keywordMatch = text.match(/(\d+)\s+(v[ií]de|venda|lead|call|post|story|stories|reuni[aã]o|p[aá]gina|aula)/i);
+        if (keywordMatch) {
+            targetValue = parseInt(keywordMatch[1]);
+        } else {
+            // c) Slash syntax: "/5"
+            const slashMatch = text.match(/\/(\d+)/);
+            if (slashMatch) {
+                targetValue = parseInt(slashMatch[1]);
+                title = title.replace(slashMatch[0], '').trim();
+            }
         }
     }
 
@@ -99,14 +98,9 @@ export const TasksPage: React.FC = () => {
     useEffect(() => {
         if (!user) return; // Wait for user
 
-        // Query: Tasks where ownerId == user.uid (assuming user has uid, logic from AuthContext)
-        // or just all tasks for now if simpler MVP, filtering in memory for security
-        // Ideally: where('ownerId', '==', user.uid)
-
-        // For MVP, assuming we save with ownerId = 'current-user' or actual ID
         const q = query(
             collection(db, 'tasks'),
-            // where('ownerId', '==', user.uid), // Uncomment when auth is strict
+            // where('ownerId', '==', user.uid), 
             orderBy('createdAt', 'desc')
         );
 
@@ -135,19 +129,12 @@ export const TasksPage: React.FC = () => {
 
     // --- Notification Logic ---
     useEffect(() => {
-        // Check for upcoming tasks (5 min warning)
         if (permission !== 'granted') return;
 
         tasks.forEach(task => {
             if (task.status === 'DONE' || !task.startTime || task.notify === false) return;
-
-            // Parse task start time
-            // Assuming task.dueAt is the Day, and task.startTime is HH:mm
             const taskDate = task.dueAt;
             if (!isToday(taskDate)) return;
-
-            // Notify if exactly 5 mins away ...
-            // (Logic moved to dedicated interval below)
         });
     }, [tasks, permission, now]);
 
@@ -160,7 +147,7 @@ export const TasksPage: React.FC = () => {
             tasks.forEach(task => {
                 if (task.status === 'DONE' || !task.startTime) return;
                 const taskDate = task.dueAt;
-                if (!isToday(taskDate)) return; // Only today's tasks
+                if (!isToday(taskDate)) return;
 
                 const [h, m] = task.startTime.split(':').map(Number);
                 const start = new Date(taskDate);
@@ -168,50 +155,54 @@ export const TasksPage: React.FC = () => {
 
                 const diff = differenceInMinutes(start, currentNow);
 
-                // Trigger 10 min before
                 if (diff === 10) {
                     new Notification(`Prepare-se: ${task.title}`, {
                         body: `Começa em 10 minutos (${task.startTime})`,
-                        icon: '/vite.svg'
+                        icon: '/favicon.ico'
                     });
                 }
             });
-        }, 60000); // Check every minute
+        }, 60000);
         return () => clearInterval(interval);
     }, [tasks]);
-
 
     const requestNotification = () => {
         Notification.requestPermission().then(setPermission);
     };
 
-    // --- Handlers ---
-
     const handleAddTask = async (e?: React.FormEvent) => {
         if (e) e.preventDefault();
         if (!inputValue.trim()) return;
 
+        if (!user) {
+            toast.error('Erro de autenticação. Recarregue a página.');
+            return;
+        }
+
         const { title, startTime, targetValue } = parseInput(inputValue);
 
         try {
-            await addDoc(collection(db, 'tasks'), {
-                ownerId: user?.id || 'unknown', // Fallback
+            const taskData = {
+                ownerId: user.id || 'unknown', // Ensure ID
                 title,
                 startTime,
                 status: 'TODO',
                 priority: 'MEDIUM',
-                dueAt: Timestamp.fromDate(new Date()), // Today
+                dueAt: Timestamp.fromDate(new Date()),
                 createdAt: Timestamp.now(),
                 targetValue: targetValue || 0,
                 currentValue: 0,
-                // If it has startTime, imply endTime + 1h for now or leave open
                 notify: true
-            });
+            };
+
+            console.log('Adding task:', taskData); // Debug
+            await addDoc(collection(db, 'tasks'), taskData);
+
             setInputValue('');
-            toast.success('Missão adicionada');
+            toast.success(targetValue ? `Meta Criada: ${targetValue}` : 'Missão adicionada');
         } catch (err) {
-            console.error(err);
-            toast.error('Erro ao adicionar missão');
+            console.error("Firestore Error:", err);
+            toast.error('Erro ao salvar. Verifique o console.');
         }
     };
 
@@ -324,7 +315,7 @@ export const TasksPage: React.FC = () => {
                     <input
                         type="text"
                         className="smart-input"
-                        placeholder="Ex: Ligar para leads 14:00 (ou '5 vendas')"
+                        placeholder="Ex: 5 vendas hoje (ou 'Ligar 14:00')"
                         value={inputValue}
                         onChange={(e) => setInputValue(e.target.value)}
                         autoFocus
