@@ -9,7 +9,7 @@ interface OfferMinedCardProps {
     offer: OfferMined;
     onIncrementAds: (offerId: string) => void;
     onEdit: (offer: OfferMined) => void;
-    onValidate: (offer: OfferMined) => void;
+    onValidate?: (offer: OfferMined) => void;
     onChangeStatus: (offerId: string, status: OfferStatus) => void;
     onDelete?: (offerId: string) => void;
     showMentorActions?: boolean;
@@ -119,17 +119,19 @@ export const OfferMinedCard: React.FC<OfferMinedCardProps> = ({
                     <Clock size={14} /> Atualizar
                 </Button>
 
-                <Button
-                    variant="secondary"
-                    size="sm"
-                    className="validate-roi-btn"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onValidate(offer);
-                    }}
-                >
-                    <DollarSign size={14} /> ROI
-                </Button>
+                {onValidate && (
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        className="validate-roi-btn"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onValidate(offer);
+                        }}
+                    >
+                        <DollarSign size={14} /> ROI
+                    </Button>
+                )}
 
                 <Button
                     variant="ghost"

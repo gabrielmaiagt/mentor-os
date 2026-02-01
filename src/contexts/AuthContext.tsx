@@ -64,80 +64,76 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 } finally {
                     setLoading(false);
                 }
-            },
-            setLoading(false);
-    }
-    );
-
-    // Safety Timeout (Force stop loading after 10s)
-    const timeout = setTimeout(() => {
-        setLoading((prev) => {
-            if (prev) {
-                console.warn("Auth processing timed out, forcing app load.");
-                return false;
             }
-            return prev;
-        });
-    }, 10000);
+        );
 
-    return () => {
-        unsubscribe();
-        clearTimeout(timeout);
+        // Safety Timeout (Force stop loading after 10s)
+        const timeout = setTimeout(() => {
+            setLoading((prev) => {
+                if (prev) {
+                    console.warn("Auth processing timed out, forcing app load.");
+                    return false;
+                }
+                return prev;
+            });
+        }, 10000);
+
+        return () => {
+            unsubscribe();
+            clearTimeout(timeout);
+        };
+
+
+    }, []);
+
+    const signIn = async (email: string, password: string) => {
+        await signInWithEmailAndPassword(auth, email, password);
     };
 
-    return () => {
-        unsubscribe();
+    const signUp = async (email: string, password: string, displayName: string, role: UserRole) => {
+        const { user: fbUser } = await createUserWithEmailAndPassword(auth, email, password);
+
+        // Create user document in Firestore
+        const userData: Omit<User, 'id'> = {
+            displayName,
+            email,
+            role,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        };
+
+        await setDoc(doc(db, 'users', fbUser.uid), userData);
+
+        // MANUALLY set state to avoid race condition where onAuthStateChanged fires before doc is written/readable
+        // or if onAuthStateChanged executed too early and found no doc.
+        setUser({ id: fbUser.uid, ...userData } as User);
+        setFirebaseUser(fbUser);
     };
-}, []);
 
-const signIn = async (email: string, password: string) => {
-    await signInWithEmailAndPassword(auth, email, password);
-};
-
-const signUp = async (email: string, password: string, displayName: string, role: UserRole) => {
-    const { user: fbUser } = await createUserWithEmailAndPassword(auth, email, password);
-
-    // Create user document in Firestore
-    const userData: Omit<User, 'id'> = {
-        displayName,
-        email,
-        role,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+    const signOut = async () => {
+        await firebaseSignOut(auth);
+        setUser(null);
     };
 
-    await setDoc(doc(db, 'users', fbUser.uid), userData);
+    const isAdmin = user?.role === 'mentor';
+    const isMentee = user?.role === 'mentee';
 
-    // MANUALLY set state to avoid race condition where onAuthStateChanged fires before doc is written/readable
-    // or if onAuthStateChanged executed too early and found no doc.
-    setUser({ id: fbUser.uid, ...userData } as User);
-    setFirebaseUser(fbUser);
-};
-
-const signOut = async () => {
-    await firebaseSignOut(auth);
-    setUser(null);
-};
-
-const isAdmin = user?.role === 'mentor';
-const isMentee = user?.role === 'mentee';
-
-return (
-    <AuthContext.Provider
-        value={{
-            user,
-            firebaseUser,
-            loading,
-            signIn,
-            signUp,
-            signOut,
-            isAdmin,
-            isMentee,
-        }}
-    >
-        {children}
-    </AuthContext.Provider>
-);
+    return (
+        <AuthContext.Provider
+            value={{
+                user,
+                firebaseUser,
+                loading,
+                signIn,
+                signUp,
+                signOut,
+                isAdmin,
+                isMentee,
+            }}
+        >
+            {children}
+        </AuthContext.Provider>
+    );
 };
 
 export default AuthProvider;

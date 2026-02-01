@@ -1,10 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { db } from '../../lib/firebase';
 import {
     collection,
     query,
-    where,
     onSnapshot,
     addDoc,
     updateDoc,
@@ -14,20 +13,18 @@ import {
     Timestamp
 } from 'firebase/firestore';
 import {
+    Bell,
+    CheckSquare,
     Check,
-    Plus,
     Clock,
     Target,
-    Trash2,
-    Bell,
-    BellOff,
-    CheckSquare,
-    ArrowUp
+    Plus,
+    Trash2
 } from 'lucide-react';
 import { useToast } from '../../components/ui/Toast';
-import { Task } from '../../types'; // Ensure Task is imported from index.ts where we added new fields
+import type { Task } from '../../types'; // Ensure Task is imported from index.ts where we added new fields
 import './Tasks.css';
-import { format, isToday, parse, isValid, addMinutes, differenceInMinutes } from 'date-fns';
+import { format, isToday, addMinutes, differenceInMinutes } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 // --- Smart Parser ---
@@ -149,14 +146,8 @@ export const TasksPage: React.FC = () => {
             const taskDate = task.dueAt;
             if (!isToday(taskDate)) return;
 
-            const [h, m] = task.startTime.split(':').map(Number);
-            const taskStart = new Date(taskDate);
-            taskStart.setHours(h, m, 0, 0);
-
-            const diff = differenceInMinutes(taskStart, now);
-            // Notify if exactly 5 mins away (we run this check every minute via 'now' effect? 
-            // Actually 'now' updates rendering, but this effect runs when 'tasks' change or permission.
-            // We need a dedicated interval for checking notifications against 'tasks'.
+            // Notify if exactly 5 mins away ...
+            // (Logic moved to dedicated interval below)
         });
     }, [tasks, permission, now]);
 
@@ -204,7 +195,7 @@ export const TasksPage: React.FC = () => {
 
         try {
             await addDoc(collection(db, 'tasks'), {
-                ownerId: user?.uid || 'unknown', // Fallback
+                ownerId: user?.id || 'unknown', // Fallback
                 title,
                 startTime,
                 status: 'TODO',
@@ -232,7 +223,6 @@ export const TasksPage: React.FC = () => {
         // Calculate performance if finishing
         let performance = null;
         if (newStatus === 'DONE' && task.startTime) {
-            const [h, m] = task.startTime.split(':').map(Number);
             // Assume end time is +1h or user set it. If only StartTime, comparison is vague.
             // Let's just compare start time vs now. If late start? Or late finish?
             // Simplest: If now > startTime + 30min, it's late? 
@@ -363,7 +353,6 @@ export const TasksPage: React.FC = () => {
 
                 {sortedTasks.map(task => {
                     const active = isActive(task);
-                    const isLate = false; // Implement late logic later
 
                     return (
                         <div key={task.id} className={`task-card ${active ? 'is-active' : ''} ${task.status === 'DONE' ? 'is-done' : ''}`}>

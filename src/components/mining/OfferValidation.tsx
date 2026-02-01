@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Button, Input } from '../../components/ui';
 import { useToast } from '../../components/ui/Toast';
-import { TrendingUp, TrendingDown, DollarSign, Calendar, Save } from 'lucide-react';
-import { doc, getDoc, updateDoc, arrayUnion, Timestamp } from 'firebase/firestore';
+import { DollarSign, Calendar, Save } from 'lucide-react';
+import { doc, updateDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
-import { Offer } from '../../types';
+import type { Offer } from '../../types';
 
 interface DailyStat {
     date: string; // YYYY-MM-DD
