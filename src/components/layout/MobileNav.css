@@ -1,14 +1,12 @@
 .mobile-nav {
     display: none;
-    /* Default hidden, shown in media query */
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    background: rgba(30, 30, 46, 0.95);
-    backdrop-filter: blur(12px);
+    background: rgba(20, 20, 30, 0.98);
+    backdrop-filter: blur(16px);
     border-top: 1px solid rgba(255, 255, 255, 0.08);
-    /* Glass border */
     z-index: 100;
     padding-bottom: env(safe-area-inset-bottom);
 }
@@ -17,10 +15,10 @@
     display: flex;
     justify-content: space-around;
     align-items: center;
-    height: 60px;
-    max-width: 600px;
-    /* Prevent stretching on wide screens if visible */
+    height: 64px;
+    max-width: 500px;
     margin: 0 auto;
+    padding: 0 var(--space-2);
 }
 
 .mobile-nav-item {
@@ -30,10 +28,18 @@
     align-items: center;
     justify-content: center;
     gap: 4px;
-    color: var(--text-secondary);
+    color: var(--text-tertiary);
     text-decoration: none;
     height: 100%;
     transition: all 0.2s ease;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+}
+
+.mobile-nav-item:active {
+    transform: scale(0.95);
 }
 
 .mobile-nav-item.active {
@@ -44,13 +50,147 @@
     filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.5));
 }
 
+.mobile-nav-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .mobile-nav-label {
     font-size: 10px;
     font-weight: 500;
 }
 
+.mobile-nav-more {
+    color: var(--text-tertiary);
+}
+
+/* ========== MORE MENU ========== */
+.more-menu-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 150;
+    animation: fadeIn 0.2s ease;
+}
+
+.more-menu {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--bg-secondary);
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    z-index: 160;
+    max-height: 70vh;
+    overflow-y: auto;
+    animation: slideUp 0.25s ease;
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+    }
+
+    to {
+        transform: translateY(0);
+    }
+}
+
+.more-menu-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-4) var(--space-5);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    position: sticky;
+    top: 0;
+    background: var(--bg-secondary);
+}
+
+.more-menu-header h3 {
+    margin: 0;
+    font-size: var(--text-lg);
+    font-weight: var(--font-semibold);
+    color: var(--text-primary);
+}
+
+.more-menu-close {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: var(--space-2);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.more-menu-close:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.more-menu-items {
+    padding: var(--space-3);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-2);
+}
+
+.more-menu-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: var(--space-4);
+    border-radius: var(--radius-lg);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+.more-menu-item:hover,
+.more-menu-item:active {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-primary);
+}
+
+.more-menu-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    background: rgba(139, 92, 246, 0.1);
+    border-radius: var(--radius-lg);
+    color: var(--accent-primary);
+}
+
+.more-menu-label {
+    font-size: 11px;
+    font-weight: 500;
+    text-align: center;
+}
+
+/* ========== RESPONSIVE ========== */
 @media (max-width: 768px) {
     .mobile-nav {
         display: block;
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
     }
 }

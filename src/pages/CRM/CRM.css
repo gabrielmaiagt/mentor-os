@@ -202,11 +202,55 @@
 }
 
 @media (max-width: 768px) {
+    .crm {
+        height: auto;
+        padding-bottom: var(--space-4);
+    }
+
+    .crm-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-3);
+        margin-bottom: var(--space-4);
+    }
+
+    .crm-title {
+        font-size: var(--text-xl);
+    }
+
+    /* Horizontal swipe pipeline */
     .crm-pipeline {
-        grid-template-columns: 1fr;
+        display: flex;
+        grid-template-columns: none;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        gap: var(--space-3);
+        padding: 0 var(--space-2) var(--space-4);
+        margin: 0 calc(var(--space-4) * -1);
+    }
+
+    .crm-pipeline::-webkit-scrollbar {
+        display: none;
     }
 
     .crm-column {
-        min-width: auto;
+        flex: 0 0 85vw;
+        max-width: 320px;
+        scroll-snap-align: start;
+        min-width: 0;
+    }
+
+    .crm-column:first-child {
+        margin-left: var(--space-4);
+    }
+
+    .crm-column:last-child {
+        margin-right: var(--space-4);
+    }
+
+    .crm-card-actions {
+        flex-wrap: nowrap;
+        overflow-x: auto;
     }
 }

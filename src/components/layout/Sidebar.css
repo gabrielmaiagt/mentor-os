@@ -192,16 +192,15 @@
 
 @media (max-width: 768px) {
     .sidebar {
-        display: flex;
-        transform: translateX(-100%);
-        width: 80%;
-        /* Or fixed width like 280px */
+        display: none;
+        position: fixed;
+        transform: none;
+        width: 85%;
         max-width: 320px;
-        box-shadow: none;
     }
 
     .sidebar.open {
-        transform: translateX(0);
+        display: flex;
         box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
     }
 
@@ -209,7 +208,6 @@
     .sidebar-nav-label,
     .sidebar-user-info {
         display: block;
-        /* Show labels on mobile menu */
     }
 
     .sidebar-overlay {
@@ -218,7 +216,6 @@
         background: rgba(0, 0, 0, 0.6);
         backdrop-filter: blur(4px);
         z-index: 45;
-        /* Below sidebar (50) */
         animation: fadeIn 0.2s ease;
     }
 

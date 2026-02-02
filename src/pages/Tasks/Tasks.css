@@ -321,3 +321,88 @@
     background: var(--task-success);
     transition: width 0.3s ease;
 }
+
+/* ========== RESPONSIVE MOBILE ========== */
+@media (max-width: 768px) {
+    .tasks-page {
+        padding: 1rem;
+        padding-bottom: 2rem;
+    }
+
+    .tasks-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .tasks-header h1 {
+        font-size: 1.5rem;
+    }
+
+    /* Smart Input Mobile */
+    .smart-input-container {
+        margin-bottom: 1.5rem;
+    }
+
+    .smart-input {
+        font-size: 1rem;
+        padding: 0.875rem 1rem;
+    }
+
+    .smart-tags {
+        padding: 0 0.75rem 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    /* Task Cards Mobile */
+    .task-card {
+        padding: 0.875rem;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    .task-left {
+        margin-right: 0.75rem;
+        min-width: 50px;
+    }
+
+    .task-time {
+        font-size: 0.8rem;
+    }
+
+    .task-title {
+        font-size: 1rem;
+    }
+
+    .task-meta {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .task-right {
+        gap: 0.5rem;
+    }
+
+    .check-btn {
+        width: 28px;
+        height: 28px;
+    }
+
+    .progressive-tracker {
+        padding: 3px 6px;
+    }
+
+    .tracker-val {
+        font-size: 0.8rem;
+    }
+
+    .tracker-btn {
+        width: 22px;
+        height: 22px;
+    }
+
+    .empty-state {
+        padding: 2.5rem 1.5rem;
+    }
+}

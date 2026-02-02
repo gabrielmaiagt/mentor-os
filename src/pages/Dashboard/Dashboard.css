@@ -277,21 +277,82 @@
 }
 
 @media (max-width: 768px) {
-    .finance-hero-cards {
-        grid-template-columns: 1fr;
+    .dashboard {
+        padding-bottom: var(--space-4);
     }
 
     .dashboard-header {
         flex-direction: column;
         align-items: flex-start;
-        gap: var(--space-4);
+        gap: var(--space-3);
+        margin-bottom: var(--space-6);
     }
 
-    .quick-links {
+    .dashboard-title {
+        font-size: var(--text-2xl);
+    }
+
+    /* Finance Hero Mobile */
+    .finance-hero {
+        margin-bottom: var(--space-6);
+    }
+
+    .finance-hero-cards {
         grid-template-columns: 1fr 1fr;
+        gap: var(--space-3);
+    }
+
+    .finance-hero-card {
+        padding: var(--space-3);
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-2);
+    }
+
+    .finance-hero-main {
+        grid-column: 1 / -1;
+        flex-direction: row;
+        align-items: center;
+    }
+
+    .finance-hero-total {
+        grid-column: 1 / -1;
+    }
+
+    .finance-hero-icon {
+        width: 44px;
+        height: 44px;
+    }
+
+    .finance-hero-value {
+        font-size: var(--text-lg);
     }
 
     .finance-hero-value-large {
         font-size: var(--text-2xl);
+    }
+
+    /* Chart Mobile */
+    .finance-chart-card {
+        padding: var(--space-3);
+    }
+
+    .finance-chart {
+        height: 140px;
+    }
+
+    /* Mining Mobile */
+    .mining-overview-grid {
+        grid-template-columns: 1fr;
+        gap: var(--space-3);
+    }
+
+    .section-title {
+        font-size: var(--text-base);
+    }
+
+    /* Hide quick links on mobile - using bottom nav instead */
+    .quick-links {
+        display: none;
     }
 }
