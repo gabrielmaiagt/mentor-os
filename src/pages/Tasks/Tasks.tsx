@@ -167,6 +167,9 @@ export const TasksPage: React.FC = () => {
     }, [tasks, permission, now]);
 
     // Dedicated Notification Interval
+    // Dedicated Notification Interval
+    const notifiedRef = React.useRef<Set<string>>(new Set());
+
     useEffect(() => {
         const interval = setInterval(() => {
             if (Notification.permission !== 'granted') return;
@@ -177,20 +180,50 @@ export const TasksPage: React.FC = () => {
                 const taskDate = task.dueAt;
                 if (!isToday(taskDate)) return;
 
-                const [h, m] = task.startTime.split(':').map(Number);
+                // --- Start Time Logic ---
+                const [hStart, mStart] = task.startTime.split(':').map(Number);
                 const start = new Date(taskDate);
-                start.setHours(h, m, 0, 0);
+                start.setHours(hStart, mStart, 0, 0);
 
-                const diff = differenceInMinutes(start, currentNow);
+                const diffStart = differenceInMinutes(start, currentNow);
 
-                if (diff === 10) {
+                // Notify 10 min before
+                if (diffStart === 10 && !notifiedRef.current.has(`${task.id}-start-10`)) {
                     new Notification(`Prepare-se: ${task.title}`, {
                         body: `Começa em 10 minutos (${task.startTime})`,
                         icon: '/favicon.ico'
                     });
+                    notifiedRef.current.add(`${task.id}-start-10`);
+                }
+
+                // Notify EXACT Start
+                if (diffStart === 0 && !notifiedRef.current.has(`${task.id}-start-0`)) {
+                    new Notification(`🟢 Missão Iniciada: ${task.title}`, {
+                        body: `Hora de focar! (${task.startTime})`,
+                        icon: '/favicon.ico'
+                    });
+                    notifiedRef.current.add(`${task.id}-start-0`);
+                }
+
+                // --- End Time Logic ---
+                if (task.endTime) {
+                    const [hEnd, mEnd] = task.endTime.split(':').map(Number);
+                    const end = new Date(taskDate);
+                    end.setHours(hEnd, mEnd, 0, 0);
+
+                    const diffEnd = differenceInMinutes(end, currentNow);
+
+                    // Notify EXACT End
+                    if (diffEnd === 0 && !notifiedRef.current.has(`${task.id}-end-0`)) {
+                        new Notification(`🔴 Fim da Missão: ${task.title}`, {
+                            body: `Hora de encerrar! (${task.endTime})`,
+                            icon: '/favicon.ico'
+                        });
+                        notifiedRef.current.add(`${task.id}-end-0`);
+                    }
                 }
             });
-        }, 60000);
+        }, 30000); // Check every 30s to hit the minute window
         return () => clearInterval(interval);
     }, [tasks]);
 
