@@ -79,24 +79,116 @@
     color: rgba(255, 255, 255, 0.3);
 }
 
-.smart-tags {
+/* Task Description Input */
+.task-description-input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    color: white;
+    font-size: 0.95rem;
+    padding: 0.875rem 1.25rem;
+    outline: none;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 60px;
+}
+
+.task-description-input::placeholder {
+    color: rgba(255, 255, 255, 0.25);
+}
+
+/* Meta Inputs */
+.task-meta-inputs {
     display: flex;
     gap: 0.5rem;
     padding: 0 1rem 0.75rem;
-    min-height: 32px;
+    flex-wrap: wrap;
 }
 
-.smart-tag {
-    font-size: 0.75rem;
-    padding: 2px 8px;
-    border-radius: 4px;
-    background: rgba(59, 130, 246, 0.2);
-    color: #93c5fd;
-    border: 1px solid rgba(59, 130, 246, 0.3);
+.task-meta-input-group {
     display: flex;
     align-items: center;
-    gap: 4px;
-    animation: fadeIn 0.3s ease;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 0.4rem 0.75rem;
+    border-radius: 6px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.task-date-input,
+.task-target-input {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 0.85rem;
+    outline: none;
+    min-width: 80px;
+}
+
+.task-date-input {
+    min-width: 130px;
+}
+
+.task-target-input {
+    width: 80px;
+}
+
+.task-toggle-desc-btn {
+    background: rgba(59, 130, 246, 0.15);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    color: #93c5fd;
+    font-size: 0.75rem;
+    padding: 0.4rem 0.75rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.task-toggle-desc-btn:hover {
+    background: rgba(59, 130, 246, 0.25);
+}
+
+/* Form Actions */
+.task-form-actions {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0 1rem 0.75rem;
+}
+
+.btn-primary {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--task-accent);
+    color: white;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-primary:hover {
+    background: #2563eb;
+}
+
+.btn-cancel {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.7);
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-cancel:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
 }
 
 /* Task List Container */
@@ -199,11 +291,35 @@
     margin-bottom: 0.25rem;
 }
 
+.task-description {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+}
+
 .task-meta {
     display: flex;
     gap: 1rem;
     font-size: 0.8rem;
     color: #64748b;
+    flex-wrap: wrap;
+}
+
+.task-date {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.task-date-late {
+    color: var(--task-late);
+}
+
+.task-progress {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
 }
 
 /* Actions */
@@ -246,6 +362,31 @@
 
 .tracker-btn:hover {
     background: var(--task-accent);
+}
+
+.task-edit-btn,
+.task-delete-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.6);
+    transition: all 0.2s;
+}
+
+.task-edit-btn:hover {
+    background: rgba(59, 130, 246, 0.2);
+    color: #3b82f6;
+}
+
+.task-delete-btn:hover {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
 }
 
 /* Checkbox Replacement */

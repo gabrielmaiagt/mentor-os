@@ -253,16 +253,12 @@ export interface Task extends FirestoreTimestamps {
     entityId: string;
     title: string;
     description?: string;
-    dueAt: Date;
+    dueDate?: Date; // Changed from dueAt to dueDate for clarity
     priority: TaskPriority;
     status: TaskStatus;
 
-    // Time Tracking
-    startTime?: string; // HH:mm
-    endTime?: string; // HH:mm
     completedAt?: Date;
     performance?: 'EARLY' | 'ON_TIME' | 'LATE';
-    notify?: boolean;
 
     // Progressive Tracking (Subtasks/Counters)
     targetValue?: number; // e.g. 5 (calls)

@@ -12,123 +12,30 @@ import {
     orderBy,
     Timestamp
 } from 'firebase/firestore';
-import {
-    Bell,
-    CheckSquare,
-    Check,
-    Clock,
-    Target,
-    Plus,
-    Trash2
-} from 'lucide-react';
+import { Plus, Trash2, Check, Pencil, Calendar, Target } from 'lucide-react';
+import type { Task } from '../../types';
 import { useToast } from '../../components/ui/Toast';
-import type { Task } from '../../types'; // Ensure Task is imported from index.ts where we added new fields
 import './Tasks.css';
-import { format, isToday, addMinutes, differenceInMinutes } from 'date-fns';
+import { format, isToday, isTomorrow, isPast } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-
-// --- Smart Parser ---
-interface ParsedInput {
-    title: string;
-    startTime?: string;
-    endTime?: string;
-    targetValue?: number;
-}
-
-const parseInput = (text: string): ParsedInput => {
-    let title = text;
-    let startTime: string | undefined;
-    let endTime: string | undefined;
-    let targetValue: number | undefined;
-
-    // 1. Detect Time Range (e.g. "21 e 22", "21-22", "21h as 22h", "14:00 ate 15:00")
-    // Regex logic: 
-    // Group 1: Start Time (HH:mm or HH)
-    // Group 2: Separator (e, -, ate, as)
-    // Group 3: End Time (HH:mm or HH)
-
-    // Complex Regex for Range:
-    const rangeMatch = text.match(/(\d{1,2}(?::\d{2})?)\s*(?:e|-|at[eé]|as|às)\s*(\d{1,2}(?::\d{2})?)/i);
-
-    const parseTime = (raw: string): string | undefined => {
-        if (raw.includes(':')) return raw.padStart(5, '0'); // 9:00 -> 09:00
-        const h = parseInt(raw);
-        if (h >= 0 && h <= 23) return `${h.toString().padStart(2, '0')}:00`;
-        return undefined;
-    };
-
-    if (rangeMatch) {
-        const start = parseTime(rangeMatch[1]);
-        const end = parseTime(rangeMatch[2]);
-
-        if (start && end) {
-            startTime = start;
-            endTime = end;
-            title = title.replace(rangeMatch[0], '').trim();
-        }
-    }
-
-    // 2. If no range, look for single start time
-    if (!startTime) {
-        const timeMatch = text.match(/(\d{1,2}:\d{2})/);
-        if (timeMatch) {
-            startTime = timeMatch[1];
-            title = title.replace(timeMatch[0], '').trim();
-        } else {
-            const hourMatch = text.match(/\b(\d{1,2})[hH]\b/);
-            if (hourMatch) {
-                const h = parseInt(hourMatch[1]);
-                if (h >= 0 && h <= 23) {
-                    startTime = `${h.toString().padStart(2, '0')}:00`;
-                    title = title.replace(hourMatch[0], '').trim();
-                }
-            }
-        }
-    }
-
-    // 3. Detect Target
-    const startMatch = text.match(/^(\d+)\s/);
-    if (startMatch) {
-        targetValue = parseInt(startMatch[1]);
-    } else {
-        const keywordMatch = text.match(/(\d+)\s+(v[ií]de|venda|lead|call|post|story|stories|reuni[aã]o|p[aá]gina|aula)/i);
-        if (keywordMatch) {
-            targetValue = parseInt(keywordMatch[1]);
-        } else {
-            const slashMatch = text.match(/\/(\d+)/);
-            if (slashMatch) {
-                targetValue = parseInt(slashMatch[1]);
-                title = title.replace(slashMatch[0], '').trim();
-            }
-        }
-    }
-
-    return { title, startTime, endTime, targetValue };
-};
 
 export const TasksPage: React.FC = () => {
     const { user } = useAuth();
     const toast = useToast();
     const [tasks, setTasks] = useState<Task[]>([]);
     const [inputValue, setInputValue] = useState('');
-    const [parsedPreview, setParsedPreview] = useState<ParsedInput | null>(null);
-    const [permission, setPermission] = useState(Notification.permission);
-
-    // Auto-update time for highlighting current task
-    const [now, setNow] = useState(new Date());
-
-    useEffect(() => {
-        const timer = setInterval(() => setNow(new Date()), 60000); // Every minute
-        return () => clearInterval(timer);
-    }, []);
+    const [description, setDescription] = useState('');
+    const [dueDate, setDueDate] = useState('');
+    const [targetValue, setTargetValue] = useState('');
+    const [editingTask, setEditingTask] = useState<Task | null>(null);
+    const [showDescription, setShowDescription] = useState(false);
 
     // --- Firebase Subscription ---
     useEffect(() => {
-        if (!user) return; // Wait for user
+        if (!user) return;
 
         const q = query(
             collection(db, 'tasks'),
-            // where('ownerId', '==', user.uid), 
             orderBy('createdAt', 'desc')
         );
 
@@ -136,7 +43,7 @@ export const TasksPage: React.FC = () => {
             const loaded = snapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data(),
-                dueAt: doc.data().dueAt?.toDate(),
+                dueDate: doc.data().dueDate?.toDate(),
                 createdAt: doc.data().createdAt?.toDate(),
                 completedAt: doc.data().completedAt?.toDate(),
             })) as Task[];
@@ -146,327 +53,292 @@ export const TasksPage: React.FC = () => {
         return () => unsubscribe();
     }, [user]);
 
-    // --- Smart Input Effect ---
-    useEffect(() => {
-        if (inputValue) {
-            setParsedPreview(parseInput(inputValue));
-        } else {
-            setParsedPreview(null);
-        }
-    }, [inputValue]);
-
-    // --- Notification Logic ---
-    useEffect(() => {
-        if (permission !== 'granted') return;
-
-        tasks.forEach(task => {
-            if (task.status === 'DONE' || !task.startTime || task.notify === false) return;
-            const taskDate = task.dueAt;
-            if (!isToday(taskDate)) return;
-        });
-    }, [tasks, permission, now]);
-
-    // Dedicated Notification Interval
-    // Dedicated Notification Interval
-    const notifiedRef = React.useRef<Set<string>>(new Set());
-
-    useEffect(() => {
-        const interval = setInterval(() => {
-            if (Notification.permission !== 'granted') return;
-            const currentNow = new Date();
-
-            tasks.forEach(task => {
-                if (task.status === 'DONE' || !task.startTime) return;
-                const taskDate = task.dueAt;
-                if (!isToday(taskDate)) return;
-
-                // --- Start Time Logic ---
-                const [hStart, mStart] = task.startTime.split(':').map(Number);
-                const start = new Date(taskDate);
-                start.setHours(hStart, mStart, 0, 0);
-
-                const diffStart = differenceInMinutes(start, currentNow);
-
-                // Notify 10 min before
-                if (diffStart === 10 && !notifiedRef.current.has(`${task.id}-start-10`)) {
-                    new Notification(`Prepare-se: ${task.title}`, {
-                        body: `Começa em 10 minutos (${task.startTime})`,
-                        icon: '/favicon.ico'
-                    });
-                    notifiedRef.current.add(`${task.id}-start-10`);
-                }
-
-                // Notify EXACT Start
-                if (diffStart === 0 && !notifiedRef.current.has(`${task.id}-start-0`)) {
-                    new Notification(`🟢 Missão Iniciada: ${task.title}`, {
-                        body: `Hora de focar! (${task.startTime})`,
-                        icon: '/favicon.ico'
-                    });
-                    notifiedRef.current.add(`${task.id}-start-0`);
-                }
-
-                // --- End Time Logic ---
-                if (task.endTime) {
-                    const [hEnd, mEnd] = task.endTime.split(':').map(Number);
-                    const end = new Date(taskDate);
-                    end.setHours(hEnd, mEnd, 0, 0);
-
-                    const diffEnd = differenceInMinutes(end, currentNow);
-
-                    // Notify EXACT End
-                    if (diffEnd === 0 && !notifiedRef.current.has(`${task.id}-end-0`)) {
-                        new Notification(`🔴 Fim da Missão: ${task.title}`, {
-                            body: `Hora de encerrar! (${task.endTime})`,
-                            icon: '/favicon.ico'
-                        });
-                        notifiedRef.current.add(`${task.id}-end-0`);
-                    }
-                }
-            });
-        }, 30000); // Check every 30s to hit the minute window
-        return () => clearInterval(interval);
-    }, [tasks]);
-
-    const requestNotification = () => {
-        Notification.requestPermission().then(setPermission);
-    };
-
     const handleAddTask = async (e?: React.FormEvent) => {
         if (e) e.preventDefault();
-        if (!inputValue.trim()) return;
-
-        if (!user) {
-            toast.error('Erro de autenticação. Recarregue a página.');
+        if (!inputValue.trim()) {
+            toast.error('Digite um título para a missão');
             return;
         }
 
-        const { title, startTime, endTime, targetValue } = parseInput(inputValue);
+        if (!user) {
+            toast.error('Erro de autenticação');
+            return;
+        }
 
         try {
             const taskData = {
-                ownerId: user.id || 'unknown', // Ensure ID
-                title,
-                startTime: startTime || null,
-                endTime: endTime || null,
+                ownerId: user.id || 'unknown',
+                ownerRole: 'mentor',
+                scope: 'PERSONAL',
+                entityType: 'NONE',
+                entityId: '',
+                title: inputValue.trim(),
+                description: description.trim() || null,
+                dueDate: dueDate ? Timestamp.fromDate(new Date(dueDate)) : null,
                 status: 'TODO',
                 priority: 'MEDIUM',
-                dueAt: Timestamp.fromDate(new Date()),
                 createdAt: Timestamp.now(),
-                targetValue: targetValue || 0,
+                targetValue: targetValue ? parseInt(targetValue) : null,
                 currentValue: 0,
-                notify: true
+                quickActions: []
             };
 
-            console.log('Adding task:', taskData); // Debug
             await addDoc(collection(db, 'tasks'), taskData);
 
             setInputValue('');
-            toast.success(targetValue ? `Meta Criada: ${targetValue}` : 'Missão adicionada');
+            setDescription('');
+            setDueDate('');
+            setTargetValue('');
+            setShowDescription(false);
+            toast.success('Missão criada!');
         } catch (err) {
             console.error("Firestore Error:", err);
-            toast.error('Erro ao salvar. Verifique o console.');
+            toast.error('Erro ao criar missão');
         }
     };
 
+    const handleEditTask = async () => {
+        if (!editingTask || !inputValue.trim()) return;
+
+        try {
+            await updateDoc(doc(db, 'tasks', editingTask.id), {
+                title: inputValue.trim(),
+                description: description.trim() || null,
+                dueDate: dueDate ? Timestamp.fromDate(new Date(dueDate)) : null,
+                targetValue: targetValue ? parseInt(targetValue) : null,
+            });
+
+            setEditingTask(null);
+            setInputValue('');
+            setDescription('');
+            setDueDate('');
+            setTargetValue('');
+            toast.success('Missão atualizada!');
+        } catch (err) {
+            console.error("Error updating task:", err);
+            toast.error('Erro ao atualizar missão');
+        }
+    };
+
+    const openEditModal = (task: Task) => {
+        setEditingTask(task);
+        setInputValue(task.title);
+        setDescription(task.description || '');
+        setDueDate(task.dueDate ? format(task.dueDate, 'yyyy-MM-dd') : '');
+        setTargetValue(task.targetValue?.toString() || '');
+        setShowDescription(!!task.description);
+    };
+
+    const cancelEdit = () => {
+        setEditingTask(null);
+        setInputValue('');
+        setDescription('');
+        setDueDate('');
+        setTargetValue('');
+        setShowDescription(false);
+    };
+
     const handleToggle = async (task: Task) => {
-        // If progressive, this button finishes it Forcefully? 
-        // Or if it's a checkbox, it toggles DONE/TODO.
         const newStatus = task.status === 'DONE' ? 'TODO' : 'DONE';
 
-        // Calculate performance if finishing
-        let performance = null;
-        if (newStatus === 'DONE' && task.startTime) {
-            // Assume end time is +1h or user set it. If only StartTime, comparison is vague.
-            // Let's just compare start time vs now. If late start? Or late finish?
-            // Simplest: If now > startTime + 30min, it's late? 
-            // Let's say: On Time = Completed on the same day.
-            // Let's leave Performance logic simple: Always 'ON_TIME' if today.
-            performance = 'ON_TIME';
-
-            // Advanced logic: if task.endTime, compare.
+        try {
+            await updateDoc(doc(db, 'tasks', task.id), {
+                status: newStatus,
+                completedAt: newStatus === 'DONE' ? Timestamp.now() : null,
+                currentValue: newStatus === 'DONE' && task.targetValue ? task.targetValue : task.currentValue
+            });
+        } catch (err) {
+            console.error("Error toggling task:", err);
+            toast.error('Erro ao atualizar missão');
         }
-
-        await updateDoc(doc(db, 'tasks', task.id), {
-            status: newStatus,
-            completedAt: newStatus === 'DONE' ? Timestamp.now() : null,
-            performance
-        });
     };
 
     const handleIncrement = async (task: Task) => {
         if (!task.targetValue) return;
-        const nextVal = (task.currentValue || 0) + 1;
 
-        if (nextVal >= task.targetValue) {
-            // Auto complete
+        const newValue = Math.min((task.currentValue || 0) + 1, task.targetValue);
+        const isDone = newValue >= task.targetValue;
+
+        try {
             await updateDoc(doc(db, 'tasks', task.id), {
-                currentValue: nextVal,
-                status: 'DONE',
-                completedAt: Timestamp.now(),
-                performance: 'ON_TIME'
+                currentValue: newValue,
+                status: isDone ? 'DONE' : task.status,
+                completedAt: isDone ? Timestamp.now() : task.completedAt
             });
-            toast.success(`Meta batida: ${task.title}`);
-        } else {
-            await updateDoc(doc(db, 'tasks', task.id), {
-                currentValue: nextVal
-            });
+        } catch (err) {
+            console.error("Error incrementing:", err);
         }
     };
 
     const handleDelete = async (id: string) => {
-        if (confirm('Deletar missão?')) {
+        if (!confirm('Deseja excluir esta missão?')) return;
+        try {
             await deleteDoc(doc(db, 'tasks', id));
+            toast.success('Missão removida');
+        } catch (err) {
+            toast.error('Erro ao remover missão');
         }
     };
 
-    // --- Auto-Priority Sort ---
-    // 1. Pending vs Done
-    // 2. Overdue (if Date < today) - skipping for now as we auto-set Due=Today
-    // 3. Current Time Block (startTime is closest to NOW)
-    // 4. Future
-    // 5. No Time
-    const sortedTasks = [...tasks].sort((a, b) => {
+    const formatDate = (date?: Date) => {
+        if (!date) return null;
+        if (isToday(date)) return 'Hoje';
+        if (isTomorrow(date)) return 'Amanhã';
+        return format(date, 'dd/MM', { locale: ptBR });
+    };
+
+    const filteredTasks = tasks.filter(t =>
+        t.ownerId === user?.id
+    );
+
+    const sortedTasks = [...filteredTasks].sort((a, b) => {
         if (a.status === 'DONE' && b.status !== 'DONE') return 1;
         if (a.status !== 'DONE' && b.status === 'DONE') return -1;
-
-        // Both Pending
-        if (a.startTime && b.startTime) {
-            return a.startTime.localeCompare(b.startTime);
-        }
-        if (a.startTime) return -1;
-        if (b.startTime) return 1;
-
-        return 0; // Keep insertion order
+        if (a.dueDate && b.dueDate) return a.dueDate.getTime() - b.dueDate.getTime();
+        if (a.dueDate) return -1;
+        if (b.dueDate) return 1;
+        return 0;
     });
-
-    // Determine "Active" task (first pending with time closest to now, or just first pending)
-    // Actually, "Active" is valid if now >= startTime && now < endTime.
-    // Simplify: Highlight task if we are within [startTime, startTime + 1h]
-    const isActive = (task: Task) => {
-        if (task.status === 'DONE' || !task.startTime) return false;
-        const [h, m] = task.startTime.split(':').map(Number);
-        const start = new Date();
-        start.setHours(h, m, 0, 0);
-        const end = addMinutes(start, 60); // Assume 1h blocks default
-        return now >= start && now < end;
-    };
-
 
     return (
         <div className="tasks-page">
-            <header className="tasks-header">
+            <div className="tasks-header">
                 <div>
-                    <h1>Field Marshal</h1>
+                    <h1>Missões</h1>
                     <p className="tasks-subtitle">
-                        {format(now, "EEEE, d 'de' MMMM", { locale: ptBR })} • {format(now, "HH:mm")}
+                        {filteredTasks.filter(t => t.status !== 'DONE').length} pendentes •{' '}
+                        {filteredTasks.filter(t => t.status === 'DONE').length} concluídas
                     </p>
                 </div>
-                <div>
-                    {permission === 'default' && (
-                        <button className="btn-ghost" onClick={requestNotification}>
-                            <Bell size={20} /> Ativar Alertas
-                        </button>
-                    )}
-                    {permission === 'granted' && <div className="text-success text-sm flex gap-2"><Check size={14} /> Sistema Online</div>}
-                </div>
-            </header>
+            </div>
 
-            {/* Smart Input */}
+            {/* Input Form */}
             <div className="smart-input-container">
-                <form onSubmit={handleAddTask}>
+                <form onSubmit={editingTask ? (e) => { e.preventDefault(); handleEditTask(); } : handleAddTask}>
                     <input
-                        type="text"
                         className="smart-input"
-                        placeholder="Ex: 5 vendas hoje (ou 'Ligar 14:00')"
+                        placeholder={editingTask ? "Editar missão..." : "Nova missão..."}
                         value={inputValue}
                         onChange={(e) => setInputValue(e.target.value)}
-                        autoFocus
                     />
-                </form>
-                {parsedPreview && (parsedPreview.startTime || parsedPreview.targetValue) && (
-                    <div className="smart-tags">
-                        {parsedPreview.startTime && (
-                            <span className="smart-tag">
-                                <Clock size={12} />
-                                {parsedPreview.startTime}
-                                {parsedPreview.endTime ? ` - ${parsedPreview.endTime}` : ''}
-                            </span>
-                        )}
-                        {parsedPreview.targetValue && (
-                            <span className="smart-tag"><Target size={12} /> Meta: {parsedPreview.targetValue}</span>
-                        )}
+
+                    {showDescription && (
+                        <textarea
+                            className="task-description-input"
+                            placeholder="Descrição (opcional)..."
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                            rows={2}
+                        />
+                    )}
+
+                    <div className="task-meta-inputs">
+                        <div className="task-meta-input-group">
+                            <Calendar size={16} />
+                            <input
+                                type="date"
+                                value={dueDate}
+                                onChange={(e) => setDueDate(e.target.value)}
+                                className="task-date-input"
+                            />
+                        </div>
+
+                        <div className="task-meta-input-group">
+                            <Target size={16} />
+                            <input
+                                type="number"
+                                placeholder="Meta (opcional)"
+                                value={targetValue}
+                                onChange={(e) => setTargetValue(e.target.value)}
+                                className="task-target-input"
+                            />
+                        </div>
+
+                        <button
+                            type="button"
+                            className="task-toggle-desc-btn"
+                            onClick={() => setShowDescription(!showDescription)}
+                        >
+                            {showDescription ? '−' : '+ Descrição'}
+                        </button>
                     </div>
-                )}
+
+                    <div className="task-form-actions">
+                        {editingTask && (
+                            <button type="button" className="btn-cancel" onClick={cancelEdit}>
+                                Cancelar
+                            </button>
+                        )}
+                        <button type="submit" className="btn-primary">
+                            <Plus size={18} />
+                            {editingTask ? 'Salvar' : 'Adicionar'}
+                        </button>
+                    </div>
+                </form>
             </div>
 
-            {/* Task List */}
+            {/* Tasks Grid */}
             <div className="tasks-grid">
-                {sortedTasks.length === 0 && (
-                    <div className="empty-state">
-                        <CheckSquare size={48} style={{ opacity: 0.2, margin: '0 auto 1rem' }} />
-                        <p>Nenhuma missão ativa. O campo está limpo.</p>
-                    </div>
-                )}
+                {sortedTasks.map(task => (
+                    <div
+                        key={task.id}
+                        className={`task-card ${task.status === 'DONE' ? 'is-done' : ''} ${task.dueDate && isPast(task.dueDate) && task.status !== 'DONE' ? 'is-late' : ''}`}
+                    >
+                        <div className="task-left">
+                            <button
+                                className={`check-btn ${task.status === 'DONE' ? 'checked' : ''}`}
+                                onClick={() => handleToggle(task)}
+                            >
+                                {task.status === 'DONE' && <Check size={18} />}
+                            </button>
+                        </div>
 
-                {sortedTasks.map(task => {
-                    const active = isActive(task);
-
-                    return (
-                        <div key={task.id} className={`task-card ${active ? 'is-active' : ''} ${task.status === 'DONE' ? 'is-done' : ''}`}>
-                            {/* Left: Time */}
-                            <div className="task-left">
-                                {task.startTime ? (
-                                    <div className="task-time-col">
-                                        <span className="task-time">{task.startTime}</span>
-                                        {task.endTime && <span className="task-endtime">{task.endTime}</span>}
-                                    </div>
-                                ) : (
-                                    <span className="task-time">--:--</span>
+                        <div className="task-center">
+                            <div className="task-title">{task.title}</div>
+                            {task.description && (
+                                <div className="task-description">{task.description}</div>
+                            )}
+                            <div className="task-meta">
+                                {task.dueDate && (
+                                    <span className={`task-date ${task.dueDate && isPast(task.dueDate) && task.status !== 'DONE' ? 'task-date-late' : ''}`}>
+                                        📅 {formatDate(task.dueDate)}
+                                    </span>
                                 )}
-                            </div>
-
-                            {/* Center: Info */}
-                            <div className="task-center">
-                                <div className="task-title">{task.title}</div>
-                                {task.targetValue ? (
-                                    <div className="task-progress-bar">
-                                        <div
-                                            className="progress-fill"
-                                            style={{ width: `${((task.currentValue || 0) / task.targetValue) * 100}%` }}
-                                        />
-                                    </div>
-                                ) : null}
-                            </div>
-
-                            {/* Right: Actions */}
-                            <div className="task-right">
-                                {/* Progressive Control */}
-                                {task.targetValue && task.status !== 'DONE' ? (
-                                    <div className="progressive-tracker">
-                                        <span className="tracker-val">{task.currentValue || 0}/{task.targetValue}</span>
-                                        <button className="tracker-btn" onClick={() => handleIncrement(task)}>
-                                            <Plus size={14} />
-                                        </button>
-                                    </div>
-                                ) : (
-                                    // Regular Checkbox
-                                    <button
-                                        className={`check-btn ${task.status === 'DONE' ? 'checked' : ''}`}
-                                        onClick={() => handleToggle(task)}
-                                    >
-                                        <Check size={18} />
-                                    </button>
+                                {task.targetValue && (
+                                    <span className="task-progress">
+                                        🎯 {task.currentValue || 0}/{task.targetValue}
+                                    </span>
                                 )}
-
-                                {/* Delete */}
-                                <button className="tracker-btn" style={{ background: 'transparent', opacity: 0.5 }} onClick={() => handleDelete(task.id)}>
-                                    <Trash2 size={16} />
-                                </button>
                             </div>
                         </div>
-                    );
-                })}
+
+                        <div className="task-right">
+                            {task.targetValue && task.status !== 'DONE' && (
+                                <button
+                                    className="tracker-btn"
+                                    onClick={() => handleIncrement(task)}
+                                    disabled={(task.currentValue || 0) >= task.targetValue}
+                                >
+                                    +
+                                </button>
+                            )}
+                            <button className="task-edit-btn" onClick={() => openEditModal(task)}>
+                                <Pencil size={14} />
+                            </button>
+                            <button className="task-delete-btn" onClick={() => handleDelete(task.id)}>
+                                <Trash2 size={14} />
+                            </button>
+                        </div>
+                    </div>
+                ))}
             </div>
+
+            {sortedTasks.length === 0 && (
+                <div className="empty-state">
+                    <p>Nenhuma missão criada ainda.</p>
+                    <p className="text-secondary text-sm">Comece adicionando sua primeira missão acima!</p>
+                </div>
+            )}
         </div>
     );
 };

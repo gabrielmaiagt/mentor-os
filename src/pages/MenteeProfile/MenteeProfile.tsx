@@ -117,12 +117,12 @@ export const MenteeProfilePage: React.FC = () => {
     // Fetch Tasks
     useEffect(() => {
         if (!id) return;
-        const q = query(collection(db, 'tasks'), where('ownerId', '==', id), orderBy('dueAt', 'asc'));
+        const q = query(collection(db, 'tasks'), where('ownerId', '==', id), orderBy('dueDate', 'asc'));
         const unsubscribe = onSnapshot(q, (snapshot) => {
             setMenteeTasks(snapshot.docs.map(d => ({
                 id: d.id,
                 ...d.data(),
-                dueAt: d.data().dueAt?.toDate(),
+                dueDate: d.data().dueDate?.toDate(),
                 createdAt: d.data().createdAt?.toDate(),
             })) as Task[]);
         });
@@ -134,7 +134,7 @@ export const MenteeProfilePage: React.FC = () => {
     const [newTask, setNewTask] = useState({
         title: '',
         description: '',
-        dueAt: new Date().toISOString().split('T')[0]
+        dueDate: new Date().toISOString().split('T')[0]
     });
 
     // Templates State
@@ -787,10 +787,10 @@ export const MenteeProfilePage: React.FC = () => {
                                         />
                                         <div className="task-content">
                                             <span className="task-title">{task.title}</span>
-                                            {task.dueAt && (
+                                            {task.dueDate && (
                                                 <span className={`task-due ${task.status === 'OVERDUE' ? 'overdue' : ''}`}>
                                                     <Clock size={12} />
-                                                    {task.status === 'OVERDUE' ? 'Atrasada' : formatDate(task.dueAt)}
+                                                    {task.status === 'OVERDUE' ? 'Atrasada' : formatDate(task.dueDate)}
                                                 </span>
                                             )}
                                         </div>
@@ -828,7 +828,7 @@ export const MenteeProfilePage: React.FC = () => {
                                 await addDoc(collection(db, 'tasks'), {
                                     title: newTask.title,
                                     description: newTask.description,
-                                    dueAt: new Date(newTask.dueAt),
+                                    dueDate: new Date(newTask.dueDate),
                                     ownerId: id,
                                     ownerRole: 'MENTEE',
                                     scope: 'DELIVERY',
@@ -842,7 +842,7 @@ export const MenteeProfilePage: React.FC = () => {
                                 });
                                 toast.success('Tarefa criada!', newTask.title);
                                 setShowTaskModal(false);
-                                setNewTask({ title: '', description: '', dueAt: new Date().toISOString().split('T')[0] });
+                                setNewTask({ title: '', description: '', dueDate: new Date().toISOString().split('T')[0] });
                             } catch (e) {
                                 console.error(e);
                                 toast.error('Erro ao criar tarefa');
@@ -889,8 +889,8 @@ export const MenteeProfilePage: React.FC = () => {
                         <label>Prazo</label>
                         <input
                             type="date"
-                            value={newTask.dueAt}
-                            onChange={e => setNewTask({ ...newTask, dueAt: e.target.value })}
+                            value={newTask.dueDate}
+                            onChange={e => setNewTask({ ...newTask, dueDate: e.target.value })}
                         />
                     </div>
                 </div>
