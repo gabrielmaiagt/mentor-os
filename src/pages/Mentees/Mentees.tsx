@@ -213,6 +213,37 @@ export const MenteesPage: React.FC = () => {
                     </p>
                 </div>
                 <div className="flex gap-2">
+                    <Button
+                        variant="ghost"
+                        className="text-warning border border-warning/30"
+                        onClick={async () => {
+                            if (!confirm('Isso irá corrigir todos os mentorados ATIVOS sem currentStage. Continuar?')) return;
+
+                            try {
+                                let fixed = 0;
+                                const activeMentees = mentees.filter(m =>
+                                    (m.status === 'ACTIVE' || (m.status === undefined && m.active !== false))
+                                    && !m.currentStage
+                                );
+
+                                for (const mentee of activeMentees) {
+                                    await updateDoc(doc(db, 'mentees', mentee.id), {
+                                        currentStage: 'ONBOARDING',
+                                        stageProgress: 0,
+                                        weeklyGoal: 'Complete o processo de onboarding'
+                                    });
+                                    fixed++;
+                                }
+
+                                toast.success(`${fixed} mentorado(s) corrigido(s)! Agora podem acessar o onboarding.`);
+                            } catch (error) {
+                                console.error("Error fixing mentees:", error);
+                                toast.error("Erro ao corrigir mentorados");
+                            }
+                        }}
+                    >
+                        🔧 Corrigir Mentorados
+                    </Button>
                     <Button variant="secondary" icon={<Download size={18} />} onClick={handleExport}>
                         Exportar
                     </Button>
