@@ -515,3 +515,38 @@ export interface DailyAdStats {
     pixGenerated?: number;
     pixPaid?: number; // Vendas confirmadas
 }
+
+export type CategoriaDespesa =
+    // Operacional
+    | 'TRAFEGO' | 'AUTOMACAO' | 'INFRA' | 'DESIGN' | 'IA'
+    // Pessoal
+    | 'MORADIA' | 'CONTAS' | 'ALIMENTACAO' | 'TRANSPORTE' | 'LAZER' | 'SAUDE' | 'ASSINATURAS_PESSOAIS';
+
+export type Recorrencia = 'MENSAL' | 'ANUAL' | 'UNICO';
+
+export interface DespesaOperacional extends FirestoreTimestamps {
+    id: string;
+    userId: string;
+    nome: string;
+    escopo: 'OPERACIONAL';
+    categoria: CategoriaDespesa;
+    tipo: 'FIXO' | 'VARIAVEL';
+    valor: number;
+    recorrencia: Recorrencia;
+    status: 'ATIVO' | 'CANCELADO'; // Para assinaturas
+    proximaCobranca?: Date;
+    notas?: string;
+}
+
+export interface DespesaPessoal extends FirestoreTimestamps {
+    id: string;
+    userId: string;
+    nome: string;
+    escopo: 'PESSOAL';
+    categoria: CategoriaDespesa;
+    tipo: 'FIXO' | 'VARIAVEL';
+    valor: number;
+    metodoPagamento: 'CARTAO' | 'PIX' | 'DINHEIRO';
+    essencial: boolean; // Checkbox "Essencial?"
+    data: Date;
+}

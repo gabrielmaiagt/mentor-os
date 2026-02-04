@@ -1,0 +1,247 @@
+.personal-finance {
+    padding: 24px 0;
+}
+
+.life-dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+.life-card {
+    background: rgba(30, 41, 59, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+}
+
+.life-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.life-card.main-card h1 {
+    font-size: 36px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 12px;
+}
+
+.life-breakdown {
+    display: flex;
+    gap: 16px;
+    font-size: 13px;
+}
+
+.text-green {
+    color: #34d399;
+}
+
+.text-purple {
+    color: #a78bfa;
+}
+
+.text-blue {
+    color: #60a5fa;
+}
+
+.text-orange {
+    color: #fb923c;
+}
+
+.text-red {
+    color: #f87171;
+}
+
+.text-gray {
+    color: #9ca3af;
+}
+
+/* Goal Card */
+.goal-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 24px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 16px;
+}
+
+.goal-input {
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    font-size: 24px;
+    font-weight: 600;
+    width: 140px;
+    padding: 0 4px;
+}
+
+.goal-input:focus {
+    outline: none;
+    border-color: #fb923c;
+}
+
+.goal-progress-bar {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(to right, #fb923c, #fcd34d);
+    transition: width 0.5s ease;
+}
+
+.goal-status {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.goal-status b {
+    color: #fff;
+}
+
+/* Expenses List */
+.personal-expenses-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.personal-expense-item {
+    display: flex;
+    align-items: center;
+    background: rgba(30, 41, 59, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 12px 16px;
+    transition: all 0.2s;
+}
+
+.personal-expense-item:hover {
+    background: rgba(30, 41, 59, 0.5);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.expense-icon-col {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 16px;
+}
+
+.expense-info-col {
+    flex: 1;
+}
+
+.expense-info-col h3 {
+    font-size: 14px;
+    color: #fff;
+    font-weight: 500;
+}
+
+.expense-date {
+    font-size: 12px;
+    color: var(--text-tertiary);
+}
+
+.expense-tags-col {
+    display: flex;
+    gap: 8px;
+    margin-right: 24px;
+}
+
+.badge-outline {
+    font-size: 10px;
+    padding: 2px 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 100px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+
+.badge-essential {
+    font-size: 10px;
+    padding: 2px 8px;
+    background: rgba(52, 211, 153, 0.1);
+    color: #34d399;
+    border-radius: 100px;
+    font-weight: 500;
+}
+
+.expense-amount-col {
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+    margin-right: 16px;
+    min-width: 100px;
+    text-align: right;
+}
+
+.expense-actions-col {
+    display: flex;
+}
+
+.checkbox-field {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.checkbox-field input {
+    width: auto;
+}
+
+@media (max-width: 600px) {
+    .personal-expense-item {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .expense-icon-col {
+        width: 32px;
+        height: 32px;
+    }
+
+    .expense-tags-col {
+        order: 3;
+        width: 100%;
+        margin-right: 0;
+        margin-top: 4px;
+        justify-content: flex-start;
+    }
+
+    .expense-amount-col {
+        order: 2;
+        margin-left: auto;
+        margin-right: 0;
+    }
+
+    .expense-actions-col {
+        order: 4;
+        position: absolute;
+        right: 16px;
+        top: 16px;
+    }
+}

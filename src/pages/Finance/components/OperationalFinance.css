@@ -1,0 +1,244 @@
+.operational-finance {
+    padding: 24px 0;
+}
+
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+}
+
+.kpi-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 20px;
+    background: rgba(30, 41, 59, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+}
+
+.kpi-icon-wrapper {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.kpi-icon-wrapper.blue {
+    background: rgba(59, 130, 246, 0.1);
+    color: #60a5fa;
+}
+
+.kpi-icon-wrapper.purple {
+    background: rgba(139, 92, 246, 0.1);
+    color: #a78bfa;
+}
+
+.kpi-icon-wrapper.red {
+    background: rgba(239, 68, 68, 0.1);
+    color: #f87171;
+}
+
+.kpi-content h3 {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.kpi-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 4px;
+}
+
+.kpi-subtitle {
+    font-size: 12px;
+    color: var(--text-tertiary);
+}
+
+.kpi-value.text-red {
+    color: #f87171;
+}
+
+.mini-bar-chart {
+    display: flex;
+    height: 6px;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    margin: 8px 0;
+    overflow: hidden;
+}
+
+.bar-segment.fixed {
+    background: #818cf8;
+}
+
+.bar-segment.variable {
+    background: #34d399;
+}
+
+/* Subscriptions Grid */
+.subscriptions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.subscription-card {
+    background: rgba(30, 41, 59, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 16px;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+}
+
+.subscription-card:hover {
+    border-color: rgba(99, 102, 241, 0.3);
+    background: rgba(30, 41, 59, 0.6);
+}
+
+.subscription-card.cancelled {
+    opacity: 0.6;
+    filter: grayscale(1);
+}
+
+.sub-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.sub-category {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 4px 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    color: var(--text-secondary);
+}
+
+.sub-menu-btn {
+    background: none;
+    border: none;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    padding: 4px;
+}
+
+.sub-menu-btn:hover {
+    color: #f87171;
+}
+
+.sub-body {
+    margin-bottom: 16px;
+}
+
+.sub-body h3 {
+    font-size: 16px;
+    color: #fff;
+    margin-bottom: 4px;
+}
+
+.sub-price {
+    font-size: 20px;
+    font-weight: 600;
+    color: #818cf8;
+}
+
+.sub-price small {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    font-weight: 400;
+}
+
+.sub-footer {
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding-top: 12px;
+}
+
+.status-toggle {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border: none;
+    padding: 8px;
+    border-radius: 6px;
+    color: var(--text-secondary);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.status-toggle:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.status-toggle.active {
+    background: rgba(16, 185, 129, 0.1);
+    color: #34d399;
+}
+
+/* History Table Styles */
+.table-container {
+    overflow-x: auto;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.finance-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.finance-table th,
+.finance-table td {
+    padding: 16px;
+    text-align: left;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    color: var(--text-secondary);
+}
+
+.finance-table th {
+    font-weight: 500;
+    font-size: 12px;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+}
+
+.finance-table td {
+    font-size: 14px;
+}
+
+.icon-btn {
+    background: none;
+    border: none;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.icon-btn:hover {
+    color: #f87171;
+}
+
+@media (max-width: 768px) {
+    .kpi-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .subscriptions-grid {
+        grid-template-columns: 1fr;
+    }
+}
