@@ -103,9 +103,12 @@ export const MenteesPage: React.FC = () => {
             await updateDoc(doc(db, 'mentees', mentee.id), {
                 status: 'ACTIVE',
                 active: true,
+                currentStage: 'ONBOARDING', // Set initial stage
+                stageProgress: 0,
+                weeklyGoal: 'Complete o processo de onboarding',
                 updatedAt: new Date()
             });
-            toast.success(`Mentorado aprovado com sucesso!`);
+            toast.success(`${mentee.name} aprovado! Ele já pode acessar o onboarding. 🎉`);
         } catch (error) {
             console.error("Error approving mentee:", error);
             toast.error("Erro ao aprovar mentorado");
