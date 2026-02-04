@@ -7,21 +7,85 @@
 .finance-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    margin-bottom: var(--space-8);
+    gap: 32px;
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.finance-header h1 {
-    font-size: var(--text-3xl);
-    font-weight: var(--font-bold);
+.finance-title {
+    font-size: 28px;
+    font-weight: 700;
     color: var(--text-primary);
     margin: 0;
+    background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
-.finance-header p {
-    font-size: var(--text-sm);
+/* Premium Tabs */
+.finance-tabs {
+    display: flex;
+    gap: 8px;
+    padding: 6px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.finance-tab {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    border-radius: 10px;
+    border: none;
+    background: transparent;
+    color: var(--text-tertiary);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.finance-tab::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+.finance-tab:hover {
     color: var(--text-secondary);
-    margin: var(--space-1) 0 0;
+}
+
+.finance-tab:hover::before {
+    opacity: 1;
+}
+
+.finance-tab.active {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(139, 92, 246, 0.15) 100%);
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.25);
+}
+
+.finance-tab.active svg {
+    color: #818cf8;
+}
+
+.finance-tab svg {
+    flex-shrink: 0;
+    transition: color 0.25s ease;
+}
+
+.finance-tab span {
+    position: relative;
+    z-index: 1;
 }
 
 .finance-actions {

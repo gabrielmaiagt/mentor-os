@@ -247,26 +247,26 @@ export const MenteesPage: React.FC = () => {
                     <Button variant="secondary" icon={<Download size={18} />} onClick={handleExport}>
                         Exportar
                     </Button>
-                    <div className="flex bg-surface-primary rounded-lg p-1 border border-border">
+                    <div className="premium-tabs compact">
                         <button
-                            className={`px-3 py-1.5 text-sm rounded-md transition-colors ${viewMode === 'ACTIVE' ? 'bg-primary text-white font-medium shadow-sm' : 'text-secondary hover:text-primary hover:bg-surface-secondary'}`}
+                            className={`premium-tab ${viewMode === 'ACTIVE' ? 'active' : ''}`}
                             onClick={() => setViewMode('ACTIVE')}
                         >
                             Ativos
                         </button>
                         <button
-                            className={`px-3 py-1.5 text-sm rounded-md transition-colors flex items-center gap-2 ${viewMode === 'PENDING' ? 'bg-primary text-white font-medium shadow-sm' : 'text-secondary hover:text-primary hover:bg-surface-secondary'}`}
+                            className={`premium-tab ${viewMode === 'PENDING' ? 'active' : ''}`}
                             onClick={() => setViewMode('PENDING')}
                         >
                             Pendentes
                             {mentees.some(m => m.status === 'PENDING') && (
-                                <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${viewMode === 'PENDING' ? 'bg-white/20 text-white' : 'bg-primary/10 text-primary'}`}>
+                                <span className="tab-badge">
                                     {mentees.filter(m => m.status === 'PENDING').length}
                                 </span>
                             )}
                         </button>
                         <button
-                            className={`px-3 py-1.5 text-sm rounded-md transition-colors ${viewMode === 'ARCHIVED' ? 'bg-primary text-white font-medium shadow-sm' : 'text-secondary hover:text-primary hover:bg-surface-secondary'}`}
+                            className={`premium-tab ${viewMode === 'ARCHIVED' ? 'active' : ''}`}
                             onClick={() => setViewMode('ARCHIVED')}
                         >
                             Arquivados

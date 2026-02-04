@@ -17,7 +17,8 @@ import {
     ChevronRight,
     FileText,
     Play,
-    Search
+    Search,
+    TrendingUp
 } from 'lucide-react';
 import { Card, CardHeader, CardContent, Badge, Button, Modal } from '../../components/ui';
 import { OfferMinedCard } from '../../components/mining';
@@ -28,7 +29,9 @@ import type { Mentee, MenteeStage, Call, Task, OfferMined, OfferStatus, Onboardi
 import { calculateLevel, calculateNextLevelXp, calculateProgressToNextLevel, addXp } from '../../lib/gamification';
 import { BadgesList } from '../../components/gamification/BadgesList';
 import { MenteeRanking } from '../../components/gamification/MenteeRanking';
-import { Zap, Trophy, Medal } from 'lucide-react';
+import { TrafficFinance } from '../Finance/components/TrafficFinance';
+import { MenteeControlPanel } from '../../components/mentee/MenteeControlPanel';
+import { Zap, Trophy, Medal, Settings } from 'lucide-react';
 import './MenteeProfile.css';
 
 // Mining Helper
@@ -50,7 +53,7 @@ const calculateMiningSummary = (offers: OfferMined[]) => {
 // Updated stage journey to include MINING
 const stageJourney: MenteeStage[] = ['ONBOARDING', 'MINING', 'OFFER', 'CREATIVES', 'TRAFFIC', 'OPTIMIZATION', 'SCALING'];
 
-type TabType = 'overview' | 'onboarding' | 'mining' | 'calls' | 'tasks' | 'achievements' | 'ranking';
+type TabType = 'overview' | 'onboarding' | 'mining' | 'traffic' | 'calls' | 'tasks' | 'achievements' | 'ranking';
 
 export const MenteeProfilePage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -65,6 +68,8 @@ export const MenteeProfilePage: React.FC = () => {
     const [activeTab, setActiveTab] = useState<TabType>('overview');
     const [showTaskModal, setShowTaskModal] = useState(false);
     const [showCallModal, setShowCallModal] = useState(false);
+
+    const [showControlPanel, setShowControlPanel] = useState(false);
 
     // Edit Modal State
     const [showEditModal, setShowEditModal] = useState(false);
@@ -279,6 +284,14 @@ export const MenteeProfilePage: React.FC = () => {
                 </Button>
                 <div className="flex items-center gap-3">
                     <Button
+                        variant="secondary"
+                        size="sm"
+                        icon={<Settings size={16} />}
+                        onClick={() => setShowControlPanel(true)}
+                    >
+                        Painel
+                    </Button>
+                    <Button
                         variant="ghost"
                         size="sm"
                         icon={<Edit size={16} />}
@@ -457,6 +470,13 @@ export const MenteeProfilePage: React.FC = () => {
                     <Search size={14} />
                     Mineração
                     {isMiningStage && <Badge variant="info" size="sm">{miningSummary.offersTotal}</Badge>}
+                </button>
+                <button
+                    className={`mentee-tab ${activeTab === 'traffic' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('traffic')}
+                >
+                    <TrendingUp size={14} />
+                    Tráfego
                 </button>
                 <button
                     className={`mentee-tab ${activeTab === 'calls' ? 'active' : ''}`}
@@ -814,6 +834,28 @@ export const MenteeProfilePage: React.FC = () => {
                 </div>
             )}
 
+            {activeTab === 'traffic' && (
+                <div className="traffic-tab-content">
+                    <TrafficFinance menteeId={mentee.id} readOnly />
+                </div>
+            )}
+
+
+
+            {/* Control Panel Modal */}
+            <Modal
+                isOpen={showControlPanel}
+                onClose={() => setShowControlPanel(false)}
+                title="Gerenciar Mentorado"
+            >
+                {mentee && (
+                    <MenteeControlPanel
+                        mentee={mentee}
+                        onClose={() => setShowControlPanel(false)}
+                    />
+                )}
+            </Modal>
+
             {/* Task Modal */}
             <Modal
                 isOpen={showTaskModal}
@@ -987,7 +1029,7 @@ export const MenteeProfilePage: React.FC = () => {
                     </div>
                 </div>
             </Modal>
-        </div>
+        </div >
     );
 };
 

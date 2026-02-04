@@ -587,3 +587,100 @@ a:hover {
 .select-none {
     user-select: none;
 }
+
+/* ============================================
+   PREMIUM TABS COMPONENT
+   Reusable across all pages
+   ============================================ */
+
+.premium-tabs {
+    display: flex;
+    gap: 8px;
+    padding: 6px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.premium-tab {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    border-radius: 10px;
+    border: none;
+    background: transparent;
+    color: var(--text-tertiary);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.premium-tab::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+.premium-tab:hover {
+    color: var(--text-secondary);
+}
+
+.premium-tab:hover::before {
+    opacity: 1;
+}
+
+.premium-tab.active {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(139, 92, 246, 0.15) 100%);
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.25);
+}
+
+.premium-tab.active svg {
+    color: #818cf8;
+}
+
+.premium-tab svg {
+    flex-shrink: 0;
+    transition: color 0.25s ease;
+}
+
+.premium-tab span {
+    position: relative;
+    z-index: 1;
+}
+
+/* Badge inside tab */
+.premium-tab .tab-badge {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-weight: 600;
+    background: rgba(99, 102, 241, 0.15);
+    color: #818cf8;
+    position: relative;
+    z-index: 1;
+}
+
+.premium-tab.active .tab-badge {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+}
+
+/* Compact variant */
+.premium-tabs.compact {
+    padding: 4px;
+    gap: 4px;
+}
+
+.premium-tabs.compact .premium-tab {
+    padding: 10px 16px;
+    font-size: 13px;
+}

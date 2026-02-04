@@ -13,6 +13,7 @@ import {
     Home,
     FolderOpen,
     GraduationCap,
+    TrendingUp,
     Flame,
     Pickaxe,
     Shield,
@@ -52,6 +53,7 @@ const mentorNavItems: NavItem[] = [
 const menteeNavItems: NavItem[] = [
     { path: '/me', label: 'Minha Jornada', icon: <Home size={20} /> },
     { path: '/me/mining', label: 'Mineração', icon: <Pickaxe size={20} /> },
+    { path: '/me/finance', label: 'Financeiro', icon: <TrendingUp size={20} /> },
     { path: '/me/academy', label: 'Academy', icon: <GraduationCap size={20} /> },
     { path: '/me/swipe-file', label: 'Swipe File', icon: <Layers size={20} /> },
     { path: '/me/warming', label: 'Aquecimento X1', icon: <Flame size={20} /> },

@@ -208,6 +208,7 @@ export interface Mentee extends FirestoreTimestamps {
     plan?: string;
     startAt: Date;
     currentStage: MenteeStage;
+    activeStages?: MenteeStage[]; // Multiple active stages
     stageProgress: number; // 0-100
     weeklyGoal?: string;
     blocked: boolean;
@@ -215,6 +216,9 @@ export interface Mentee extends FirestoreTimestamps {
     nextCallAt?: Date;
     active?: boolean; // active by default (undefined or true)
     avatarUrl?: string;
+    // Manual Tracking
+    callsCount?: number; // Manual call count
+    notes?: string; // General notes
     // Gamification
     xp?: number;
     level?: number;
@@ -486,3 +490,28 @@ export interface FeatureFlags {
 
 // Assets
 export * from './assets';
+
+// ============================================
+// FINANCE & TRACKING
+// ============================================
+
+export interface OfferTracker extends FirestoreTimestamps {
+    id: string;
+    userId: string; // mentor uid
+    name: string;
+    type: 'DIRECT' | 'X1';
+    status: 'ACTIVE' | 'ARCHIVED';
+}
+
+export interface DailyAdStats {
+    id: string;
+    offerId: string;
+    date: string; // YYYY-MM-DD
+    spend: number;
+    revenue: number;
+
+    // X1 Specific
+    leads?: number; // Conversas
+    pixGenerated?: number;
+    pixPaid?: number; // Vendas confirmadas
+}

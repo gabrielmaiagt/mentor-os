@@ -1,0 +1,28 @@
+.mentee-finance-page {
+    padding: 24px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.mentee-finance-page .loading-state,
+.mentee-finance-page .error-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    text-align: center;
+    color: var(--text-secondary);
+}
+
+.mentee-finance-page .error-state h2 {
+    font-size: 1.5rem;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+@media (max-width: 768px) {
+    .mentee-finance-page {
+        padding: 16px;
+    }
+}

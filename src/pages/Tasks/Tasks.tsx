@@ -124,7 +124,7 @@ export const TasksPage: React.FC = () => {
         setEditingTask(task);
         setInputValue(task.title);
         setDescription(task.description || '');
-        setDueDate(task.dueDate ? format(task.dueDate, 'yyyy-MM-dd') : '');
+        setDueDate(task.dueDate ? format(task.dueDate, "yyyy-MM-dd'T'HH:mm") : '');
         setTargetValue(task.targetValue?.toString() || '');
         setShowDescription(!!task.description);
     };
@@ -182,9 +182,13 @@ export const TasksPage: React.FC = () => {
 
     const formatDate = (date?: Date) => {
         if (!date) return null;
-        if (isToday(date)) return 'Hoje';
-        if (isTomorrow(date)) return 'Amanhã';
-        return format(date, 'dd/MM', { locale: ptBR });
+        // Check if it has time component (not midnight)
+        const hasTime = date.getHours() !== 0 || date.getMinutes() !== 0;
+        const timeStr = hasTime ? ` às ${format(date, 'HH:mm')}` : '';
+
+        if (isToday(date)) return `Hoje${timeStr}`;
+        if (isTomorrow(date)) return `Amanhã${timeStr}`;
+        return `${format(date, 'dd/MM', { locale: ptBR })}${timeStr}`;
     };
 
     const filteredTasks = tasks.filter(t =>
@@ -236,10 +240,11 @@ export const TasksPage: React.FC = () => {
                         <div className="task-meta-input-group">
                             <Calendar size={16} />
                             <input
-                                type="date"
+                                type="datetime-local"
                                 value={dueDate}
                                 onChange={(e) => setDueDate(e.target.value)}
                                 className="task-date-input"
+                                style={{ minWidth: '180px' }} // Increased width for datetime
                             />
                         </div>
 

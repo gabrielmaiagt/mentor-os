@@ -554,38 +554,63 @@
 /* Tabs */
 .mentee-tabs {
     display: flex;
-    gap: var(--space-1);
-    padding: var(--space-2);
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-lg);
+    gap: 8px;
+    padding: 6px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
     margin-bottom: var(--space-6);
+    flex-wrap: wrap;
 }
 
 .mentee-tab {
     display: flex;
     align-items: center;
-    gap: var(--space-2);
-    padding: var(--space-3) var(--space-4);
+    gap: 10px;
+    padding: 12px 20px;
     background: transparent;
     border: none;
-    border-radius: var(--radius-md);
+    border-radius: 10px;
     font-family: var(--font-family);
-    font-size: var(--text-sm);
-    font-weight: var(--font-medium);
-    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-tertiary);
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.mentee-tab::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%);
+    opacity: 0;
+    transition: opacity 0.25s ease;
 }
 
 .mentee-tab:hover {
-    background-color: var(--bg-secondary);
-    color: var(--text-primary);
+    color: var(--text-secondary);
+}
+
+.mentee-tab:hover::before {
+    opacity: 1;
 }
 
 .mentee-tab.active {
-    background-color: var(--accent-primary);
-    color: white;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(139, 92, 246, 0.15) 100%);
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.25);
+}
+
+.mentee-tab.active svg {
+    color: #818cf8;
+}
+
+.mentee-tab svg {
+    position: relative;
+    z-index: 1;
 }
 
 .mentee-tab.highlight {
@@ -601,6 +626,7 @@
     height: 8px;
     background-color: var(--status-warning);
     border-radius: 50%;
+    z-index: 2;
 }
 
 .mentee-tab.active.highlight::after {

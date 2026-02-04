@@ -32,6 +32,7 @@ import { SettingsPage } from './pages/Settings/Settings';
 import { RoleSelector } from './pages/Login/RoleSelector';
 import { MentorLogin } from './pages/Login/MentorLogin';
 import { MenteeLogin } from './pages/Login/MenteeLogin';
+import MenteeFinancePage from './pages/MenteeFinance';
 
 function App() {
   return (
@@ -75,6 +76,7 @@ function App() {
             <Route element={<Shell requireAuth allowedRoles={['mentee']} />}>
               <Route path="/me" element={<MenteeHomePage />} />
               <Route path="/me/tasks" element={<MenteeTasksPage />} />
+              <Route path="/me/finance" element={<MenteeFinancePage />} />
               <Route path="/me/resources" element={<ResourcesPage />} />
               <Route path="/me/academy" element={<AcademyPage />} />
               <Route path="/me/mining" element={<MiningPage />} />

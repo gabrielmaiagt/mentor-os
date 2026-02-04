@@ -2,6 +2,7 @@ import React from 'react';
 import { Outlet, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useWarmingScheduler } from '../../hooks/useWarmingScheduler';
+import useFcmToken from '../../hooks/useFcmToken';
 import MobileNav from './MobileNav';
 import Sidebar from './Sidebar';
 import Header from './Header';
@@ -19,6 +20,14 @@ export const Shell: React.FC<ShellProps> = ({
     const { user, loading } = useAuth();
     const location = useLocation();
     useWarmingScheduler();
+
+    // Register FCM Token for the current user
+    // Mentees are stored in 'mentees' collection, Mentors (and others) in 'users'
+    const tokenCollection = user?.role === 'mentee' ? 'mentees' : 'users';
+    useFcmToken(user?.id, tokenCollection);
+
+    // IMPORTANT: All hooks must be called before any conditional returns
+    const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
     // Show loading state
     if (loading) {
@@ -44,8 +53,6 @@ export const Shell: React.FC<ShellProps> = ({
         // Redirect mentors to dashboard
         return <Navigate to="/dashboard" replace />;
     }
-
-    const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
     return (
         <div className="shell">
