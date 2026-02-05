@@ -6,17 +6,18 @@ import {
     Check,
     Plus,
     Minus,
-    Phone,
     FileText,
     Layers
 } from 'lucide-react';
 import { Button } from '../ui';
-import type { Mentee, MenteeStage } from '../../types';
 import { MENTEE_STAGES } from '../../types';
+import type { Mentee, MenteeStage } from '../../types';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useToast } from '../ui/Toast';
 import './MenteeControlPanel.css';
+
+import { format } from 'date-fns';
 
 interface MenteeControlPanelProps {
     mentee: Mentee;
@@ -33,6 +34,7 @@ export const MenteeControlPanel: React.FC<MenteeControlPanelProps> = ({ mentee, 
     const [currentStage, setCurrentStage] = useState<MenteeStage>(mentee.currentStage);
     const [callsCount, setCallsCount] = useState<number>(mentee.callsCount || 0);
     const [notes, setNotes] = useState<string>(mentee.notes || '');
+    const [startAt, setStartAt] = useState<Date>(mentee.startAt || new Date());
 
     // Initialize state from mentee data
     useEffect(() => {
@@ -45,6 +47,7 @@ export const MenteeControlPanel: React.FC<MenteeControlPanelProps> = ({ mentee, 
         setCurrentStage(mentee.currentStage);
         setCallsCount(mentee.callsCount || 0);
         setNotes(mentee.notes || '');
+        setStartAt(mentee.startAt ? new Date(mentee.startAt) : new Date());
     }, [mentee]);
 
     const handleToggleStage = (stage: MenteeStage) => {
@@ -74,11 +77,15 @@ export const MenteeControlPanel: React.FC<MenteeControlPanelProps> = ({ mentee, 
     const handleSave = async () => {
         setLoading(true);
         try {
+            // Sanitize data before sending to Firestore
+            const sanitizedActiveStages = (activeStages || []).filter(stage => stage !== undefined && stage !== null);
+
             await updateDoc(doc(db, 'mentees', mentee.id), {
-                activeStages,
-                currentStage,
-                callsCount,
-                notes,
+                activeStages: sanitizedActiveStages,
+                currentStage: currentStage || 'ONBOARDING',
+                callsCount: Number(callsCount) || 0, // Ensure strictly number
+                notes: notes || '',
+                startAt: startAt,
                 lastUpdateAt: new Date()
             });
 
@@ -148,9 +155,9 @@ export const MenteeControlPanel: React.FC<MenteeControlPanelProps> = ({ mentee, 
                 </div>
             </div>
 
-            {/* Manual Counters */}
+            {/* Manual Counters & Date */}
             <div className="control-section">
-                <h4><Phone size={14} /> Contagem Manual</h4>
+                <h4><Settings size={14} /> Ajustes Gerais</h4>
                 <div className="counters-row">
                     <div className="counter-control">
                         <span>Calls Realizadas:</span>
@@ -168,6 +175,26 @@ export const MenteeControlPanel: React.FC<MenteeControlPanelProps> = ({ mentee, 
                             <Plus size={14} />
                         </button>
                     </div>
+                </div>
+
+                <div style={{ marginTop: 12 }}>
+                    <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}>
+                        Data de Início da Mentoria
+                    </label>
+                    <input
+                        type="date"
+                        className="notes-textarea" // Reusing style for simplicity, or could add specific style
+                        style={{ height: 40, paddingTop: 10 }}
+                        value={startAt ? format(startAt, 'yyyy-MM-dd') : ''}
+                        onChange={(e) => {
+                            // Fix timezone offset issue by treating the input as local date
+                            // e.target.value is yyyy-mm-dd
+                            if (e.target.value) {
+                                const [y, m, d] = e.target.value.split('-').map(Number);
+                                setStartAt(new Date(y, m - 1, d));
+                            }
+                        }}
+                    />
                 </div>
             </div>
 

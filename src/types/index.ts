@@ -263,6 +263,7 @@ export interface Task extends FirestoreTimestamps {
 
     completedAt?: Date;
     performance?: 'EARLY' | 'ON_TIME' | 'LATE';
+    notified?: boolean;
 
     // Progressive Tracking (Subtasks/Counters)
     targetValue?: number; // e.g. 5 (calls)

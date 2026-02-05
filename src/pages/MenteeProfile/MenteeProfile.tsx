@@ -195,13 +195,36 @@ export const MenteeProfilePage: React.FC = () => {
         }).format(date);
     };
 
-    const handleIncrementAds = (offerId: string) => {
+    const handleIncrementAds = async (offerId: string) => {
+        const offer = offers.find(o => o.id === offerId);
+        if (!offer) return;
+
+        const newCount = (offer.adCount || 0) + 1;
+
+        // Optimistic update
         setOffers(prev => prev.map(o =>
             o.id === offerId
-                ? { ...o, adCount: o.adCount + 1, lastTouchedAt: new Date() }
+                ? { ...o, adCount: newCount, lastTouchedAt: new Date() }
                 : o
         ));
-        toast.success('+1 anúncio registrado!');
+
+        try {
+            await updateDoc(doc(db, 'offer_trackers', offerId), {
+                adCount: newCount,
+                lastTouchedAt: new Date(),
+                updatedAt: new Date()
+            });
+            toast.success('+1 anúncio registrado!');
+        } catch (error) {
+            console.error(error);
+            toast.error('Erro ao salvar progresso');
+            // Revert on error
+            setOffers(prev => prev.map(o =>
+                o.id === offerId
+                    ? { ...o, adCount: offer.adCount, lastTouchedAt: offer.lastTouchedAt }
+                    : o
+            ));
+        }
     };
 
     const handleChangeStatus = (offerId: string, status: OfferStatus) => {
@@ -534,7 +557,7 @@ export const MenteeProfilePage: React.FC = () => {
                             <CardContent>
                                 <div className="mentee-stats">
                                     <div className="stat-item">
-                                        <span className="stat-value">{menteeCalls.filter(c => c.status === 'DONE').length}</span>
+                                        <span className="stat-value">{mentee.callsCount || 0}</span>
                                         <span className="stat-label">Calls realizadas</span>
                                     </div>
                                     <div className="stat-item">

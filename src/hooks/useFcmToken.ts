@@ -22,7 +22,7 @@ const useFcmToken = (userId?: string, collectionName: 'mentees' | 'users' = 'men
 
                     if (permission === 'granted') {
                         const currentToken = await getToken(messaging, {
-                            vapidKey: 'BMc25r2v3i4t5p3o4t5p3-dummy-key-actually-app-should-have-one' // Just relying on default config usually works if configured in firebase
+                            // vapidKey: '...' // Generate in Firebase Console > Project Settings > Cloud Messaging > Web Push certificates
                         });
 
                         if (currentToken) {

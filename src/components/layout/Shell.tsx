@@ -8,6 +8,8 @@ import Sidebar from './Sidebar';
 import Header from './Header';
 import './Shell.css';
 
+import { useTaskScheduler } from '../../hooks/useTaskScheduler';
+
 interface ShellProps {
     requireAuth?: boolean;
     allowedRoles?: Array<'mentor' | 'mentee'>;
@@ -20,6 +22,9 @@ export const Shell: React.FC<ShellProps> = ({
     const { user, loading } = useAuth();
     const location = useLocation();
     useWarmingScheduler();
+
+    // Activate Task Scheduler
+    useTaskScheduler();
 
     // Register FCM Token for the current user
     // Mentees are stored in 'mentees' collection, Mentors (and others) in 'users'

@@ -80,7 +80,8 @@ export const TasksPage: React.FC = () => {
                 createdAt: Timestamp.now(),
                 targetValue: targetValue ? parseInt(targetValue) : null,
                 currentValue: 0,
-                quickActions: []
+                quickActions: [],
+                notified: false
             };
 
             await addDoc(collection(db, 'tasks'), taskData);
@@ -159,14 +160,28 @@ export const TasksPage: React.FC = () => {
         const newValue = Math.min((task.currentValue || 0) + 1, task.targetValue);
         const isDone = newValue >= task.targetValue;
 
+        // Optimistic Update
+        setTasks(prev => prev.map(t =>
+            t.id === task.id
+                ? { ...t, currentValue: newValue, status: isDone ? 'DONE' : t.status }
+                : t
+        ));
+
+        const updates: any = {
+            currentValue: newValue,
+            status: isDone ? 'DONE' : task.status
+        };
+
+        if (isDone) {
+            updates.completedAt = Timestamp.now();
+        }
+
         try {
-            await updateDoc(doc(db, 'tasks', task.id), {
-                currentValue: newValue,
-                status: isDone ? 'DONE' : task.status,
-                completedAt: isDone ? Timestamp.now() : task.completedAt
-            });
+            await updateDoc(doc(db, 'tasks', task.id), updates);
         } catch (err) {
             console.error("Error incrementing:", err);
+            toast.error('Erro ao atualizar progresso');
+            // Revert on error (optional, but good practice. For now simpler to just fetch again or let snapshot correct it)
         }
     };
 
