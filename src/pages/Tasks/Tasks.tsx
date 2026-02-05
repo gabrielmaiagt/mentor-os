@@ -12,12 +12,13 @@ import {
     orderBy,
     Timestamp
 } from 'firebase/firestore';
-import { Plus, Trash2, Check, Pencil, Calendar, Target } from 'lucide-react';
-import type { Task } from '../../types';
+import { Plus, Trash2, Check, Pencil, Calendar, Target, AlertCircle, ArrowUp, ArrowRight, ArrowDown } from 'lucide-react';
+import type { Task, TaskPriority } from '../../types';
 import { useToast } from '../../components/ui/Toast';
 import './Tasks.css';
 import { format, isToday, isTomorrow, isPast } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { TaskAnalytics } from '../../components/tasks/TaskAnalytics';
 
 export const TasksPage: React.FC = () => {
     const { user } = useAuth();
@@ -27,6 +28,7 @@ export const TasksPage: React.FC = () => {
     const [description, setDescription] = useState('');
     const [dueDate, setDueDate] = useState('');
     const [targetValue, setTargetValue] = useState('');
+    const [priority, setPriority] = useState<TaskPriority>('MEDIUM');
     const [editingTask, setEditingTask] = useState<Task | null>(null);
     const [showDescription, setShowDescription] = useState(false);
 
@@ -76,7 +78,7 @@ export const TasksPage: React.FC = () => {
                 description: description.trim() || null,
                 dueDate: dueDate ? Timestamp.fromDate(new Date(dueDate)) : null,
                 status: 'TODO',
-                priority: 'MEDIUM',
+                priority: priority,
                 createdAt: Timestamp.now(),
                 targetValue: targetValue ? parseInt(targetValue) : null,
                 currentValue: 0,
@@ -90,6 +92,7 @@ export const TasksPage: React.FC = () => {
             setDescription('');
             setDueDate('');
             setTargetValue('');
+            setPriority('MEDIUM');
             setShowDescription(false);
             toast.success('Missão criada!');
         } catch (err) {
@@ -107,6 +110,7 @@ export const TasksPage: React.FC = () => {
                 description: description.trim() || null,
                 dueDate: dueDate ? Timestamp.fromDate(new Date(dueDate)) : null,
                 targetValue: targetValue ? parseInt(targetValue) : null,
+                priority: priority
             });
 
             setEditingTask(null);
@@ -127,6 +131,7 @@ export const TasksPage: React.FC = () => {
         setDescription(task.description || '');
         setDueDate(task.dueDate ? format(task.dueDate, "yyyy-MM-dd'T'HH:mm") : '');
         setTargetValue(task.targetValue?.toString() || '');
+        setPriority(task.priority || 'MEDIUM');
         setShowDescription(!!task.description);
     };
 
@@ -211,11 +216,28 @@ export const TasksPage: React.FC = () => {
     );
 
     const sortedTasks = [...filteredTasks].sort((a, b) => {
+        // 1. Done at the bottom
         if (a.status === 'DONE' && b.status !== 'DONE') return 1;
         if (a.status !== 'DONE' && b.status === 'DONE') return -1;
+
+        // 2. Sort by Priority (Urgent > High > Medium > Low)
+        const priorityOrder: Record<string, number> = {
+            'URGENT': 0,
+            'HIGH': 1,
+            'MEDIUM': 2,
+            'LOW': 3
+        };
+        const pA = priorityOrder[a.priority || 'MEDIUM'];
+        const pB = priorityOrder[b.priority || 'MEDIUM'];
+
+        if (pA !== pB) return pA - pB;
+
+        // 3. Sort by Due Date (Earliest first)
         if (a.dueDate && b.dueDate) return a.dueDate.getTime() - b.dueDate.getTime();
         if (a.dueDate) return -1;
         if (b.dueDate) return 1;
+
+        // 4. Created At as fallback
         return 0;
     });
 
@@ -230,6 +252,9 @@ export const TasksPage: React.FC = () => {
                     </p>
                 </div>
             </div>
+
+            {/* Analytics */}
+            <TaskAnalytics tasks={tasks} />
 
             {/* Input Form */}
             <div className="smart-input-container">
@@ -272,6 +297,42 @@ export const TasksPage: React.FC = () => {
                                 onChange={(e) => setTargetValue(e.target.value)}
                                 className="task-target-input"
                             />
+                        </div>
+
+                        {/* Priority Selector */}
+                        <div className="task-priority-selector">
+                            <button
+                                type="button"
+                                className={`priority-btn ${priority === 'URGENT' ? 'active urgent' : ''}`}
+                                onClick={() => setPriority('URGENT')}
+                                title="Urgente"
+                            >
+                                <AlertCircle size={16} />
+                            </button>
+                            <button
+                                type="button"
+                                className={`priority-btn ${priority === 'HIGH' ? 'active high' : ''}`}
+                                onClick={() => setPriority('HIGH')}
+                                title="Alta"
+                            >
+                                <ArrowUp size={16} />
+                            </button>
+                            <button
+                                type="button"
+                                className={`priority-btn ${priority === 'MEDIUM' ? 'active medium' : ''}`}
+                                onClick={() => setPriority('MEDIUM')}
+                                title="Média"
+                            >
+                                <ArrowRight size={16} />
+                            </button>
+                            <button
+                                type="button"
+                                className={`priority-btn ${priority === 'LOW' ? 'active low' : ''}`}
+                                onClick={() => setPriority('LOW')}
+                                title="Baixa"
+                            >
+                                <ArrowDown size={16} />
+                            </button>
                         </div>
 
                         <button
@@ -319,6 +380,14 @@ export const TasksPage: React.FC = () => {
                                 <div className="task-description">{task.description}</div>
                             )}
                             <div className="task-meta">
+                                {task.priority && task.priority !== 'MEDIUM' && (
+                                    <span className={`task-priority-badge ${task.priority.toLowerCase()}`}>
+                                        {task.priority === 'URGENT' && <AlertCircle size={12} />}
+                                        {task.priority === 'HIGH' && <ArrowUp size={12} />}
+                                        {task.priority === 'LOW' && <ArrowDown size={12} />}
+                                        {task.priority === 'URGENT' ? 'URGENTE' : task.priority === 'HIGH' ? 'ALTA' : 'BAIXA'}
+                                    </span>
+                                )}
                                 {task.dueDate && (
                                     <span className={`task-date ${task.dueDate && isPast(task.dueDate) && task.status !== 'DONE' ? 'task-date-late' : ''}`}>
                                         📅 {formatDate(task.dueDate)}
