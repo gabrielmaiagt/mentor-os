@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import type { Task } from '../../types';
-import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { AreaChart, Area, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { isSameDay, subDays, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -70,33 +70,42 @@ export const TaskAnalytics: React.FC<TaskAnalyticsProps> = ({ tasks }) => {
                 </div>
             </div>
 
-            <div style={{ height: '150px', width: '100%' }}>
+            <div style={{ height: '200px', width: '100%', marginTop: '20px' }}>
                 <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={metrics.chartData}>
+                    <AreaChart data={metrics.chartData}>
+                        <defs>
+                            <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.8} />
+                                <stop offset="95%" stopColor="var(--primary)" stopOpacity={0} />
+                            </linearGradient>
+                        </defs>
                         <XAxis
                             dataKey="date"
                             tick={{ fontSize: 10, fill: 'var(--text-secondary)' }}
                             axisLine={false}
                             tickLine={false}
+                            dy={10}
                         />
                         <Tooltip
                             contentStyle={{
                                 background: 'var(--bg-tertiary)',
-                                border: 'none',
+                                border: '1px solid var(--border-color)',
                                 borderRadius: '8px',
-                                fontSize: '12px'
+                                fontSize: '12px',
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
                             }}
-                            cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                            cursor={{ stroke: 'var(--primary)', strokeWidth: 1, strokeDasharray: '5 5' }}
                         />
-                        <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-                            {metrics.chartData.map((entry, index) => (
-                                <Cell
-                                    key={`cell-${index}`}
-                                    fill={isSameDay(entry.fullDate, new Date()) ? 'var(--primary)' : 'var(--text-tertiary)'}
-                                />
-                            ))}
-                        </Bar>
-                    </BarChart>
+                        <Area
+                            type="monotone"
+                            dataKey="count"
+                            stroke="var(--primary)"
+                            fillOpacity={1}
+                            fill="url(#colorCount)"
+                            strokeWidth={3}
+                            animationDuration={1500}
+                        />
+                    </AreaChart>
                 </ResponsiveContainer>
             </div>
         </div>
