@@ -1,4 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useMentee } from '../../hooks/queries/useMentee';
+import { useMiningOffers, useCreateMiningOffer, useUpdateMiningOffer } from '../../hooks/queries/useMining';
 import {
     Search,
     Plus,
@@ -9,9 +12,7 @@ import { Card, Button, Modal } from '../../components/ui';
 import { OfferMinedCard, OfferValidation } from '../../components/mining';
 import { useToast } from '../../components/ui/Toast';
 import { OFFER_PLATFORMS } from '../../types';
-import { db, auth } from '../../lib/firebase';
-import { collection, query, where, onSnapshot, addDoc, updateDoc, doc, getDocs } from 'firebase/firestore';
-import type { OfferMined, OfferStatus, OfferPlatform, Mentee } from '../../types';
+import type { OfferMined, OfferStatus, OfferPlatform } from '../../types';
 import './Mining.css';
 
 // Helper to calculate summary
@@ -22,7 +23,7 @@ const calculateMiningSummary = (offers: OfferMined[]) => {
     const discarded = offers.filter(o => o.status === 'DISCARDED').length;
 
     const adsTotal = offers.reduce((acc, curr) => acc + curr.adCount, 0);
-    const topOffer = [...offers].sort((a, b) => b.adCount - a.adCount)[0];
+    const topOffer = [...offers].sort((a, b) => (b.adCount || 0) - (a.adCount || 0))[0];
 
     return {
         offersTotal: offers.length,
@@ -34,9 +35,15 @@ const calculateMiningSummary = (offers: OfferMined[]) => {
 
 export const MiningPage: React.FC = () => {
     const toast = useToast();
-    const [mentee, setMentee] = useState<Mentee | null>(null);
-    const [offers, setOffers] = useState<OfferMined[]>([]);
-    const [loading, setLoading] = useState(true);
+    const queryClient = useQueryClient();
+
+    // React Query Hooks
+    const { data: mentee, isLoading: isLoadingMentee } = useMentee();
+    const { data: offers = [], isLoading: isLoadingOffers } = useMiningOffers(mentee?.id);
+    const createOffer = useCreateMiningOffer();
+    const updateOffer = useUpdateMiningOffer();
+
+    const isLoading = isLoadingMentee || isLoadingOffers;
 
     const [showAddModal, setShowAddModal] = useState(false);
     const [editingOffer, setEditingOffer] = useState<OfferMined | null>(null);
@@ -65,49 +72,29 @@ export const MiningPage: React.FC = () => {
         notes: '',
     });
 
-    // Fetch Mentee
-    useEffect(() => {
-        const fetchMentee = async () => {
-            if (!auth.currentUser) return;
-            try {
-                // Try finding by UID
-                let q = query(collection(db, 'mentees'), where('uid', '==', auth.currentUser.uid));
-                let snapshot = await getDocs(q);
+    const handleAddOffer = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!mentee?.id) return;
 
-                if (snapshot.empty && auth.currentUser.email) {
-                    q = query(collection(db, 'mentees'), where('email', '==', auth.currentUser.email));
-                    snapshot = await getDocs(q);
-                }
-
-                if (!snapshot.empty) {
-                    const data = snapshot.docs[0].data();
-                    setMentee({ id: snapshot.docs[0].id, ...data } as Mentee);
-                }
-            } catch (e) {
-                console.error(e);
+        createOffer.mutate({ offerData: formData, menteeId: mentee.id }, {
+            onSuccess: () => {
+                setShowAddModal(false);
+                setFormData({
+                    name: '',
+                    url: '',
+                    adCount: 1,
+                    platform: 'META',
+                    angles: '',
+                    notes: '',
+                });
             }
-        };
-        fetchMentee();
-    }, [auth.currentUser]);
-
-    // Fetch Offers
-    useEffect(() => {
-        if (!mentee) return;
-        const q = query(collection(db, 'offers'), where('createdByUserId', '==', mentee.id));
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            setOffers(snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data(),
-                createdAt: doc.data().createdAt?.toDate(),
-                updatedAt: doc.data().updatedAt?.toDate(),
-                lastTouchedAt: doc.data().lastTouchedAt?.toDate()
-            })) as OfferMined[]);
-            setLoading(false);
         });
-        return () => unsubscribe();
-    }, [mentee]);
+    };
 
-    // Handlers (Copy-pasted logic)
+    const handleUpdateOffer = async (id: string, updates: Partial<OfferMined>) => {
+        updateOffer.mutate({ id, data: updates });
+    };
+
     const handleOpenHistoryModal = (offer: OfferMined) => {
         setUpdatingHistoryOffer(offer);
         setHistoryFormData({
@@ -117,274 +104,272 @@ export const MiningPage: React.FC = () => {
         setShowHistoryModal(true);
     };
 
-    const handleUpdateAdHistory = async () => {
+    const handleUpdateHistory = async (e: React.FormEvent) => {
+        e.preventDefault();
         if (!updatingHistoryOffer) return;
-        try {
-            const o = updatingHistoryOffer;
-            const newAdHistory = [...(o.adHistory || [])];
-            const existingIndex = newAdHistory.findIndex(h => h.date === historyFormData.date);
 
-            if (existingIndex >= 0) {
-                newAdHistory[existingIndex] = { ...newAdHistory[existingIndex], count: historyFormData.count };
-            } else {
-                newAdHistory.push({ date: historyFormData.date, count: historyFormData.count });
-                newAdHistory.sort((a, b) => a.date.localeCompare(b.date));
-            }
-            const isLatest = newAdHistory[newAdHistory.length - 1].date === historyFormData.date;
+        const o = updatingHistoryOffer;
+        const newAdHistory = [...(o.adHistory || [])];
+        const existingIndex = newAdHistory.findIndex(h => h.date === historyFormData.date);
 
-            await updateDoc(doc(db, 'offers', o.id), {
+        if (existingIndex >= 0) {
+            newAdHistory[existingIndex] = { ...newAdHistory[existingIndex], count: historyFormData.count };
+        } else {
+            newAdHistory.push({ date: historyFormData.date, count: historyFormData.count });
+            newAdHistory.sort((a, b) => a.date.localeCompare(b.date));
+        }
+
+        const isLatest = newAdHistory[newAdHistory.length - 1].date === historyFormData.date;
+
+        updateOffer.mutate({
+            id: updatingHistoryOffer.id,
+            data: {
                 adCount: isLatest ? historyFormData.count : o.adCount,
                 adHistory: newAdHistory,
                 lastTouchedAt: new Date()
-            });
-            toast.success('Métrica atualizada!');
-        } catch (e) {
-            toast.error('Erro ao atualizar');
-        }
-        setShowHistoryModal(false);
-        setUpdatingHistoryOffer(null);
-    };
-
-    const handleChangeStatus = async (offerId: string, status: OfferStatus) => {
-        try {
-            await updateDoc(doc(db, 'offers', offerId), { status, lastTouchedAt: new Date() });
-            toast.success('Status atualizado!');
-        } catch (e) {
-            toast.error('Erro ao atualizar status');
-        }
-    };
-
-    const handleEdit = (offer: OfferMined) => {
-        setEditingOffer(offer);
-        setFormData({
-            name: offer.name,
-            url: offer.url,
-            adCount: offer.adCount,
-            platform: offer.platform || 'META',
-            angles: offer.angles?.join(', ') || '',
-            notes: offer.notes || '',
+            }
+        }, {
+            onSuccess: () => setShowHistoryModal(false)
         });
-        setShowAddModal(true);
     };
 
-    const handleValidate = (offer: OfferMined) => {
+    const handleOpenValidation = (offer: OfferMined) => {
         setValidatingOffer(offer);
         setShowValidationModal(true);
     };
 
-    const handleSaveOffer = async () => {
-        if (!formData.name || !formData.url) return toast.error('Preencha nome e URL');
-        if (!mentee) return;
-
-        const angleArray = formData.angles.split(',').map(s => s.trim()).filter(Boolean);
-        try {
-            if (editingOffer) {
-                await updateDoc(doc(db, 'offers', editingOffer.id), {
-                    name: formData.name,
-                    url: formData.url,
-                    adCount: formData.adCount,
-                    platform: formData.platform,
-                    angles: angleArray,
-                    notes: formData.notes,
-                    lastTouchedAt: new Date(),
-                    updatedAt: new Date(),
-                });
-                toast.success('Editado com sucesso!');
-            } else {
-                const today = new Date().toISOString().split('T')[0];
-                await addDoc(collection(db, 'offers'), {
-                    name: formData.name,
-                    url: formData.url,
-                    adCount: formData.adCount,
-                    platform: formData.platform,
-                    angles: angleArray,
-                    notes: formData.notes,
-                    status: 'CANDIDATE',
-                    adHistory: [{ date: today, count: formData.adCount }],
-                    createdAt: new Date(),
-                    updatedAt: new Date(),
-                    lastTouchedAt: new Date(),
-                    createdByUserId: mentee.id,
-                });
-                toast.success('Criado com sucesso!');
-            }
-            setShowAddModal(false);
-            setEditingOffer(null);
-            setFormData({ name: '', url: '', adCount: 1, platform: 'META', angles: '', notes: '' });
-        } catch (e) {
-            toast.error('Erro ao salvar');
-        }
-    };
-
-    const summary = calculateMiningSummary(offers);
+    // Filter and Sort
     const filteredOffers = offers
-        .filter(o => filterStatus === 'ALL' || o.status === filterStatus)
+        .filter(offer => filterStatus === 'ALL' || offer.status === filterStatus)
         .sort((a, b) => {
-            if (sortBy === 'adCount') return b.adCount - a.adCount;
-            return b.lastTouchedAt.getTime() - a.lastTouchedAt.getTime();
+            if (sortBy === 'adCount') return (b.adCount || 0) - (a.adCount || 0);
+            if (sortBy === 'lastTouchedAt') {
+                return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+            }
+            return 0;
         });
 
-    if (loading) return <div className="p-8"><div className="animate-pulse">Carregando...</div></div>;
+    const summary = calculateMiningSummary(offers);
+
+    if (isLoading) {
+        return (
+            <div className="mining-page">
+                <div className="flex items-center justify-center p-12">
+                    <div className="text-secondary">Carregando ofertas mineradas...</div>
+                </div>
+            </div>
+        );
+    }
+
+    if (!mentee) {
+        return (
+            <div className="mining-page">
+                <div className="p-8 text-center text-secondary">
+                    Perfil de mentorado não encontrado. Entre em contato com o suporte.
+                </div>
+            </div>
+        );
+    }
 
     return (
-        <div className="mining-page max-w-[1400px] mx-auto p-6">
-            <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+        <div className="mining-page">
+            <div className="mining-header">
                 <div>
-                    <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-400 flex items-center gap-3">
-                        <Search size={32} className="text-blue-400" />
-                        Mineração e Ofertas
-                    </h1>
-                    <p className="text-secondary mt-1">Gerencie suas ofertas mineradas e acompanhe a validação.</p>
+                    <h1>Mineração de Ofertas</h1>
+                    <p>Gerencie e valide as ofertas que você está modelando</p>
                 </div>
-                <Button variant="primary" icon={<Plus size={18} />} onClick={() => {
-                    setEditingOffer(null);
-                    setFormData({ name: '', url: '', adCount: 1, platform: 'META', angles: '', notes: '' });
-                    setShowAddModal(true);
-                }}>
-                    Nova Oferta
-                </Button>
+                <div className="mining-actions">
+                    <Button variant="secondary" icon={<Filter size={18} />}>
+                        Filtros
+                    </Button>
+                    <Button variant="primary" icon={<Plus size={18} />} onClick={() => setShowAddModal(true)}>
+                        Nova Oferta
+                    </Button>
+                </div>
             </div>
 
-            {/* Stats Header */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                <Card className="bg-blue-500/10 border-blue-500/20 text-center">
-                    <span className="text-3xl font-bold text-blue-400 block">{summary.offersTotal}</span>
-                    <span className="text-xs text-secondary uppercase tracking-wider">Total Ofertas</span>
+            {/* Summary Cards */}
+            <div className="mining-stats-grid">
+                <Card padding="md" className="mining-stat-card">
+                    <span className="stat-label">Total Minerado</span>
+                    <span className="stat-value">{summary.offersTotal}</span>
+                    <div className="stat-meta">
+                        <span className="text-green-400">ATIVO</span>
+                    </div>
                 </Card>
-                <Card className="bg-purple-500/10 border-purple-500/20 text-center">
-                    <span className="text-3xl font-bold text-purple-400 block">{summary.adsTotal}</span>
-                    <span className="text-xs text-secondary uppercase tracking-wider">Ads Mapeados</span>
+                <Card padding="md" className="mining-stat-card">
+                    <span className="stat-label">Em Validação</span>
+                    <span className="stat-value">{summary.byStatus.CANDIDATE}</span>
+                    <div className="stat-meta">
+                        <span>Aguardando análise</span>
+                    </div>
                 </Card>
-                <Card className="bg-yellow-500/10 border-yellow-500/20 text-center">
-                    <span className="text-3xl font-bold text-yellow-400 block">{summary.byStatus.TESTING}</span>
-                    <span className="text-xs text-secondary uppercase tracking-wider">Em Teste</span>
+                <Card padding="md" className="mining-stat-card highlight">
+                    <span className="stat-label">Campeãs</span>
+                    <span className="stat-value">{summary.byStatus.WINNER}</span>
+                    <div className="stat-meta">
+                        <span>Ofertas validadas</span>
+                    </div>
                 </Card>
-                <Card className="bg-green-500/10 border-green-500/20 text-center">
-                    <span className="text-3xl font-bold text-green-400 block">{summary.byStatus.WINNER}</span>
-                    <span className="text-xs text-secondary uppercase tracking-wider">Campeãs</span>
+                <Card padding="md" className="mining-stat-card">
+                    <span className="stat-label">Total de Anúncios</span>
+                    <span className="stat-value">{summary.adsTotal}</span>
+                    <div className="stat-meta">
+                        <span>Criativos mapeados</span>
+                    </div>
                 </Card>
             </div>
 
-            {/* Filters */}
-            <div className="flex flex-wrap gap-4 mb-6 bg-card/50 p-4 rounded-xl border border-white/5">
-                <div className="flex items-center gap-2">
-                    <Filter size={16} className="text-secondary" />
+            {/* Filters Bar */}
+            <div className="mining-filters-bar">
+                <div className="search-wrapper">
+                    <Search size={18} className="search-icon" />
+                    <input type="text" placeholder="Buscar oferta..." className="search-input" />
+                </div>
+
+                <div className="filter-group">
                     <select
+                        className="filter-select"
                         value={filterStatus}
-                        onChange={e => setFilterStatus(e.target.value as OfferStatus | 'ALL')}
-                        style={{ backgroundColor: '#111', color: 'white' }}
-                        className="text-sm border-none focus:ring-0 cursor-pointer rounded-md py-1 px-2"
+                        onChange={(e) => setFilterStatus(e.target.value as OfferStatus | 'ALL')}
                     >
-                        <option value="ALL" style={{ backgroundColor: '#111' }}>Todos os status</option>
-                        <option value="CANDIDATE" style={{ backgroundColor: '#111' }}>Candidatas</option>
-                        <option value="TESTING" style={{ backgroundColor: '#111' }}>Testando</option>
-                        <option value="WINNER" style={{ backgroundColor: '#111' }}>Vencedoras</option>
-                        <option value="DISCARDED" style={{ backgroundColor: '#111' }}>Descartadas</option>
+                        <option value="ALL">Todos os status</option>
+                        <option value="CANDIDATE">Candidata</option>
+                        <option value="TESTING">Em Teste</option>
+                        <option value="WINNER">Campeã</option>
+                        <option value="DISCARDED">Descartada</option>
                     </select>
-                </div>
-                <div className="w-px h-6 bg-white/10" />
-                <div className="flex items-center gap-2">
-                    <ArrowUpDown size={16} className="text-secondary" />
-                    <select
-                        value={sortBy}
-                        onChange={e => setSortBy(e.target.value as 'adCount' | 'lastTouchedAt')}
-                        style={{ backgroundColor: '#111', color: 'white' }}
-                        className="text-sm border-none focus:ring-0 cursor-pointer rounded-md py-1 px-2"
+
+                    <button
+                        className="sort-btn"
+                        onClick={() => setSortBy(prev => prev === 'adCount' ? 'lastTouchedAt' : 'adCount')}
                     >
-                        <option value="adCount" style={{ backgroundColor: '#111' }}>Mais anúncios</option>
-                        <option value="lastTouchedAt" style={{ backgroundColor: '#111' }}>Mais recentes</option>
-                    </select>
+                        <ArrowUpDown size={16} />
+                        {sortBy === 'adCount' ? 'Por Anúncios' : 'Recentes'}
+                    </button>
                 </div>
             </div>
 
-            {/* Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {/* Offers Grid */}
+            <div className="mining-grid">
                 {filteredOffers.map(offer => (
                     <OfferMinedCard
                         key={offer.id}
                         offer={offer}
-                        onIncrementAds={() => handleOpenHistoryModal(offer)}
-                        onEdit={handleEdit}
-                        onValidate={handleValidate}
-                        onChangeStatus={handleChangeStatus}
+                        onEdit={(o) => {
+                            setEditingOffer(o);
+                            setShowAddModal(true);
+                        }}
+                        onUpdateHistory={() => handleOpenHistoryModal(offer)}
+                        onValidate={() => handleOpenValidation(offer)}
+                        // Implement status change handler
+                        onChangeStatus={(id, status) => {
+                            updateOffer.mutate({ id, data: { status, lastTouchedAt: new Date() } });
+                        }}
                     />
                 ))}
+
+                {filteredOffers.length === 0 && (
+                    <div className="empty-state-mining">
+                        <p>Nenhuma oferta encontrada com os filtros atuais.</p>
+                        <Button variant="ghost" onClick={() => setFilterStatus('ALL')}>Limpar filtros</Button>
+                    </div>
+                )}
             </div>
 
             {/* Modals */}
-            <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title={editingOffer ? 'Editar Oferta' : 'Nova Oferta'}>
-                <div className="space-y-4">
-                    <div>
-                        <label className="block text-sm mb-1 text-secondary">Nome</label>
+            <Modal
+                isOpen={showAddModal}
+                onClose={() => setShowAddModal(false)}
+                title={editingOffer ? "Editar Oferta" : "Nova Oferta"}
+            >
+                <form onSubmit={handleAddOffer} className="mining-form">
+                    <div className="form-group">
+                        <label>Nome do Produto/Oferta</label>
                         <input
-                            className="w-full border border-white/10 rounded p-3 text-white placeholder-zinc-500 focus:border-white/20 transition-all outline-none"
-                            style={{ backgroundColor: '#111', color: 'white' }}
+                            required
+                            type="text"
+                            className="input-field"
+                            placeholder="Ex: Método X"
                             value={formData.name}
                             onChange={e => setFormData({ ...formData, name: e.target.value })}
-                            placeholder="Nome do produto"
                         />
                     </div>
-                    <div>
-                        <label className="block text-sm mb-1 text-secondary">URL</label>
+                    <div className="form-group">
+                        <label>URL / Link</label>
                         <input
-                            className="w-full border border-white/10 rounded p-3 text-white placeholder-zinc-500 focus:border-white/20 transition-all outline-none"
-                            style={{ backgroundColor: '#111', color: 'white' }}
+                            type="url"
+                            className="input-field"
+                            placeholder="https://..."
                             value={formData.url}
                             onChange={e => setFormData({ ...formData, url: e.target.value })}
-                            placeholder="URL do anúncio"
                         />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm mb-1 text-secondary">Contagem Ads</label>
+                    <div className="form-row-2">
+                        <div className="form-group">
+                            <label>Qtd. Anúncios</label>
                             <input
                                 type="number"
-                                className="w-full border border-white/10 rounded p-3 text-white placeholder-zinc-500 focus:border-white/20 transition-all outline-none"
-                                style={{ backgroundColor: '#111', color: 'white' }}
+                                min="0"
+                                className="input-field"
                                 value={formData.adCount}
-                                onChange={e => setFormData({ ...formData, adCount: parseInt(e.target.value) })}
+                                onChange={e => setFormData({ ...formData, adCount: Number(e.target.value) })}
                             />
                         </div>
-                        <div>
-                            <label className="block text-sm mb-1 text-secondary">Plataforma</label>
+                        <div className="form-group">
+                            <label>Plataforma</label>
                             <select
-                                className="w-full border border-white/10 rounded p-3 text-white placeholder-zinc-500 focus:border-white/20 transition-all outline-none"
-                                style={{ backgroundColor: '#111', color: 'white' }}
+                                className="input-field"
                                 value={formData.platform}
-                                onChange={e => setFormData({ ...formData, platform: e.target.value as any })}
+                                onChange={e => setFormData({ ...formData, platform: e.target.value as OfferPlatform })}
                             >
-                                {OFFER_PLATFORMS.map(p => <option key={p.key} value={p.key} style={{ backgroundColor: '#111' }}>{p.label}</option>)}
+                                {OFFER_PLATFORMS.map(p => (
+                                    <option key={p} value={p}>{p}</option>
+                                ))}
                             </select>
                         </div>
                     </div>
-                    <div>
-                        <label className="block text-sm mb-1 text-secondary">Ângulos (separados por vírgula)</label>
-                        <input
-                            className="w-full border border-white/10 rounded p-3 text-white placeholder-zinc-500 focus:border-white/20 transition-all outline-none"
-                            style={{ backgroundColor: '#111', color: 'white' }}
+                    <div className="form-group">
+                        <label>Ângulos / Promessas</label>
+                        <textarea
+                            className="input-field"
+                            rows={3}
+                            placeholder="Quais são as principais promessas?"
                             value={formData.angles}
                             onChange={e => setFormData({ ...formData, angles: e.target.value })}
                         />
                     </div>
-                    <div className="flex justify-end gap-2 mt-4">
-                        <Button variant="ghost" onClick={() => setShowAddModal(false)}>Cancelar</Button>
-                        <Button variant="primary" onClick={handleSaveOffer}>Salvar</Button>
+                    <div className="modal-actions">
+                        <Button type="button" variant="ghost" onClick={() => setShowAddModal(false)}>Cancelar</Button>
+                        <Button type="submit" variant="primary">
+                            {createOffer.isPending ? 'Salvando...' : 'Salvar Oferta'}
+                        </Button>
                     </div>
-                </div>
+                </form>
             </Modal>
 
-            <Modal isOpen={showHistoryModal} onClose={() => setShowHistoryModal(false)} title="Atualizar Histórico">
-                <div className="space-y-4">
-                    <p className="text-secondary">Atualize a contagem de anúncios ativos para este criativo hoje.</p>
-                    <input
-                        type="number"
-                        className="w-full border border-white/10 rounded p-3 text-2xl text-center font-bold text-white placeholder-zinc-500 focus:border-white/20 transition-all outline-none"
-                        style={{ backgroundColor: '#111', color: 'white' }}
-                        value={historyFormData.count}
-                        onChange={e => setHistoryFormData({ ...historyFormData, count: parseInt(e.target.value) })}
-                    />
-                    <Button variant="primary" fullWidth onClick={handleUpdateAdHistory}>Atualizar</Button>
-                </div>
+            <Modal
+                isOpen={showHistoryModal}
+                onClose={() => setShowHistoryModal(false)}
+                title="Atualizar Histórico"
+            >
+                <form onSubmit={handleUpdateHistory}>
+                    <div className="form-group">
+                        <label>Nova contagem de anúncios</label>
+                        <input
+                            type="number"
+                            className="input-field"
+                            value={historyFormData.count}
+                            onChange={e => setHistoryFormData({ ...historyFormData, count: Number(e.target.value) })}
+                        />
+                    </div>
+                    <div className="modal-actions">
+                        <Button type="button" variant="ghost" onClick={() => setShowHistoryModal(false)}>Cancelar</Button>
+                        <Button type="submit" variant="primary">
+                            {updateOffer.isPending ? 'Atualizando...' : 'Atualizar'}
+                        </Button>
+                    </div>
+                </form>
             </Modal>
 
             <Modal isOpen={showValidationModal} onClose={() => setShowValidationModal(false)} title="Validar Oferta (ROI)">
@@ -392,9 +377,7 @@ export const MiningPage: React.FC = () => {
                     <OfferValidation
                         offer={validatingOffer}
                         onUpdate={() => {
-                            // Close modal after efficient save? Or keep open for edits?
-                            // Let's keep it open to see the history update instantly if we were real-time, 
-                            // but for now maybe just let user close it manually.
+                            queryClient.invalidateQueries({ queryKey: ['mining-offers'] });
                         }}
                     />
                 )}

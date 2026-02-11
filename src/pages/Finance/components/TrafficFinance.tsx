@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useLoading } from '../../../hooks/useLoading';
 import { collection, query, where, onSnapshot, addDoc, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 import { useAuth } from '../../../contexts/AuthContext';
 import { db as firestore } from '../../../lib/firebase';
@@ -52,7 +53,7 @@ export const TrafficFinance: React.FC<TrafficFinanceProps> = ({ menteeId, readOn
     const [offers, setOffers] = useState<OfferTracker[]>([]);
     const [stats, setStats] = useState<DailyAdStats[]>([]);
     const [selectedOfferId, setSelectedOfferId] = useState<string>('');
-    const [loading, setLoading] = useState(true);
+    const { isLoading, stopLoading } = useLoading('finance-traffic');
 
     // Date Selection
     const [selectedDate, setSelectedDate] = useState(new Date());
@@ -226,7 +227,7 @@ export const TrafficFinance: React.FC<TrafficFinanceProps> = ({ menteeId, readOn
         return { totalSpend, totalRevenue, totalProfit, totalLeads, totalSales, globalRoi, globalCpl };
     }, [filteredStats]);
 
-    if (loading) return <div className="traffic-loading">Carregando...</div>;
+    if (isLoading) return <div className="traffic-loading">Carregando...</div>;
 
     return (
         <div className="traffic-finance-redesign">

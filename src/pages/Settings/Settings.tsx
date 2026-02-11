@@ -49,6 +49,27 @@ export const SettingsPage: React.FC = () => {
         { key: 'enableSwipeFile', label: 'Swipe File', icon: <Layers />, desc: 'Biblioteca de ofertas' },
         { key: 'enableRanking', label: 'Ranking', icon: <Trophy />, desc: 'Ranking de gamificação' },
         { key: 'enableResources', label: 'Materiais', icon: <FolderOpen />, desc: 'Área de downloads e links' },
+        { key: 'enableRanking', label: 'Ranking', icon: <Trophy />, desc: 'Ranking de gamificação' },
+        { key: 'enableResources', label: 'Materiais', icon: <FolderOpen />, desc: 'Área de downloads e links' },
+    ];
+
+    const mentorFeatureList = [
+        { key: 'mentorEnableDashboard', label: 'Dashboard' },
+        { key: 'mentorEnableExecution', label: 'Execução' },
+        { key: 'mentorEnableTasks', label: 'Missões' },
+        { key: 'mentorEnableCRM', label: 'CRM' },
+        { key: 'mentorEnableMentees', label: 'Mentorados' },
+        { key: 'mentorEnableCalendar', label: 'Calendário' },
+        { key: 'mentorEnableFinance', label: 'Financeiro' },
+        { key: 'mentorEnableAcademy', label: 'Academy' },
+        { key: 'mentorEnableTemplates', label: 'Templates' },
+        { key: 'mentorEnableSwipeFile', label: 'Swipe File' },
+        { key: 'mentorEnableAssets', label: 'Ativos' },
+        { key: 'mentorEnableWarming', label: 'Aquecimento X1' },
+        { key: 'mentorEnableResources', label: 'Recursos' },
+        { key: 'mentorEnableOnboarding', label: 'Editor Onboarding' },
+        { key: 'mentorEnableOfferLab', label: 'Laboratório de Ofertas' },
+        { key: 'mentorEnableStrategyBoard', label: 'Lousa Estratégica' },
     ];
 
     if (loading) {
@@ -80,7 +101,23 @@ export const SettingsPage: React.FC = () => {
                                     </div>
                                 </div>
                                 <Toggle
-                                    enabled={features[item.key as keyof typeof features]}
+                                    enabled={features[item.key as keyof typeof features] ?? false}
+                                    onChange={(val) => toggleFeature(item.key as keyof typeof features, val)}
+                                />
+                            </div>
+                        ))}
+                    </div>
+                </Card>
+
+                <Card className="p-6">
+                    <h2 className="text-lg font-bold text-white mb-4 border-b border-white/10 pb-2">Painel do Mentor (Suas Abas)</h2>
+                    <p className="text-secondary text-sm mb-6">Oculte funcionalidades que você não usa no momento para limpar sua visão.</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {mentorFeatureList.map((item) => (
+                            <div key={item.key} className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/5">
+                                <span className="text-white font-medium">{item.label}</span>
+                                <Toggle
+                                    enabled={features[item.key as keyof typeof features] !== false}
                                     onChange={(val) => toggleFeature(item.key as keyof typeof features, val)}
                                 />
                             </div>

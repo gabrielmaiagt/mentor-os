@@ -14,6 +14,7 @@ import { db } from '../../lib/firebase';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 import { Card, Badge, Button, Skeleton } from '../../components/ui';
+import { useLoading } from '../../hooks/useLoading';
 import { format, subDays, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { FinanceSnapshot } from '../../types';
@@ -22,7 +23,7 @@ import './Dashboard.css';
 export const DashboardPage: React.FC = () => {
     const navigate = useNavigate();
 
-    const [loading, setLoading] = React.useState(true);
+    const { isLoading, startLoading, stopLoading } = useLoading('dashboard');
 
     const [finance, setFinance] = React.useState<FinanceSnapshot>({
         today: 0, week: 0, month: 0, total: 0,
@@ -33,7 +34,7 @@ export const DashboardPage: React.FC = () => {
 
     React.useEffect(() => {
         const fetchData = async () => {
-            setTimeout(() => setLoading(false), 800);
+            startLoading('Carregando dashboard...');
 
             // 1. Finance (Transactions)
             const unsubFinance = onSnapshot(query(collection(db, 'transactions')), (snapshot) => {
@@ -99,6 +100,7 @@ export const DashboardPage: React.FC = () => {
                     };
                 });
                 setMiningOverview(miningStats);
+                stopLoading();
             });
 
             return () => {
@@ -118,7 +120,7 @@ export const DashboardPage: React.FC = () => {
         }).format(value);
     };
 
-    if (loading) {
+    if (isLoading) {
         return (
             <div className="dashboard">
                 <div className="dashboard-header mb-6">

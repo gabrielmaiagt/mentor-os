@@ -11,6 +11,8 @@
     "start": "vite preview --host 0.0.0.0 --port 8080"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.90.21",
+    "@tanstack/react-query-devtools": "^5.91.3",
     "@vitejs/plugin-react": "^4.2.1",
     "date-fns": "^3.6.0",
     "firebase": "^10.11.0",

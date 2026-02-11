@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLoading } from '../../hooks/useLoading';
 import { useNavigate } from 'react-router-dom';
 import {
     ArrowLeft,
@@ -37,7 +38,7 @@ export const LeadProfilePage: React.FC = () => {
 
     const [lead, setLead] = useState<Lead | null>(null);
     const [deal, setDeal] = useState<Deal | null>(null);
-    const [loading, setLoading] = useState(true);
+    const { isLoading, stopLoading } = useLoading('lead-profile');
     const [showNoteModal, setShowNoteModal] = useState(false);
     const [showCreateDealModal, setShowCreateDealModal] = useState(false);
     const [showTemplatesModal, setShowTemplatesModal] = useState(false);
@@ -90,7 +91,7 @@ export const LeadProfilePage: React.FC = () => {
         fetchLeadData();
     }, [leadId, navigate]);
 
-    if (loading) return <div className="flex items-center justify-center p-12"><Loader className="animate-spin" /></div>;
+    if (isLoading) return <div className="flex items-center justify-center p-12"><Loader className="animate-spin" /></div>;
     if (!lead || !deal) return null;
 
     const leadStageConfig = getStageConfig(LEAD_STAGES, lead.stage);

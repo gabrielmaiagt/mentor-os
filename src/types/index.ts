@@ -269,10 +269,19 @@ export interface Task extends FirestoreTimestamps {
     targetValue?: number; // e.g. 5 (calls)
     currentValue?: number; // e.g. 2 (calls done)
 
+    // Subtasks (Micro-Metas)
+    subtasks?: Subtask[];
+
     suggestedWhatsAppText?: string;
     quickActions: string[];
     // Denormalized for display
     entityName?: string;
+}
+
+export interface Subtask {
+    id: string;
+    title: string;
+    completed: boolean;
 }
 
 // Update (Mentee weekly report)
@@ -487,6 +496,24 @@ export interface FeatureFlags {
     enableSwipeFile: boolean;
     enableRanking: boolean;
     enableResources: boolean;
+
+    // Mentor Visibility Flags
+    mentorEnableDashboard?: boolean;
+    mentorEnableExecution?: boolean;
+    mentorEnableTasks?: boolean;
+    mentorEnableCRM?: boolean;
+    mentorEnableMentees?: boolean;
+    mentorEnableCalendar?: boolean;
+    mentorEnableFinance?: boolean;
+    mentorEnableAcademy?: boolean;
+    mentorEnableTemplates?: boolean;
+    mentorEnableSwipeFile?: boolean;
+    mentorEnableAssets?: boolean;
+    mentorEnableWarming?: boolean;
+    mentorEnableResources?: boolean;
+    mentorEnableOnboarding?: boolean;
+    mentorEnableOfferLab?: boolean;
+    mentorEnableStrategyBoard?: boolean;
 }
 
 // Assets

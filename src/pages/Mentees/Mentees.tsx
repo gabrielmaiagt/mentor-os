@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLoading } from '../../hooks/useLoading';
 import { collection, query, orderBy, onSnapshot, deleteDoc, doc, addDoc, updateDoc } from 'firebase/firestore';
 import { db, auth } from '../../lib/firebase';
 import { useNavigate } from 'react-router-dom';
@@ -34,7 +35,7 @@ export const MenteesPage: React.FC = () => {
     const [filterStage, setFilterStage] = useState<MenteeStage | 'ALL'>('ALL');
     const [viewMode, setViewMode] = useState<'ACTIVE' | 'PENDING' | 'ARCHIVED'>('ACTIVE');
     const [mentees, setMentees] = useState<Mentee[]>([]);
-    const [loading, setLoading] = useState(true);
+    const { isLoading, stopLoading } = useLoading('mentees-list');
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     // Fetch Mentees from Firestore
@@ -58,11 +59,11 @@ export const MenteesPage: React.FC = () => {
                 status: doc.data().status || (doc.data().active === false ? 'ARCHIVED' : 'ACTIVE')
             })) as Mentee[];
             setMentees(fetchedMentees);
-            setLoading(false);
+            stopLoading();
         }, (error) => {
             console.error("Error fetching mentees:", error);
             toast.error("Erro ao carregar mentorados");
-            setLoading(false);
+            stopLoading();
         });
 
         return () => unsubscribe();
@@ -197,7 +198,7 @@ export const MenteesPage: React.FC = () => {
         return `Em ${days} dias`;
     };
 
-    if (loading) {
+    if (isLoading) {
         return <div className="p-8 text-center text-secondary">Carregando mentorados...</div>;
     }
 

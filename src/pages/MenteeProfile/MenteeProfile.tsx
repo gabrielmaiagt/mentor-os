@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useLoading } from '../../hooks/useLoading';
 import { useParams, useNavigate } from 'react-router-dom';
 import { doc, onSnapshot, collection, query, where, orderBy, addDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
@@ -61,7 +62,7 @@ export const MenteeProfilePage: React.FC = () => {
     const toast = useToast();
 
     const [mentee, setMentee] = useState<Mentee | null>(null);
-    const [loading, setLoading] = useState(true);
+    const { isLoading, stopLoading } = useLoading('mentee-profile');
     const [menteeCalls, setMenteeCalls] = useState<Call[]>([]);
     const [menteeTasks, setMenteeTasks] = useState<Task[]>([]);
 

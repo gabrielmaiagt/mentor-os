@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLoading } from '../../hooks/useLoading';
 import {
     FileText,
     ExternalLink,
@@ -31,7 +32,7 @@ export const ResourcesPage: React.FC = () => {
     const [activeTab, setActiveTab] = useState<ResourceCategory | 'ALL'>('ALL');
     const [searchTerm, setSearchTerm] = useState('');
     const [resources, setResources] = useState<Resource[]>([]);
-    const [loading, setLoading] = useState(true);
+    const { isLoading, stopLoading } = useLoading('resources');
     const [showAddModal, setShowAddModal] = useState(false);
 
     // Form State
@@ -104,7 +105,7 @@ export const ResourcesPage: React.FC = () => {
         return matchesTab && matchesSearch;
     });
 
-    if (loading) {
+    if (isLoading) {
         return (
             <div className="resources-page p-6 max-w-[1400px] mx-auto">
                 <div className="flex justify-between items-center mb-8">

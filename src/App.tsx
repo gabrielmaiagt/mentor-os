@@ -1,7 +1,11 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { LoadingProvider } from './contexts/LoadingContext';
 import { ToastProvider } from './components/ui/Toast';
 import { Shell } from './components/layout';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import { queryClient } from './lib/react-query';
 import './styles/global.css';
 
 // Page imports
@@ -32,66 +36,75 @@ import { SettingsPage } from './pages/Settings/Settings';
 import { RoleSelector } from './pages/Login/RoleSelector';
 import { MentorLogin } from './pages/Login/MentorLogin';
 import { MenteeLogin } from './pages/Login/MenteeLogin';
+
+import { StrategyBoard } from './pages/Strategy/StrategyBoard';
 import MenteeFinancePage from './pages/MenteeFinance';
 
 function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <ToastProvider>
-          <Routes>
-            {/* Public routes */}
-            <Route path="/login" element={<RoleSelector />} />
-            <Route path="/mentor/login" element={<MentorLogin />} />
-            <Route path="/mentee/login" element={<MenteeLogin />} />
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <LoadingProvider>
+            <ToastProvider>
+              <Routes>
+                {/* Public routes */}
+                <Route path="/login" element={<RoleSelector />} />
+                <Route path="/mentor/login" element={<MentorLogin />} />
+                <Route path="/mentee/login" element={<MenteeLogin />} />
 
-            {/* Protected universal routes (Mentor & Mentee) */}
-            <Route element={<Shell requireAuth allowedRoles={['mentor', 'mentee']} />}>
-              <Route path="/profile" element={<ProfilePage />} />
-              <Route path="/me/calls" element={<MenteeCallsPage />} />
-            </Route>
+                {/* Protected universal routes (Mentor & Mentee) */}
+                <Route element={<Shell requireAuth allowedRoles={['mentor', 'mentee']} />}>
+                  <Route path="/profile" element={<ProfilePage />} />
+                  <Route path="/me/calls" element={<MenteeCallsPage />} />
+                </Route>
 
-            {/* Protected mentor routes */}
-            <Route element={<Shell requireAuth allowedRoles={['mentor']} />}>
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/tasks" element={<TasksPage />} />
-              <Route path="/execution" element={<ExecutionPage />} />
-              <Route path="/crm" element={<CRMPage />} />
-              <Route path="/lead/:id" element={<LeadProfilePage />} />
-              <Route path="/mentees" element={<MenteesPage />} />
-              <Route path="/mentee/:id" element={<MenteeProfilePage />} />
-              <Route path="/calendar" element={<CalendarPage />} />
-              <Route path="/finance" element={<FinancePage />} />
-              <Route path="/templates" element={<TemplatesPage />} />
-              <Route path="/resources" element={<ResourcesPage />} />
-              <Route path="/warming" element={<WarmingPage />} />
-              <Route path="/academy/manage" element={<ManageAcademyPage />} />
-              <Route path="/onboarding-editor" element={<OnboardingEditorPage />} />
-              <Route path="/swipe-file" element={<SwipeFileLib />} />
-              <Route path="/assets" element={<AssetsManager />} />
-              <Route path="/settings" element={<SettingsPage />} />
-            </Route>
+                {/* Protected mentor routes */}
+                <Route element={<Shell requireAuth allowedRoles={['mentor']} />}>
+                  <Route path="/dashboard" element={<DashboardPage />} />
+                  <Route path="/tasks" element={<TasksPage />} />
+                  <Route path="/execution" element={<ExecutionPage />} />
+                  <Route path="/crm" element={<CRMPage />} />
+                  <Route path="/lead/:id" element={<LeadProfilePage />} />
+                  <Route path="/mentees" element={<MenteesPage />} />
+                  <Route path="/mentee/:id" element={<MenteeProfilePage />} />
+                  <Route path="/calendar" element={<CalendarPage />} />
+                  <Route path="/finance" element={<FinancePage />} />
+                  <Route path="/templates" element={<TemplatesPage />} />
+                  <Route path="/resources" element={<ResourcesPage />} />
+                  <Route path="/warming" element={<WarmingPage />} />
+                  <Route path="/academy/manage" element={<ManageAcademyPage />} />
+                  <Route path="/onboarding-editor" element={<OnboardingEditorPage />} />
+                  <Route path="/swipe-file" element={<SwipeFileLib />} />
+                  <Route path="/assets" element={<AssetsManager />} />
 
-            {/* Protected mentee routes */}
-            <Route element={<Shell requireAuth allowedRoles={['mentee']} />}>
-              <Route path="/me" element={<MenteeHomePage />} />
-              <Route path="/me/tasks" element={<MenteeTasksPage />} />
-              <Route path="/me/finance" element={<MenteeFinancePage />} />
-              <Route path="/me/resources" element={<ResourcesPage />} />
-              <Route path="/me/academy" element={<AcademyPage />} />
-              <Route path="/me/mining" element={<MiningPage />} />
-              <Route path="/me/warming" element={<WarmingPage />} />
-              <Route path="/warming" element={<WarmingPage />} />
-              <Route path="/me/how-it-works" element={<HowItWorksPage />} />
-              <Route path="/me/swipe-file" element={<SwipeFileLib />} />
-            </Route>
+                  <Route path="/strategy" element={<StrategyBoard />} />
+                  <Route path="/settings" element={<SettingsPage />} />
+                </Route>
 
-            {/* Default redirect */}
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
-          </Routes>
-        </ToastProvider>
-      </AuthProvider>
+                {/* Protected mentee routes */}
+                <Route element={<Shell requireAuth allowedRoles={['mentee']} />}>
+                  <Route path="/me" element={<MenteeHomePage />} />
+                  <Route path="/me/tasks" element={<MenteeTasksPage />} />
+                  <Route path="/me/finance" element={<MenteeFinancePage />} />
+                  <Route path="/me/resources" element={<ResourcesPage />} />
+                  <Route path="/me/academy" element={<AcademyPage />} />
+                  <Route path="/me/mining" element={<MiningPage />} />
+                  <Route path="/me/warming" element={<WarmingPage />} />
+                  <Route path="/warming" element={<WarmingPage />} />
+                  <Route path="/me/how-it-works" element={<HowItWorksPage />} />
+                  <Route path="/me/swipe-file" element={<SwipeFileLib />} />
+                </Route>
+
+                {/* Default redirect */}
+                <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                <Route path="*" element={<Navigate to="/dashboard" replace />} />
+              </Routes>
+            </ToastProvider>
+          </LoadingProvider>
+        </AuthProvider>
+        <ReactQueryDevtools initialIsOpen={false} />
+      </QueryClientProvider>
     </BrowserRouter>
   );
 }

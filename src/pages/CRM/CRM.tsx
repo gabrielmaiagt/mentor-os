@@ -10,6 +10,7 @@ import {
     Search
 } from 'lucide-react';
 import { Card, Badge, Button, Modal } from '../../components/ui';
+import { useLoading } from '../../hooks/useLoading';
 import { useToast } from '../../components/ui/Toast';
 import type { Deal, DealStage, DealHeat } from '../../types';
 import { DEAL_STAGES } from '../../types';
@@ -29,7 +30,7 @@ export const CRMPage: React.FC = () => {
     const [draggedDeal, setDraggedDeal] = useState<Deal | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [closingDeal, setClosingDeal] = useState<Deal | null>(null); // New state for closing deal modal
-    const [loading, setLoading] = useState(true);
+    const { isLoading, stopLoading } = useLoading('crm-leads');
 
     // Fetch Deals
     useEffect(() => {
@@ -41,7 +42,7 @@ export const CRMPage: React.FC = () => {
                 createdAt: doc.data().createdAt?.toDate(),
                 updatedAt: doc.data().updatedAt?.toDate()
             })) as Deal[]);
-            setLoading(false);
+            stopLoading();
         });
         return () => unsubscribe();
     }, []);
@@ -259,7 +260,7 @@ export const CRMPage: React.FC = () => {
         return stageDeals.reduce((sum, d) => sum + d.pitchAmount, 0);
     };
 
-    if (loading) {
+    if (isLoading) {
         return <div className="p-8 text-center text-secondary">Carregando CRM...</div>;
     }
 

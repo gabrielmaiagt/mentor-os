@@ -12,8 +12,8 @@ import {
     orderBy,
     Timestamp
 } from 'firebase/firestore';
-import { Plus, Trash2, Check, Pencil, Calendar, Target, AlertCircle, ArrowUp, ArrowRight, ArrowDown } from 'lucide-react';
-import type { Task, TaskPriority } from '../../types';
+import { Plus, Trash2, Check, Pencil, Calendar, Target, AlertCircle, ArrowUp, ArrowRight, ArrowDown, ListTodo, X } from 'lucide-react';
+import type { Task, TaskPriority, Subtask } from '../../types';
 import { useToast } from '../../components/ui/Toast';
 import './Tasks.css';
 import { format, isToday, isTomorrow, isPast } from 'date-fns';
@@ -29,6 +29,8 @@ export const TasksPage: React.FC = () => {
     const [dueDate, setDueDate] = useState('');
     const [targetValue, setTargetValue] = useState('');
     const [priority, setPriority] = useState<TaskPriority>('MEDIUM');
+    const [subtasks, setSubtasks] = useState<Subtask[]>([]);
+    const [newSubtaskInput, setNewSubtaskInput] = useState('');
     const [editingTask, setEditingTask] = useState<Task | null>(null);
     const [showDescription, setShowDescription] = useState(false);
 
@@ -83,7 +85,8 @@ export const TasksPage: React.FC = () => {
                 targetValue: targetValue ? parseInt(targetValue) : null,
                 currentValue: 0,
                 quickActions: [],
-                notified: false
+                notified: false,
+                subtasks: subtasks
             };
 
             await addDoc(collection(db, 'tasks'), taskData);
@@ -93,6 +96,8 @@ export const TasksPage: React.FC = () => {
             setDueDate('');
             setTargetValue('');
             setPriority('MEDIUM');
+            setSubtasks([]);
+            setNewSubtaskInput('');
             setShowDescription(false);
             toast.success('Missão criada!');
         } catch (err) {
@@ -110,7 +115,8 @@ export const TasksPage: React.FC = () => {
                 description: description.trim() || null,
                 dueDate: dueDate ? Timestamp.fromDate(new Date(dueDate)) : null,
                 targetValue: targetValue ? parseInt(targetValue) : null,
-                priority: priority
+                priority: priority,
+                subtasks: subtasks
             });
 
             setEditingTask(null);
@@ -132,6 +138,7 @@ export const TasksPage: React.FC = () => {
         setDueDate(task.dueDate ? format(task.dueDate, "yyyy-MM-dd'T'HH:mm") : '');
         setTargetValue(task.targetValue?.toString() || '');
         setPriority(task.priority || 'MEDIUM');
+        setSubtasks(task.subtasks || []);
         setShowDescription(!!task.description);
     };
 
@@ -141,6 +148,9 @@ export const TasksPage: React.FC = () => {
         setDescription('');
         setDueDate('');
         setTargetValue('');
+        setPriority('MEDIUM');
+        setSubtasks([]);
+        setNewSubtaskInput('');
         setShowDescription(false);
     };
 
@@ -209,6 +219,41 @@ export const TasksPage: React.FC = () => {
         if (isToday(date)) return `Hoje${timeStr}`;
         if (isTomorrow(date)) return `Amanhã${timeStr}`;
         return `${format(date, 'dd/MM', { locale: ptBR })}${timeStr}`;
+    };
+
+    const handleAddSubtaskLocal = () => {
+        if (!newSubtaskInput.trim()) return;
+        const newSub: Subtask = {
+            id: crypto.randomUUID(),
+            title: newSubtaskInput.trim(),
+            completed: false
+        };
+        setSubtasks([...subtasks, newSub]);
+        setNewSubtaskInput('');
+    };
+
+    const handleRemoveSubtaskLocal = (id: string) => {
+        setSubtasks(subtasks.filter(s => s.id !== id));
+    };
+
+    const handleToggleSubtask = async (taskId: string, subtaskId: string, currentSubtasks: Subtask[]) => {
+        const updatedSubtasks = currentSubtasks.map(s =>
+            s.id === subtaskId ? { ...s, completed: !s.completed } : s
+        );
+
+        // Optimistic update
+        setTasks(prev => prev.map(t =>
+            t.id === taskId ? { ...t, subtasks: updatedSubtasks } : t
+        ));
+
+        try {
+            await updateDoc(doc(db, 'tasks', taskId), {
+                subtasks: updatedSubtasks
+            });
+        } catch (err) {
+            console.error("Error toggling subtask:", err);
+            toast.error("Erro ao atualizar sub-meta");
+        }
     };
 
     const filteredTasks = tasks.filter(t =>
@@ -299,6 +344,31 @@ export const TasksPage: React.FC = () => {
                             />
                         </div>
 
+                        {/* Subtasks Input - Collapsed/Expanded Logic could normally act here but for now just inline */}
+                        <div className="task-subtasks-input-container">
+                            <div className="task-meta-input-group" style={{ minWidth: '200px' }}>
+                                <ListTodo size={16} />
+                                <input
+                                    type="text"
+                                    placeholder="Adicionar micro-meta..."
+                                    value={newSubtaskInput}
+                                    onChange={(e) => setNewSubtaskInput(e.target.value)}
+                                    // Add on Enter
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                            handleAddSubtaskLocal();
+                                        }
+                                    }}
+                                    className="task-target-input"
+                                    style={{ width: '100%' }}
+                                />
+                                <button type="button" onClick={handleAddSubtaskLocal} style={{ background: 'transparent', border: 'none', color: 'var(--primary)', cursor: 'pointer' }}>
+                                    <Plus size={16} />
+                                </button>
+                            </div>
+                        </div>
+
                         {/* Priority Selector */}
                         <div className="task-priority-selector">
                             <button
@@ -334,6 +404,25 @@ export const TasksPage: React.FC = () => {
                                 <ArrowDown size={16} />
                             </button>
                         </div>
+
+                        {/* Render Draft Subtasks */}
+                        {subtasks.length > 0 && (
+                            <div className="draft-subtasks-list" style={{ width: '100%', padding: '0 1rem 0.5rem' }}>
+                                {subtasks.map(sub => (
+                                    <div key={sub.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                                        <ListTodo size={12} />
+                                        <span style={{ flex: 1 }}>{sub.title}</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleRemoveSubtaskLocal(sub.id)}
+                                            style={{ background: 'transparent', border: 'none', color: 'var(--task-late)', cursor: 'pointer' }}
+                                        >
+                                            <X size={12} />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
 
                         <button
                             type="button"
@@ -399,6 +488,35 @@ export const TasksPage: React.FC = () => {
                                     </span>
                                 )}
                             </div>
+
+                            {/* Subtasks List */}
+                            {task.subtasks && task.subtasks.length > 0 && (
+                                <div className="task-subtasks-list" style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                    {task.subtasks.map(sub => (
+                                        <div key={sub.id} className={`subtask-item ${sub.completed ? 'completed' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem' }}>
+                                            <button
+                                                className={`subtask-check-btn ${sub.completed ? 'checked' : ''}`}
+                                                style={{
+                                                    width: '16px', height: '16px', borderRadius: '4px',
+                                                    border: '1px solid var(--text-tertiary)',
+                                                    background: sub.completed ? 'var(--primary)' : 'transparent',
+                                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                    cursor: 'pointer', padding: 0
+                                                }}
+                                                onClick={() => handleToggleSubtask(task.id, sub.id, task.subtasks || [])}
+                                            >
+                                                {sub.completed && <Check size={10} color="white" />}
+                                            </button>
+                                            <span style={{
+                                                textDecoration: sub.completed ? 'line-through' : 'none',
+                                                color: sub.completed ? 'var(--text-tertiary)' : 'var(--text-secondary)'
+                                            }}>
+                                                {sub.title}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
 
                         <div className="task-right">

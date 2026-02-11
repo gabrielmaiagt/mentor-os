@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useLoading } from '../../../hooks/useLoading';
 import { collection, query, orderBy, onSnapshot, addDoc } from 'firebase/firestore';
 import { db, auth } from '../../../lib/firebase';
 import { useNavigate } from 'react-router-dom';
@@ -49,7 +50,7 @@ export const MentorshipFinance: React.FC = () => {
 
     const [transactions, setTransactions] = useState<any[]>([]);
     const [mentees, setMentees] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
+    const { isLoading, stopLoading } = useLoading('finance-mentorship');
     const [selectedDate, setSelectedDate] = useState(new Date());
 
     // Fetch Transactions
@@ -249,7 +250,7 @@ export const MentorshipFinance: React.FC = () => {
         return <DollarSign size={18} />;
     };
 
-    if (loading) {
+    if (isLoading) {
         return <div className="p-8 text-center text-secondary">Carregando financeiro...</div>;
     }
 

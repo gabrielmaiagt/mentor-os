@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useLoading } from '../../hooks/useLoading';
 import { useNavigate } from 'react-router-dom';
 import {
     ArrowLeft,
@@ -29,7 +30,7 @@ export const ExecutionPage: React.FC = () => {
     const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
     const [message, setMessage] = useState('');
     const [queue, setQueue] = useState<ActionItem[]>([]);
-    const [loading, setLoading] = useState(true);
+    const { isLoading, stopLoading } = useLoading('tasks');
 
     // Fetch and Build Queue (Logic copied/adapted from Dashboard)
     React.useEffect(() => {
@@ -170,7 +171,7 @@ export const ExecutionPage: React.FC = () => {
         }
     };
 
-    if (loading) return <div className="flex justify-center items-center h-screen"><Loader className="animate-spin text-primary" size={32} /></div>;
+    if (isLoading) return <div className="flex justify-center items-center h-screen"><Loader className="animate-spin text-primary" size={32} /></div>;
 
     // All done state
     if (activeQueue.length === 0 && queue.length > 0 && completedIds.size > 0) {

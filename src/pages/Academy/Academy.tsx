@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { Button, Skeleton } from '../../components/ui';
 import { useToast } from '../../components/ui/Toast';
+import { useLoading } from '../../hooks/useLoading';
 import { collection, query, orderBy, getDocs, doc, setDoc, getDoc } from 'firebase/firestore';
 import { db, auth } from '../../lib/firebase';
 import type { AcademyModule, AcademyLesson } from '../../types';
@@ -19,7 +20,7 @@ export const AcademyPage: React.FC = () => {
     const toast = useToast();
     const [modules, setModules] = useState<AcademyModule[]>([]);
     const [lessons, setLessons] = useState<AcademyLesson[]>([]);
-    const [loading, setLoading] = useState(true);
+    const { isLoading, stopLoading } = useLoading('academy-content');
 
     // Player State
     const [activeLesson, setActiveLesson] = useState<AcademyLesson | null>(null);
@@ -56,7 +57,7 @@ export const AcademyPage: React.FC = () => {
                 if (mods.length > 0) setExpandedModules([mods[0].id]);
             }
 
-            setLoading(false);
+            stopLoading();
         };
 
         fetchContent();
@@ -99,7 +100,7 @@ export const AcademyPage: React.FC = () => {
         }
     };
 
-    if (loading) return <div className="p-6"><Skeleton height="80vh" /></div>;
+    if (isLoading) return <div className="p-6"><Skeleton height="80vh" /></div>;
 
     if (modules.length === 0) {
         return (

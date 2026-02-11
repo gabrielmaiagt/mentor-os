@@ -19,7 +19,8 @@ import {
     Shield,
     Layers,
     Settings,
-    CheckSquare
+    CheckSquare,
+    Presentation
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useFeatureFlags } from '../../hooks/useFeatureFlags';
@@ -47,6 +48,8 @@ const mentorNavItems: NavItem[] = [
     { path: '/warming', label: 'Aquecimento X1', icon: <Flame size={20} /> },
     { path: '/resources', label: 'Recursos', icon: <FolderOpen size={20} /> },
     { path: '/onboarding-editor', label: 'Onboarding', icon: <UserCircle size={20} /> },
+
+    { path: '/strategy', label: 'Lousa Estratégica', icon: <Presentation size={20} /> },
     { path: '/settings', label: 'Configurações', icon: <Settings size={20} /> },
 ];
 
@@ -83,7 +86,29 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => 
         });
     };
 
-    const navItems = user?.role === 'mentee' ? filterNavItems(menteeNavItems) : mentorNavItems;
+    const filterMentorNavItems = (items: NavItem[]) => {
+        return items.filter(item => {
+            if (item.path === '/dashboard' && features.mentorEnableDashboard === false) return false;
+            if (item.path === '/execution' && features.mentorEnableExecution === false) return false;
+            if (item.path === '/tasks' && features.mentorEnableTasks === false) return false;
+            if (item.path === '/crm' && features.mentorEnableCRM === false) return false;
+            if (item.path === '/mentees' && features.mentorEnableMentees === false) return false;
+            if (item.path === '/calendar' && features.mentorEnableCalendar === false) return false;
+            if (item.path === '/finance' && features.mentorEnableFinance === false) return false;
+            if (item.path === '/academy/manage' && features.mentorEnableAcademy === false) return false;
+            if (item.path === '/templates' && features.mentorEnableTemplates === false) return false;
+            if (item.path === '/swipe-file' && features.mentorEnableSwipeFile === false) return false;
+            if (item.path === '/assets' && features.mentorEnableAssets === false) return false;
+            if (item.path === '/warming' && features.mentorEnableWarming === false) return false;
+            if (item.path === '/resources' && features.mentorEnableResources === false) return false;
+            if (item.path === '/onboarding-editor' && features.mentorEnableOnboarding === false) return false;
+
+            if (item.path === '/strategy' && features.mentorEnableStrategyBoard === false) return false;
+            return true;
+        });
+    };
+
+    const navItems = user?.role === 'mentee' ? filterNavItems(menteeNavItems) : filterMentorNavItems(mentorNavItems);
 
     return (
         <>

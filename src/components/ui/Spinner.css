@@ -1,0 +1,59 @@
+.spinner {
+    display: inline-block;
+    position: relative;
+}
+
+.spinner--sm {
+    width: 16px;
+    height: 16px;
+}
+
+.spinner--md {
+    width: 24px;
+    height: 24px;
+}
+
+.spinner--lg {
+    width: 40px;
+    height: 40px;
+}
+
+.spinner--xl {
+    width: 64px;
+    height: 64px;
+}
+
+.spinner__svg {
+    animation: spinner-rotate 2s linear infinite;
+    width: 100%;
+    height: 100%;
+}
+
+.spinner__circle {
+    stroke-linecap: round;
+    stroke-dasharray: 1, 200;
+    stroke-dashoffset: 0;
+    animation: spinner-dash 1.5s ease-in-out infinite;
+}
+
+@keyframes spinner-rotate {
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes spinner-dash {
+    0% {
+        stroke-dasharray: 1, 200;
+        stroke-dashoffset: 0;
+    }
+
+    50% {
+        stroke-dasharray: 90, 200;
+        stroke-dashoffset: -35px;
+    }
+
+    100% {
+        stroke-dashoffset: -125px;
+    }
+}

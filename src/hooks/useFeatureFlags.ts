@@ -9,7 +9,25 @@ const DEFAULT_FLAGS: FeatureFlags = {
     enableAcademy: true,
     enableSwipeFile: true,
     enableRanking: true,
-    enableResources: true
+    enableResources: true,
+
+    // Mentor Defaults
+    mentorEnableDashboard: true,
+    mentorEnableExecution: true,
+    mentorEnableTasks: true,
+    mentorEnableCRM: true,
+    mentorEnableMentees: true,
+    mentorEnableCalendar: true,
+    mentorEnableFinance: true,
+    mentorEnableAcademy: true,
+    mentorEnableTemplates: true,
+    mentorEnableSwipeFile: true,
+    mentorEnableAssets: true,
+    mentorEnableWarming: true,
+    mentorEnableResources: true,
+    mentorEnableOnboarding: true,
+    mentorEnableOfferLab: true,
+    mentorEnableStrategyBoard: true
 };
 
 export function useFeatureFlags() {
