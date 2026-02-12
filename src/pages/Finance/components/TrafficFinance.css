@@ -203,6 +203,16 @@
     color: #818cf8;
 }
 
+.kpi-card.spend .kpi-icon {
+    background: linear-gradient(135deg, rgba(248, 113, 113, 0.2), rgba(248, 113, 113, 0.1));
+    color: #f87171;
+}
+
+.kpi-card.leads .kpi-icon {
+    background: linear-gradient(135deg, rgba(45, 212, 191, 0.2), rgba(45, 212, 191, 0.1));
+    color: #2dd4bf;
+}
+
 /* ============================================
    CHART SECTION
    ============================================ */

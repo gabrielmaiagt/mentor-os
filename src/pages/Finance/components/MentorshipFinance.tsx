@@ -1,7 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { useLoading } from '../../../hooks/useLoading';
-import { collection, query, orderBy, onSnapshot, addDoc } from 'firebase/firestore';
-import { db, auth } from '../../../lib/firebase';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     BarChart,
@@ -25,7 +22,8 @@ import {
     Plus,
     ChevronLeft,
     ChevronRight,
-    Calendar as CalendarIcon
+    Calendar as CalendarIcon,
+    Download
 } from 'lucide-react';
 import { format, subMonths, startOfMonth, endOfMonth, isWithinInterval, addMonths, isSameMonth, eachMonthOfInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -34,7 +32,7 @@ import { Card, Button, Badge, Modal } from '../../../components/ui';
 import type { PaymentStatus } from '../../../types/finance';
 import { useToast } from '../../../components/ui/Toast';
 import { exportToCSV, formatTransactionsForExport } from '../../../utils/export';
-import { Download } from 'lucide-react';
+import { useFinanceMentees, useTransactions, useCreateTransactionBatch } from '../../../hooks/queries/useFinance';
 import '../Finance.css';
 
 const formatCurrency = (value: number) => {
@@ -48,38 +46,12 @@ export const MentorshipFinance: React.FC = () => {
     const navigate = useNavigate();
     const toast = useToast();
 
-    const [transactions, setTransactions] = useState<any[]>([]);
-    const [mentees, setMentees] = useState<any[]>([]);
-    const { isLoading, stopLoading } = useLoading('finance-mentorship');
+    // React Query Hooks
+    const { data: transactions = [], isLoading: isLoadingTransactions } = useTransactions();
+    const { data: mentees = [] } = useFinanceMentees();
+    const createTransaction = useCreateTransactionBatch();
+
     const [selectedDate, setSelectedDate] = useState(new Date());
-
-    // Fetch Transactions
-    useEffect(() => {
-        const q = query(collection(db, 'transactions'), orderBy('dueDate', 'desc'));
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            setTransactions(snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data(),
-                dueDate: doc.data().dueDate?.toDate(),
-                paidAt: doc.data().paidAt?.toDate(),
-                createdAt: doc.data().createdAt?.toDate()
-            })));
-            setLoading(false);
-        });
-        return () => unsubscribe();
-    }, []);
-
-    // Fetch Mentees for Dropdown
-    useEffect(() => {
-        const q = query(collection(db, 'mentees'), orderBy('name', 'asc'));
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            setMentees(snapshot.docs.map(doc => ({
-                id: doc.id,
-                name: doc.data().name
-            })));
-        });
-        return () => unsubscribe();
-    }, []);
 
     // Calculate Real Stats based on Selected Date
     const stats = useMemo(() => {
@@ -170,48 +142,25 @@ export const MentorshipFinance: React.FC = () => {
         installments: 1
     });
 
-    const handleAddTransaction = async (e: React.FormEvent) => {
+    const handleAddTransaction = (e: React.FormEvent) => {
         e.preventDefault();
-        try {
-            const selectedMentee = mentees.find(m => m.id === newTx.menteeId);
-            const numInstallments = newTx.isRecurrent ? Number(newTx.installments) : 1;
-            const baseAmount = Number(newTx.amount);
+        const selectedMentee = mentees.find(m => m.id === newTx.menteeId);
 
-            const amountPerInstallment = numInstallments > 1 ? baseAmount / numInstallments : baseAmount;
-
-            for (let i = 0; i < numInstallments; i++) {
-                const dueDate = new Date(newTx.dueDate);
-                dueDate.setMonth(dueDate.getMonth() + i);
-
-                const currentStatus = (i === 0) ? newTx.status : 'PENDING';
-
-                await addDoc(collection(db, 'transactions'), {
-                    menteeId: newTx.menteeId,
-                    menteeName: selectedMentee?.name || 'Desconhecido',
-                    description: numInstallments > 1
-                        ? `Parcela ${i + 1}/${numInstallments} - Manual`
-                        : 'Transação Manual',
-                    amount: amountPerInstallment,
-                    status: currentStatus,
-                    method: newTx.method,
-                    dueDate: dueDate,
-                    paidAt: currentStatus === 'PAID' ? new Date() : null,
-                    createdAt: new Date(),
-                    createdBy: auth.currentUser?.uid
+        createTransaction.mutate({
+            newTx,
+            menteeName: selectedMentee?.name || ''
+        }, {
+            onSuccess: () => {
+                setIsModalOpen(false);
+                toast.success(`${newTx.isRecurrent ? newTx.installments : 1} transação(ões) gerada(s)!`);
+                setNewTx({
+                    menteeId: '', amount: '', status: 'PAID', method: 'PIX',
+                    dueDate: new Date().toISOString().split('T')[0],
+                    isRecurrent: false, installments: 1
                 });
-            }
-
-            setIsModalOpen(false);
-            toast.success(`${numInstallments} transação(ões) gerada(s)!`);
-            setNewTx({
-                menteeId: '', amount: '', status: 'PAID', method: 'PIX',
-                dueDate: new Date().toISOString().split('T')[0],
-                isRecurrent: false, installments: 1
-            });
-        } catch (error) {
-            console.error("Error adding transaction:", error);
-            toast.error("Erro ao adicionar transação");
-        }
+            },
+            onError: () => toast.error("Erro ao adicionar transação")
+        });
     };
 
     const handleExport = () => {
@@ -250,7 +199,7 @@ export const MentorshipFinance: React.FC = () => {
         return <DollarSign size={18} />;
     };
 
-    if (isLoading) {
+    if (isLoadingTransactions) {
         return <div className="p-8 text-center text-secondary">Carregando financeiro...</div>;
     }
 
@@ -544,7 +493,9 @@ export const MentorshipFinance: React.FC = () => {
                     </div>
                     <div className="modal-actions">
                         <Button variant="ghost" type="button" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
-                        <Button variant="primary" type="submit">Adicionar</Button>
+                        <Button variant="primary" type="submit" disabled={createTransaction.isPending}>
+                            {createTransaction.isPending ? 'Adicionando...' : 'Adicionar'}
+                        </Button>
                     </div>
                 </form>
             </Modal>

@@ -1,8 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useLoading } from '../../../hooks/useLoading';
-import { collection, query, where, onSnapshot, addDoc, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 import { useAuth } from '../../../contexts/AuthContext';
-import { db as firestore } from '../../../lib/firebase';
 import {
     Plus,
     Edit2,
@@ -14,14 +11,17 @@ import {
     Calendar,
     ChevronDown,
     BarChart3,
-    Trash2
+    Trash2,
+    MessageCircle,
+    Wallet
 } from 'lucide-react';
 import { Button, Input, Modal } from '../../../components/ui';
 import { useToast } from '../../../components/ui/Toast';
-import type { OfferTracker, DailyAdStats } from '../../../types';
+import type { DailyAdStats } from '../../../types';
 import { format, subDays, startOfWeek, startOfMonth, startOfYear, isAfter, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { useTrafficOffers, useDailyStats, useCreateTrafficOffer, useSaveDailyStat, useDeleteDailyStat } from '../../../hooks/queries/useTraffic';
 import './TrafficFinance.css';
 
 type PeriodFilter = 'TODAY' | 'YESTERDAY' | 'WEEK' | 'MONTH' | 'YEAR' | 'TOTAL';
@@ -49,11 +49,25 @@ export const TrafficFinance: React.FC<TrafficFinanceProps> = ({ menteeId, readOn
     // Use menteeId if provided, otherwise use current user's ID
     const targetUserId = menteeId || user?.id;
 
-    // State
-    const [offers, setOffers] = useState<OfferTracker[]>([]);
-    const [stats, setStats] = useState<DailyAdStats[]>([]);
+    // React Query Hooks
+    const { data: offers = [], isLoading: isLoadingOffers } = useTrafficOffers(targetUserId);
     const [selectedOfferId, setSelectedOfferId] = useState<string>('');
-    const { isLoading, stopLoading } = useLoading('finance-traffic');
+
+    // Select first offer automatically when loaded
+    useEffect(() => {
+        if (offers.length > 0 && !selectedOfferId) {
+            setSelectedOfferId(offers[0].id);
+        }
+    }, [offers, selectedOfferId]);
+
+    const { data: stats = [], isLoading: isLoadingStats } = useDailyStats(selectedOfferId);
+
+    // Mutations
+    const createOfferMutation = useCreateTrafficOffer();
+    const saveStatMutation = useSaveDailyStat();
+    const deleteStatMutation = useDeleteDailyStat();
+
+    const isLoading = isLoadingOffers || isLoadingStats;
 
     // Date Selection
     const [selectedDate, setSelectedDate] = useState(new Date());
@@ -73,52 +87,27 @@ export const TrafficFinance: React.FC<TrafficFinanceProps> = ({ menteeId, readOn
         pixPaid: ''
     });
 
-    // Fetch Offers
-    useEffect(() => {
-        if (!targetUserId) return;
-        const q = query(collection(firestore, 'offer_trackers'), where('userId', '==', targetUserId), where('status', '==', 'ACTIVE'));
-        const unsub = onSnapshot(q, (snapshot) => {
-            const loaded = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as OfferTracker));
-            setOffers(loaded);
-            if (loaded.length > 0 && !selectedOfferId) {
-                setSelectedOfferId(loaded[0].id);
-            }
-            setLoading(false);
-        });
-        return () => unsub();
-    }, [targetUserId]);
-
-    // Fetch Stats for Selected Offer
-    useEffect(() => {
-        if (!selectedOfferId) return;
-        const q = query(collection(firestore, 'daily_stats'), where('offerId', '==', selectedOfferId));
-        const unsub = onSnapshot(q, (snapshot) => {
-            setStats(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as DailyAdStats)));
-        });
-        return () => unsub();
-    }, [selectedOfferId]);
-
-    const handleCreateOffer = async () => {
+    const handleCreateOffer = () => {
         if (!newOfferName.trim() || !user) return;
-        try {
-            await addDoc(collection(firestore, 'offer_trackers'), {
-                userId: user.id,
-                name: newOfferName,
-                type: newOfferType,
-                status: 'ACTIVE',
-                createdAt: new Date(),
-                updatedAt: new Date()
-            });
-            toast.success('Oferta criada!');
-            setShowNewOfferModal(false);
-            setNewOfferName('');
-        } catch (e) {
-            console.error(e);
-            toast.error('Erro ao criar oferta');
-        }
+
+        createOfferMutation.mutate({
+            userId: user.id,
+            name: newOfferName,
+            type: newOfferType,
+            status: 'ACTIVE',
+            createdAt: new Date(),
+            updatedAt: new Date()
+        }, {
+            onSuccess: () => {
+                toast.success('Oferta criada!');
+                setShowNewOfferModal(false);
+                setNewOfferName('');
+            },
+            onError: () => toast.error('Erro ao criar oferta')
+        });
     };
 
-    const handleSaveDailyStat = async () => {
+    const handleSaveDailyStat = () => {
         if (!selectedOfferId) return;
 
         const dateStr = format(selectedDate, 'yyyy-MM-dd');
@@ -134,29 +123,18 @@ export const TrafficFinance: React.FC<TrafficFinanceProps> = ({ menteeId, readOn
             pixPaid: Number(inputForm.pixPaid) || 0
         };
 
-        try {
-            if (existingStat) {
-                await updateDoc(doc(firestore, 'daily_stats', existingStat.id), data);
-                toast.success('Dados atualizados!');
-            } else {
-                await addDoc(collection(firestore, 'daily_stats'), data);
-                toast.success('Dados salvos!');
-            }
-        } catch (e) {
-            console.error(e);
-            toast.error('Erro ao salvar dados');
-        }
+        saveStatMutation.mutate({ id: existingStat?.id, data }, {
+            onSuccess: () => toast.success('Dados salvos com sucesso!'),
+            onError: () => toast.error('Erro ao salvar dados')
+        });
     };
 
-    const handleDeleteStat = async (statId: string) => {
+    const handleDeleteStat = (statId: string) => {
         if (!confirm('Tem certeza que deseja excluir este lançamento?')) return;
-        try {
-            await deleteDoc(doc(firestore, 'daily_stats', statId));
-            toast.success('Lançamento excluído!');
-        } catch (e) {
-            console.error(e);
-            toast.error('Erro ao excluir');
-        }
+        deleteStatMutation.mutate({ id: statId, offerId: selectedOfferId }, {
+            onSuccess: () => toast.success('Lançamento excluído!'),
+            onError: () => toast.error('Erro ao excluir')
+        });
     };
 
     // Load form when date changes
@@ -227,7 +205,7 @@ export const TrafficFinance: React.FC<TrafficFinanceProps> = ({ menteeId, readOn
         return { totalSpend, totalRevenue, totalProfit, totalLeads, totalSales, globalRoi, globalCpl };
     }, [filteredStats]);
 
-    if (isLoading) return <div className="traffic-loading">Carregando...</div>;
+    if (isLoading && offers.length === 0) return <div className="traffic-loading">Carregando financeiro...</div>;
 
     return (
         <div className="traffic-finance-redesign">
@@ -288,6 +266,17 @@ export const TrafficFinance: React.FC<TrafficFinanceProps> = ({ menteeId, readOn
                 {/* KPI Cards */}
                 <section className="kpi-section">
                     <div className="kpi-grid">
+                        {/* Gasto (Ads) - Requested by User */}
+                        <div className="kpi-card spend">
+                            <div className="kpi-icon">
+                                <Wallet size={24} />
+                            </div>
+                            <div className="kpi-data">
+                                <span className="kpi-label">Gasto (Ads)</span>
+                                <span className="kpi-value">{formatCurrency(aggregated.totalSpend)}</span>
+                            </div>
+                        </div>
+
                         {/* Faturamento */}
                         <div className="kpi-card revenue">
                             <div className="kpi-icon">
@@ -327,6 +316,17 @@ export const TrafficFinance: React.FC<TrafficFinanceProps> = ({ menteeId, readOn
 
                         {selectedOffer?.type === 'X1' ? (
                             <>
+                                {/* Mensagens (Leads) - Requested by User */}
+                                <div className="kpi-card leads">
+                                    <div className="kpi-icon">
+                                        <MessageCircle size={24} />
+                                    </div>
+                                    <div className="kpi-data">
+                                        <span className="kpi-label">Mensagens</span>
+                                        <span className="kpi-value">{aggregated.totalLeads}</span>
+                                    </div>
+                                </div>
+
                                 <div className="kpi-card cpl">
                                     <div className="kpi-icon">
                                         <Target size={24} />
@@ -648,7 +648,9 @@ export const TrafficFinance: React.FC<TrafficFinanceProps> = ({ menteeId, readOn
                     </div>
                     <div className="modal-actions">
                         <Button variant="ghost" onClick={() => setShowNewOfferModal(false)}>Cancelar</Button>
-                        <Button variant="primary" onClick={handleCreateOffer}>Criar Oferta</Button>
+                        <Button variant="primary" onClick={handleCreateOffer}>
+                            {createOfferMutation.isPending ? 'Criando...' : 'Criar Oferta'}
+                        </Button>
                     </div>
                 </div>
             </Modal>
