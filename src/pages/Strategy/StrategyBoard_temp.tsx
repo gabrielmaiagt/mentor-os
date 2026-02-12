@@ -49,9 +49,7 @@ export const StrategyBoard: React.FC = () => {
     // Selected Note State (for keyboard shortcuts)
     const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
 
-    // Undo/Redo History
-    const [history, setHistory] = useState<any[]>([]);
-    const [historyIndex, setHistoryIndex] = useState(-1);
+
 
     // Resize State
     const [isResizing, setIsResizing] = useState(false);
@@ -853,3 +851,10 @@ export const StrategyBoard: React.FC = () => {
                             placeholder="Escreva sua estratégia..."
                             onMouseDown={(e) => e.stopPropagation()}
                             style={{ fontFamily: '"Comic Sans MS", "Chalkboard SE", sans-serif' }}
+                        />
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
