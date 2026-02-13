@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Presentation, Trash2, MousePointer2, Link2, Plus, Minus, Upload, Pen, Eraser, Download, Eye, EyeOff } from 'lucide-react';
+import { Presentation, Trash2, MousePointer2, Link2, Plus, Minus, Upload, Pen, Eraser } from 'lucide-react';
 import { collection, query, where, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../../lib/firebase';
@@ -70,8 +70,9 @@ export const StrategyBoard: React.FC = () => {
     const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
 
     // Undo/Redo History
-    const [history, setHistory] = useState<any[]>([]);
-    const [historyIndex, setHistoryIndex] = useState(-1);
+    // Undo/Redo History - TODO: Implement
+    // const [history, setHistory] = useState<any[]>([]);
+    // const [historyIndex, setHistoryIndex] = useState(-1);
 
     // Resize State
     const [isResizing, setIsResizing] = useState(false);
@@ -79,6 +80,7 @@ export const StrategyBoard: React.FC = () => {
     const [resizeHandle, setResizeHandle] = useState<string | null>(null); // 'se', 'sw', 'ne', 'nw', 'e', 'w', 'n', 's'
     const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, width: 0, height: 0 });
 
+    // Color Menu State
     // Color Menu State
     const [colorMenuNoteId, setColorMenuNoteId] = useState<string | null>(null);
 
@@ -515,7 +517,7 @@ export const StrategyBoard: React.FC = () => {
             await updateDoc(doc(db, 'strategyNotes', noteId), {
                 color: COLORS[colorIndex].bg
             });
-            setColorMenuNoteId(null); // Close menu after selection
+            // setColorMenuNoteId(null); // Close menu after selection
         } catch (error) {
             console.error('Failed to change note color:', error);
         }
@@ -686,6 +688,20 @@ export const StrategyBoard: React.FC = () => {
             if ((e.ctrlKey || e.metaKey) && e.key === '0') {
                 e.preventDefault();
                 resetZoom();
+                return;
+            }
+
+            // 't' for toggling toolbar
+            if (e.key === 't' && !e.ctrlKey && !e.metaKey) {
+                setIsToolbarVisible(prev => !prev);
+                return;
+            }
+
+            // 'p' for presentation mode
+            if (e.key === 'p' && !e.ctrlKey && !e.metaKey) {
+                setIsPresentationMode(prev => !prev);
+                // Also toggle toolbar based on mode
+                setIsToolbarVisible(prev => isPresentationMode); // If exiting (isPresentationMode was true), show toolbar. If entering, hide it.
                 return;
             }
         };
@@ -859,8 +875,8 @@ export const StrategyBoard: React.FC = () => {
                 backgroundSize: '24px 24px'
             }}
         >
-            {/* Toolbar - Bottom Center */}
-            {isToolbarVisible && (
+            {/* Toolbar - Bottom Center - Hidden in Presentation Mode */}
+            {isToolbarVisible && !isPresentationMode && (
                 <div
                     style={{
                         position: 'fixed',
@@ -1133,6 +1149,35 @@ export const StrategyBoard: React.FC = () => {
                         </button>
                     </div>
                 </div>
+            )}
+
+            {/* Presentation Mode - Exit Button */}
+            {isPresentationMode && (
+                <button
+                    onClick={() => {
+                        setIsPresentationMode(false);
+                        setIsToolbarVisible(true);
+                    }}
+                    style={{
+                        position: 'fixed',
+                        top: '24px',
+                        right: '24px',
+                        zIndex: 9999,
+                        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                        color: 'white',
+                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                        borderRadius: '8px',
+                        padding: '8px 16px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        backdropFilter: 'blur(4px)'
+                    }}
+                >
+                    <Presentation size={16} />
+                    <span>Sair da Apresentação (P)</span>
+                </button>
             )}
 
             {/* Board Content - Notes, Images, Connections, Drawings */}

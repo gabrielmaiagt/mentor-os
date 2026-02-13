@@ -30,11 +30,11 @@ export const ExecutionPage: React.FC = () => {
     const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
     const [message, setMessage] = useState('');
     const [queue, setQueue] = useState<ActionItem[]>([]);
-    const { isLoading, stopLoading } = useLoading('tasks');
+    const { isLoading, startLoading, stopLoading } = useLoading('tasks');
 
     // Fetch and Build Queue (Logic copied/adapted from Dashboard)
     React.useEffect(() => {
-        setLoading(true);
+        startLoading();
         const fetchData = async () => {
             // 1. Deals (Sales Actions)
             const dealsSnap = await getDocs(query(collection(db, 'deals')));
@@ -98,7 +98,7 @@ export const ExecutionPage: React.FC = () => {
             });
 
             setQueue(combined);
-            setLoading(false);
+            stopLoading();
         };
         fetchData();
     }, []);
@@ -201,7 +201,7 @@ export const ExecutionPage: React.FC = () => {
         );
     }
 
-    if (activeQueue.length === 0 && !loading) {
+    if (activeQueue.length === 0 && !isLoading) {
         return (
             <div className="execution">
                 <div className="execution-complete">

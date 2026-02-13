@@ -32,7 +32,7 @@ export const ResourcesPage: React.FC = () => {
     const [activeTab, setActiveTab] = useState<ResourceCategory | 'ALL'>('ALL');
     const [searchTerm, setSearchTerm] = useState('');
     const [resources, setResources] = useState<Resource[]>([]);
-    const { isLoading, stopLoading } = useLoading('resources');
+    const { isLoading, startLoading, stopLoading } = useLoading('resources');
     const [showAddModal, setShowAddModal] = useState(false);
 
     // Form State
@@ -52,6 +52,7 @@ export const ResourcesPage: React.FC = () => {
 
     React.useEffect(() => {
         // Fetch resources
+        startLoading();
         const q = query(collection(db, 'resources'), orderBy('createdAt', 'desc'));
         const unsubscribe = onSnapshot(q, (snapshot) => {
             setResources(snapshot.docs.map(doc => ({
@@ -60,7 +61,7 @@ export const ResourcesPage: React.FC = () => {
                 createdAt: doc.data().createdAt?.toDate(),
                 updatedAt: doc.data().updatedAt?.toDate()
             })) as Resource[]);
-            setLoading(false);
+            stopLoading();
         });
 
         return () => unsubscribe();

@@ -10,8 +10,7 @@ import {
 } from 'lucide-react';
 import { Card, Button, Modal } from '../../components/ui';
 import { OfferMinedCard, OfferValidation } from '../../components/mining';
-import { useToast } from '../../components/ui/Toast';
-import { OFFER_PLATFORMS } from '../../types';
+import { OFFER_PLATFORMS } from '../../types/mining';
 import type { OfferMined, OfferStatus, OfferPlatform } from '../../types';
 import './Mining.css';
 
@@ -34,7 +33,6 @@ const calculateMiningSummary = (offers: OfferMined[]) => {
 };
 
 export const MiningPage: React.FC = () => {
-    const toast = useToast();
     const queryClient = useQueryClient();
 
     // React Query Hooks
@@ -76,7 +74,13 @@ export const MiningPage: React.FC = () => {
         e.preventDefault();
         if (!mentee?.id) return;
 
-        createOffer.mutate({ offerData: formData, menteeId: mentee.id }, {
+        createOffer.mutate({
+            offerData: {
+                ...formData,
+                angles: formData.angles.split('\n').filter(a => a.trim())
+            },
+            menteeId: mentee.id
+        }, {
             onSuccess: () => {
                 setShowAddModal(false);
                 setFormData({
@@ -89,10 +93,6 @@ export const MiningPage: React.FC = () => {
                 });
             }
         });
-    };
-
-    const handleUpdateOffer = async (id: string, updates: Partial<OfferMined>) => {
-        updateOffer.mutate({ id, data: updates });
     };
 
     const handleOpenHistoryModal = (offer: OfferMined) => {
@@ -260,7 +260,7 @@ export const MiningPage: React.FC = () => {
                             setEditingOffer(o);
                             setShowAddModal(true);
                         }}
-                        onUpdateHistory={() => handleOpenHistoryModal(offer)}
+                        onIncrementAds={() => handleOpenHistoryModal(offer)}
                         onValidate={() => handleOpenValidation(offer)}
                         // Implement status change handler
                         onChangeStatus={(id, status) => {
@@ -324,7 +324,7 @@ export const MiningPage: React.FC = () => {
                                 onChange={e => setFormData({ ...formData, platform: e.target.value as OfferPlatform })}
                             >
                                 {OFFER_PLATFORMS.map(p => (
-                                    <option key={p} value={p}>{p}</option>
+                                    <option key={p.key} value={p.key}>{p.label}</option>
                                 ))}
                             </select>
                         </div>
@@ -377,7 +377,7 @@ export const MiningPage: React.FC = () => {
                     <OfferValidation
                         offer={validatingOffer}
                         onUpdate={() => {
-                            queryClient.invalidateQueries({ queryKey: ['mining-offers'] });
+                            queryClient.invalidateQueries({ queryKey: ['mining-offers', mentee?.id] });
                         }}
                     />
                 )}

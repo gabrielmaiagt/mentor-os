@@ -13,7 +13,7 @@ export const useMentee = () => {
             if (!user) return null;
 
             // Try getting by UID (Standard)
-            let q = query(collection(db, 'mentees'), where('uid', '==', user.uid));
+            let q = query(collection(db, 'mentees'), where('uid', '==', user.id));
             let snapshot = await getDocs(q);
 
             // Fallback: Try getting by Email (Legacy support)

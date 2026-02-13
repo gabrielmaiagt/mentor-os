@@ -62,7 +62,7 @@ export const MenteeProfilePage: React.FC = () => {
     const toast = useToast();
 
     const [mentee, setMentee] = useState<Mentee | null>(null);
-    const { isLoading, stopLoading } = useLoading('mentee-profile');
+    const { isLoading, startLoading, stopLoading } = useLoading('mentee-profile');
     const [menteeCalls, setMenteeCalls] = useState<Call[]>([]);
     const [menteeTasks, setMenteeTasks] = useState<Task[]>([]);
 
@@ -83,6 +83,7 @@ export const MenteeProfilePage: React.FC = () => {
 
     // Fetch Mentee Data
     useEffect(() => {
+        startLoading();
         if (!id) return;
         const unsubscribe = onSnapshot(doc(db, 'mentees', id), (docSnap) => {
             if (docSnap.exists()) {
@@ -100,7 +101,7 @@ export const MenteeProfilePage: React.FC = () => {
                 toast.error("Mentorado não encontrado");
                 navigate('/mentees');
             }
-            setLoading(false);
+            stopLoading();
         });
         return () => unsubscribe();
     }, [id, navigate]);
@@ -177,7 +178,7 @@ export const MenteeProfilePage: React.FC = () => {
     const [offers, setOffers] = useState<OfferMined[]>([]);
     const miningSummary = useMemo(() => calculateMiningSummary(offers), [offers]);
 
-    if (loading || !mentee) return <div className="p-8 text-center">Carregando perfil...</div>;
+    if (isLoading || !mentee) return <div className="p-8 text-center">Carregando perfil...</div>;
 
     const currentStageIndex = stageJourney.indexOf(mentee.currentStage);
     const isMiningStage = mentee.currentStage === 'MINING';

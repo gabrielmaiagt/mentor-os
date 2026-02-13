@@ -38,13 +38,14 @@ export const LeadProfilePage: React.FC = () => {
 
     const [lead, setLead] = useState<Lead | null>(null);
     const [deal, setDeal] = useState<Deal | null>(null);
-    const { isLoading, stopLoading } = useLoading('lead-profile');
+    const { isLoading, startLoading, stopLoading } = useLoading('lead-profile');
     const [showNoteModal, setShowNoteModal] = useState(false);
     const [showCreateDealModal, setShowCreateDealModal] = useState(false);
     const [showTemplatesModal, setShowTemplatesModal] = useState(false);
 
     React.useEffect(() => {
         const fetchLeadData = async () => {
+            startLoading();
             if (!leadId) return;
             try {
                 // Fetch deal associated with this leadId
@@ -85,7 +86,7 @@ export const LeadProfilePage: React.FC = () => {
             } catch (error) {
                 console.error("Error fetching lead:", error);
             } finally {
-                setLoading(false);
+                stopLoading();
             }
         };
         fetchLeadData();

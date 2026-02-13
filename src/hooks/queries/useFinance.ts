@@ -73,7 +73,7 @@ export const useFinanceMentees = () => {
 
 // 3. Add Transaction Mutation
 export const useAddTransaction = () => {
-    const queryClient = useQueryClient();
+    // const queryClient = useQueryClient();
 
     return useMutation({
         mutationFn: async (data: NewTransactionData) => {
@@ -84,7 +84,7 @@ export const useAddTransaction = () => {
             // Actually, best practice: pass relevant data to mutation.
 
             // Replicating the logic from the component:
-            const selectedMenteeDoc = await getDocs(query(collection(db, 'mentees'), where('name', '>=', ''), orderBy('name'))); // This is inefficient to do inside mutation.
+            // const selectedMenteeDoc = await getDocs(query(collection(db, 'mentees'), where('name', '>=', ''), orderBy('name')));
             // Better approach: The mutation should just take the payload ready for Firestore.
 
             // Let's refactor the mutation to take the *Prepared* payloads, or handle the loop here.
