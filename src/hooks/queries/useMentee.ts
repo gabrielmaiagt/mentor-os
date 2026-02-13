@@ -8,7 +8,7 @@ export const useMentee = () => {
     const { user } = useAuth();
 
     return useQuery({
-        queryKey: ['mentee', user?.uid],
+        queryKey: ['mentee', user?.id],
         queryFn: async () => {
             if (!user) return null;
 

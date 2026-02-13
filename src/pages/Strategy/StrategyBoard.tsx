@@ -117,15 +117,8 @@ export const StrategyBoard: React.FC = () => {
 
     // UX Improvements: Hover and Drag
     const [hoveredNoteId, setHoveredNoteId] = useState<string | null>(null);
-    const [hoveredImageId, setHoveredImageId] = useState<string | null>(null);
     const [dragStartPos, setDragStartPos] = useState({ x: 0, y: 0 });
     const [hasDragMoved, setHasDragMoved] = useState(false);
-
-    // Image resize
-    const [isResizingImage, setIsResizingImage] = useState(false);
-    const [resizingImageId, setResizingImageId] = useState<string | null>(null);
-    const [resizeImageDirection, setResizeImageDirection] = useState<string>('');
-    const [resizeImageStart, setResizeImageStart] = useState({ x: 0, y: 0, width: 0, height: 0 });
 
 
     // Load notes from Firestore
@@ -699,9 +692,12 @@ export const StrategyBoard: React.FC = () => {
 
             // 'p' for presentation mode
             if (e.key === 'p' && !e.ctrlKey && !e.metaKey) {
-                setIsPresentationMode(prev => !prev);
-                // Also toggle toolbar based on mode
-                setIsToolbarVisible(prev => isPresentationMode); // If exiting (isPresentationMode was true), show toolbar. If entering, hide it.
+                setIsPresentationMode(prev => {
+                    const nextMode = !prev;
+                    // Also toggle toolbar based on mode
+                    setIsToolbarVisible(prev); // If exiting (prev was true), show toolbar (setIsToolbarVisible(true)). If entering (prev was false), hide it (setIsToolbarVisible(false)).
+                    return nextMode;
+                });
                 return;
             }
         };

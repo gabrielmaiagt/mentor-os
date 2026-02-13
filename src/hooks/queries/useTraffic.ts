@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { collection, query, where, getDocs, addDoc, updateDoc, deleteDoc, doc, orderBy } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import type { OfferTracker, DailyAdStats } from '../../types';
 
@@ -78,7 +78,7 @@ export const useSaveDailyStat = () => {
 export const useDeleteDailyStat = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: async ({ id, offerId }: { id: string; offerId: string }) => {
+        mutationFn: async ({ id, offerId: _offerId }: { id: string; offerId: string }) => {
             await deleteDoc(doc(db, 'daily_stats', id));
             return id;
         },

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { collection, query, orderBy, getDocs, addDoc, where } from 'firebase/firestore';
+import { collection, query, orderBy, getDocs, addDoc } from 'firebase/firestore';
 import { db, auth } from '../../lib/firebase';
 import type { PaymentStatus } from '../../types/finance';
 
@@ -76,30 +76,8 @@ export const useAddTransaction = () => {
     // const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: async (data: NewTransactionData) => {
-            // Fetch mentee name first (could be optimized if passed from UI, but safer here)
-            // Or rely on the UI passing the name.
-            // For now, let's fetch strictly needed info or assume the UI *could* pass it but the existing code fetched it from the list.
-            // To match existing logic exactly, we'll re-fetch or find it.
-            // Actually, best practice: pass relevant data to mutation.
-
-            // Replicating the logic from the component:
-            // const selectedMenteeDoc = await getDocs(query(collection(db, 'mentees'), where('name', '>=', ''), orderBy('name')));
-            // Better approach: The mutation should just take the payload ready for Firestore.
-
-            // Let's refactor the mutation to take the *Prepared* payloads, or handle the loop here.
-            // The existing code handles a loop for installments.
-
-            // We will move the "Business Logic" of installments into this mutation function for encapsulation.
-            const q = query(collection(db, 'mentees')); // Naive check, better to just get the specific one if possible.
-            // Actually, since we have the ID, let's just use it.
-            // But to avoid complex reads, let's assume the caller passes the name or we do a quick read.
-            // Ideally we shouldn't read inside mutation if avoidable.
-            // Let's accept { transactions: Partial<Transaction>[] } or similar.
-
-            // Wait, the component logic has: `selectedMentee = mentees.find(...)`
-            // So the component *knows* the name.
-            // I will define the mutation to accept the *Ready-to-insert* objects, or the form data + menteeName.
+        mutationFn: async (_data: NewTransactionData) => {
+            // Placeholder: This mutation needs to be properly implemented or replaced by useCreateTransactionBatch
             return;
         },
         // We will make a custom "useCreateTransactions" that handles the logic.

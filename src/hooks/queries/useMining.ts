@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { collection, query, where, getDocs, addDoc, updateDoc, doc, orderBy } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc, updateDoc, doc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../components/ui/Toast';
@@ -38,7 +38,7 @@ export const useCreateMiningOffer = () => {
 
     return useMutation({
         mutationFn: async ({ offerData, menteeId }: { offerData: Partial<OfferMined>, menteeId: string }) => {
-            if (!user?.uid) throw new Error("User not authenticated");
+            if (!user?.id) throw new Error("User not authenticated");
 
             await addDoc(collection(db, 'offers'), {
                 ...offerData,
