@@ -4,7 +4,7 @@ import { updateDoc, doc, arrayUnion } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import app from '../lib/firebase';
 
-const useFcmToken = (userId?: string, collectionName: 'mentees' | 'users' = 'mentees') => {
+const useFcmToken = (userId?: string, collectionName: 'mentees' | 'users' = 'users') => {
     const [token, setToken] = useState<string | null>(null);
     const [notificationPermissionStatus, setNotificationPermissionStatus] = useState<NotificationPermission>(
         Notification.permission

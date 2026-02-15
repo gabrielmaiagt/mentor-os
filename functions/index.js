@@ -31,8 +31,8 @@ exports.checkWarmingChips = functions.pubsub.schedule("every day 10:00")
                 // Assuming day 10 has 1 task or we check if currentDay is 10 and verify completion.
                 // Simpler condition for now: If it is Day 10.
                 if (chip.currentDay === 10) {
-                    // Check if user has tokens
-                    const userDoc = await db.collection("mentees").doc(chip.userId).get();
+                    // Check if user has tokens (always look in 'users' as tokens are now centralized there)
+                    const userDoc = await db.collection("users").doc(chip.userId).get();
                     const userData = userDoc.data();
 
                     if (userData && userData.fcmTokens && userData.fcmTokens.length > 0) {
@@ -145,18 +145,21 @@ exports.checkDueTasks = functions.pubsub.schedule("every 15 minutes")
 
                     // So we might need to check both if logic is mixed.
                     // Simple approach: Check "users" collection first (for user.id). 
+                    // Start with centralized Users collection
                     const userDoc = await db.collection("users").doc(task.ownerId).get();
                     if (userDoc.exists) {
                         tokens = userDoc.data().fcmTokens || [];
                     } else {
-                        // Maybe it's a mentee doc ID?
+                        // Fallback for older mentee docs if needed
                         const menteeDoc = await db.collection("mentees").doc(task.ownerId).get();
                         if (menteeDoc.exists) {
-                            // Mentees might have tokens stored on their doc OR their linked user doc.
-                            // Mentee interface has `userId`.
                             const menteeData = menteeDoc.data();
-                            if (menteeData.userId) {
-                                const linkedUser = await db.collection("users").doc(menteeData.userId).get();
+                            // If mentee has tokens directly
+                            if (menteeData.fcmTokens) {
+                                tokens = menteeData.fcmTokens;
+                            } else if (menteeData.uid || menteeData.userId) {
+                                // Or check their centralized user record
+                                const linkedUser = await db.collection("users").doc(menteeData.uid || menteeData.userId).get();
                                 if (linkedUser.exists) tokens = linkedUser.data().fcmTokens || [];
                             }
                         }

@@ -26,10 +26,8 @@ export const Shell: React.FC<ShellProps> = ({
     // Activate Task Scheduler
     useTaskScheduler();
 
-    // Register FCM Token for the current user
-    // Mentees are stored in 'mentees' collection, Mentors (and others) in 'users'
-    const tokenCollection = user?.role === 'mentee' ? 'mentees' : 'users';
-    useFcmToken(user?.id, tokenCollection);
+    // Register FCM Token for the current user (always in 'users' collection for Auth UID consistency)
+    useFcmToken(user?.id, 'users');
 
     // IMPORTANT: All hooks must be called before any conditional returns
     const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);

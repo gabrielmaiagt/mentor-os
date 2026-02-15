@@ -18,7 +18,7 @@ import { MENTEE_STAGES, getStageConfig, DEFAULT_ONBOARDING_TEMPLATE, FIRST_LOGIN
 import { db, auth } from '../../lib/firebase';
 import { collection, query, where, onSnapshot, updateDoc, doc, getDocs } from 'firebase/firestore';
 import type { OfferMined, OnboardingProgress, Mentee } from '../../types';
-import useFcmToken from '../../hooks/useFcmToken';
+
 import { useAuth } from '../../contexts/AuthContext';
 import './MenteeHome.css';
 
@@ -47,8 +47,7 @@ export const MenteeHomePage: React.FC = () => {
     const [mentee, setMentee] = useState<Mentee | null>(null);
     const [offers, setOffers] = useState<OfferMined[]>([]);
 
-    // Notifications logic (token registered in useFcmToken hook)
-    useFcmToken(mentee?.id);
+
 
     const [nextCall, setNextCall] = useState<any>(null);
     const [pendingTasks, setPendingTasks] = useState<any[]>([]);
