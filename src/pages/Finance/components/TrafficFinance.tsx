@@ -88,10 +88,10 @@ export const TrafficFinance: React.FC<TrafficFinanceProps> = ({ menteeId, readOn
     });
 
     const handleCreateOffer = () => {
-        if (!newOfferName.trim() || !user) return;
+        if (!newOfferName.trim() || !targetUserId) return;
 
         createOfferMutation.mutate({
-            userId: user.id,
+            userId: targetUserId,
             name: newOfferName,
             type: newOfferType,
             status: 'ACTIVE',
