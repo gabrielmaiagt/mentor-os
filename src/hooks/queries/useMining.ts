@@ -18,10 +18,17 @@ export const useMiningOffers = (menteeId?: string) => {
             );
 
             const snapshot = await getDocs(q);
-            const data = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            })) as OfferMined[];
+            const data = snapshot.docs.map(d => {
+                const raw = d.data();
+                return {
+                    id: d.id,
+                    ...raw,
+                    createdAt: raw.createdAt?.toDate?.() ?? new Date(raw.createdAt ?? Date.now()),
+                    updatedAt: raw.updatedAt?.toDate?.() ?? new Date(raw.updatedAt ?? Date.now()),
+                    lastTouchedAt: raw.lastTouchedAt?.toDate?.() ?? raw.updatedAt?.toDate?.() ?? new Date(Date.now()),
+                    lastValidationAt: raw.lastValidationAt?.toDate?.() ?? undefined,
+                } as OfferMined;
+            });
 
             // Sort manually if index is missing
             return data.sort((a, b) => (b.adCount || 0) - (a.adCount || 0));
@@ -42,9 +49,12 @@ export const useCreateMiningOffer = () => {
 
             await addDoc(collection(db, 'offers'), {
                 ...offerData,
+                status: offerData.status || 'CANDIDATE',
+                adHistory: offerData.adHistory || [],
                 createdByUserId: menteeId,
                 createdAt: new Date(),
-                updatedAt: new Date()
+                updatedAt: new Date(),
+                lastTouchedAt: new Date()
             });
         },
         onSuccess: () => {

@@ -26,11 +26,14 @@ export const OfferMinedCard: React.FC<OfferMinedCardProps> = ({
 }) => {
     const statusConfig = getOfferStatusConfig(offer.status);
 
-    const getDaysSince = (date: Date) => {
-        return Math.floor((Date.now() - date.getTime()) / (1000 * 60 * 60 * 24));
+    const getDaysSince = (date: Date | undefined | null) => {
+        if (!date) return 0;
+        const d = date instanceof Date ? date : new Date(date);
+        if (isNaN(d.getTime())) return 0;
+        return Math.floor((Date.now() - d.getTime()) / (1000 * 60 * 60 * 24));
     };
 
-    const daysSinceUpdate = getDaysSince(offer.lastTouchedAt);
+    const daysSinceUpdate = getDaysSince(offer.lastTouchedAt ?? offer.updatedAt);
 
     return (
         <Card className="offer-mined-card" padding="md" variant="interactive">
