@@ -55,12 +55,11 @@ export const AddMenteeModal: React.FC<AddMenteeModalProps> = ({ isOpen, onClose,
                 </div>
 
                 <div className="form-group">
-                    <label>Email</label>
+                    <label>Email <span className="text-secondary text-xs ml-1">(Opcional)</span></label>
                     <div className="input-wrapper">
                         <Mail className="input-icon" size={18} />
                         <input
                             type="email"
-                            required
                             className="form-input"
                             value={formData.email}
                             onChange={e => setFormData({ ...formData, email: e.target.value })}
@@ -70,12 +69,11 @@ export const AddMenteeModal: React.FC<AddMenteeModalProps> = ({ isOpen, onClose,
                 </div>
 
                 <div className="form-group">
-                    <label>WhatsApp</label>
+                    <label>WhatsApp <span className="text-secondary text-xs ml-1">(Opcional)</span></label>
                     <div className="input-wrapper">
                         <Phone className="input-icon" size={18} />
                         <input
                             type="tel"
-                            required
                             className="form-input"
                             value={formData.whatsapp}
                             onChange={e => setFormData({ ...formData, whatsapp: e.target.value })}

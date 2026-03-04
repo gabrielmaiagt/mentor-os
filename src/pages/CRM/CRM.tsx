@@ -476,7 +476,7 @@ export const CRMPage: React.FC = () => {
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-secondary mb-1">Email</label>
+                        <label className="block text-sm font-medium text-secondary mb-1">Email <span className="text-xs ml-1">(Opcional)</span></label>
                         <input
                             type="email"
                             className="w-full bg-secondary border border-subtle rounded-md px-3 py-2 text-primary focus:border-accent outline-none"
@@ -486,7 +486,7 @@ export const CRMPage: React.FC = () => {
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-secondary mb-1">WhatsApp</label>
+                        <label className="block text-sm font-medium text-secondary mb-1">WhatsApp <span className="text-xs ml-1">(Opcional)</span></label>
                         <input
                             type="text"
                             className="w-full bg-secondary border border-subtle rounded-md px-3 py-2 text-primary focus:border-accent outline-none"
