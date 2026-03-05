@@ -29,7 +29,7 @@ import type { DespesaPessoal, CategoriaDespesa } from '../../../types';
 import './PersonalFinance.css';
 import { format } from 'date-fns';
 
-export const PersonalFinance: React.FC = () => {
+export const PersonalFinance: React.FC<{ menteeId?: string }> = ({ menteeId }) => {
     const { user } = useAuth();
     const toast = useToast();
     const [expenses, setExpenses] = useState<DespesaPessoal[]>([]);
@@ -51,14 +51,23 @@ export const PersonalFinance: React.FC = () => {
     const [idealIncome, setIdealIncome] = useState(10000);
 
     useEffect(() => {
-        if (!user) return;
+        if (!menteeId && !user) return;
 
         // 1. Listen to Personal Expenses
-        const q = query(
-            collection(db, 'personal_expenses'),
-            where('userId', '==', user.id),
-            orderBy('data', 'desc')
-        );
+        let q;
+        if (menteeId) {
+            q = query(
+                collection(db, 'personal_expenses'),
+                where('menteeId', '==', menteeId),
+                orderBy('data', 'desc')
+            );
+        } else {
+            q = query(
+                collection(db, 'personal_expenses'),
+                where('userId', '==', user?.id),
+                orderBy('data', 'desc')
+            );
+        }
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const loaded = snapshot.docs.map(doc => ({
@@ -90,7 +99,8 @@ export const PersonalFinance: React.FC = () => {
         try {
             await addDoc(collection(db, 'personal_expenses'), {
                 ...formData,
-                userId: user.id,
+                userId: menteeId ? null : user.id,
+                menteeId: menteeId || null,
                 escopo: 'PESSOAL',
                 data: Timestamp.fromDate(new Date(formData.data as any)),
                 createdAt: new Date(),

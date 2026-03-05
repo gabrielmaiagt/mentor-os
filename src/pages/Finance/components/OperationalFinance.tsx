@@ -26,7 +26,7 @@ import type { DespesaOperacional, CategoriaDespesa, Recorrencia } from '../../..
 import './OperationalFinance.css';
 import { format } from 'date-fns';
 
-export const OperationalFinance: React.FC = () => {
+export const OperationalFinance: React.FC<{ menteeId?: string }> = ({ menteeId }) => {
     const { user } = useAuth();
     const toast = useToast();
     const [expenses, setExpenses] = useState<DespesaOperacional[]>([]);
@@ -44,13 +44,25 @@ export const OperationalFinance: React.FC = () => {
     });
 
     useEffect(() => {
-        if (!user) return;
+        // If it's a mentee using it, we need menteeId. If it's the mentor, we need user.id.
+        if (!menteeId && !user) return;
 
-        const q = query(
-            collection(db, 'operational_expenses'),
-            where('userId', '==', user.id),
-            orderBy('createdAt', 'desc')
-        );
+        let q;
+        if (menteeId) {
+            // Mentee view
+            q = query(
+                collection(db, 'operational_expenses'),
+                where('menteeId', '==', menteeId),
+                orderBy('createdAt', 'desc')
+            );
+        } else {
+            // Mentor view
+            q = query(
+                collection(db, 'operational_expenses'),
+                where('userId', '==', user?.id),
+                orderBy('createdAt', 'desc')
+            );
+        }
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const loaded = snapshot.docs.map(doc => ({
@@ -62,7 +74,7 @@ export const OperationalFinance: React.FC = () => {
         });
 
         return () => unsubscribe();
-    }, [user]);
+    }, [user, menteeId]);
 
     const handleSave = async () => {
         if (!user || !formData.nome || !formData.valor) {
@@ -74,7 +86,8 @@ export const OperationalFinance: React.FC = () => {
         try {
             await addDoc(collection(db, 'operational_expenses'), {
                 ...formData,
-                userId: user.id,
+                userId: menteeId ? null : user.id,
+                menteeId: menteeId || null,
                 escopo: 'OPERACIONAL',
                 notas: formData.notas || '',
                 createdAt: new Date(),
