@@ -20,7 +20,8 @@ import {
     Layers,
     Settings,
     CheckSquare,
-    Presentation
+    Presentation,
+    Activity
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useFeatureFlags } from '../../hooks/useFeatureFlags';
@@ -36,6 +37,7 @@ interface NavItem {
 const mentorNavItems: NavItem[] = [
     { path: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
     { path: '/execution', label: 'Execução', icon: <Zap size={20} /> },
+    { path: '/daily-pulse', label: 'Pulso Diário', icon: <Activity size={20} /> },
     { path: '/tasks', label: 'Missões', icon: <CheckSquare size={20} /> },
     { path: '/crm', label: 'CRM', icon: <Target size={20} /> },
     { path: '/mentees', label: 'Mentorados', icon: <Users size={20} /> },
@@ -90,6 +92,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => 
         return items.filter(item => {
             if (item.path === '/dashboard' && features.mentorEnableDashboard === false) return false;
             if (item.path === '/execution' && features.mentorEnableExecution === false) return false;
+            if (item.path === '/daily-pulse' && features.mentorEnableDailyPulse === false) return false;
             if (item.path === '/tasks' && features.mentorEnableTasks === false) return false;
             if (item.path === '/crm' && features.mentorEnableCRM === false) return false;
             if (item.path === '/mentees' && features.mentorEnableMentees === false) return false;

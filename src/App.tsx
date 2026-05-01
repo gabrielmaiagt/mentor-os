@@ -12,6 +12,7 @@ import './styles/global.css';
 import DashboardPage from './pages/Dashboard';
 import TasksPage from './pages/Tasks/Tasks';
 import ExecutionPage from './pages/Execution';
+import DailyPulsePage from './pages/DailyPulse';
 import CRMPage from './pages/CRM';
 import MenteesPage from './pages/Mentees';
 import LeadProfilePage from './pages/LeadProfile';
@@ -64,6 +65,7 @@ function App() {
                   <Route path="/dashboard" element={<DashboardPage />} />
                   <Route path="/tasks" element={<TasksPage />} />
                   <Route path="/execution" element={<ExecutionPage />} />
+                  <Route path="/daily-pulse" element={<DailyPulsePage />} />
                   <Route path="/crm" element={<CRMPage />} />
                   <Route path="/lead/:id" element={<LeadProfilePage />} />
                   <Route path="/mentees" element={<MenteesPage />} />

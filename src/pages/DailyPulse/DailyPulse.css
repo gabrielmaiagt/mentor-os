@@ -1,0 +1,102 @@
+/* DailyPulse.css - CLONE EXATO DO DESIGN PREMIUM */
+
+.daily-pulse-wrapper {
+    background-color: #101415;
+    min-height: 100vh;
+    font-family: 'Inter', sans-serif;
+    color: #e0e3e5;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Background mesh accents */
+.bg-accent-violet {
+    position: absolute;
+    top: -20%;
+    left: -10%;
+    width: 600px;
+    height: 600px;
+    background: rgba(124, 58, 237, 0.2);
+    border-radius: 9999px;
+    filter: blur(120px);
+    pointer-events: none;
+}
+
+.bg-accent-cyan {
+    position: absolute;
+    top: 40%;
+    right: -10%;
+    width: 500px;
+    height: 500px;
+    background: rgba(8, 145, 178, 0.1);
+    border-radius: 9999px;
+    filter: blur(100px);
+    pointer-events: none;
+}
+
+/* Glass Card styles */
+.glass-card {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    border-left: 1px solid rgba(255, 255, 255, 0.15);
+    border-right: 1px solid rgba(0, 0, 0, 0.2);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.inner-glow-violet {
+    box-shadow: inset 0 0 20px rgba(139, 92, 246, 0.2);
+}
+
+.inner-glow-cyan {
+    box-shadow: inset 0 0 20px rgba(6, 182, 212, 0.2);
+}
+
+/* Skeuomorphic Button */
+.skeuo-button {
+    background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(0,0,0,0.1));
+    box-shadow: 4px 4px 8px rgba(0,0,0,0.4), -1px -1px 2px rgba(255,255,255,0.1);
+    transition: all 0.2s ease-out;
+}
+
+.skeuo-button:active, .skeuo-button.active {
+    box-shadow: inset 2px 2px 5px rgba(0,0,0,0.5), inset -1px -1px 2px rgba(255,255,255,0.05);
+    transform: scale(0.98);
+}
+
+/* Custom spacing for single screen */
+.main-content-pulse {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 24px;
+    height: calc(100vh - 64px);
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    justify-content: center;
+}
+
+/* Typography from snippet */
+.pulse-display-xl {
+    font-size: 48px;
+    line-height: 1.1;
+    letter-spacing: -0.04em;
+    font-weight: 800;
+}
+
+.pulse-label-bold {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+/* Status circle from snippet */
+.status-svg-rotate {
+    transform: rotate(-90deg);
+}
+
+/* Category icons from snippet */
+.category-icon-inner {
+    box-shadow: inset 2px 2px 5px rgba(0,0,0,0.3);
+}

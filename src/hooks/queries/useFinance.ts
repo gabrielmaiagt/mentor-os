@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { collection, query, orderBy, getDocs, addDoc } from 'firebase/firestore';
+import { collection, query, orderBy, getDocs, addDoc, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db, auth } from '../../lib/firebase';
 import type { PaymentStatus } from '../../types/finance';
 
@@ -127,6 +127,32 @@ export const useCreateTransactionBatch = () => {
             }
 
             await Promise.all(promises);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['transactions'] });
+        }
+    });
+};
+
+// 4. Update Transaction Status
+export const useUpdateTransactionStatus = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({
+            transactionId,
+            status
+        }: {
+            transactionId: string;
+            status: PaymentStatus;
+        }) => {
+            const ref = doc(db, 'transactions', transactionId);
+            await updateDoc(ref, {
+                status,
+                paidAt: status === 'PAID' ? serverTimestamp() : null,
+                updatedAt: serverTimestamp(),
+                updatedBy: auth.currentUser?.uid
+            });
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['transactions'] });

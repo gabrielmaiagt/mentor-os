@@ -23,7 +23,8 @@ import {
     ChevronLeft,
     ChevronRight,
     Calendar as CalendarIcon,
-    Download
+    Download,
+    CheckCircle2
 } from 'lucide-react';
 import { format, subMonths, startOfMonth, endOfMonth, isWithinInterval, addMonths, isSameMonth, eachMonthOfInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -32,7 +33,7 @@ import { Card, Button, Badge, Modal } from '../../../components/ui';
 import type { PaymentStatus } from '../../../types/finance';
 import { useToast } from '../../../components/ui/Toast';
 import { exportToCSV, formatTransactionsForExport } from '../../../utils/export';
-import { useFinanceMentees, useTransactions, useCreateTransactionBatch } from '../../../hooks/queries/useFinance';
+import { useFinanceMentees, useTransactions, useCreateTransactionBatch, useUpdateTransactionStatus } from '../../../hooks/queries/useFinance';
 import '../Finance.css';
 
 const formatCurrency = (value: number) => {
@@ -50,6 +51,7 @@ export const MentorshipFinance: React.FC = () => {
     const { data: transactions = [], isLoading: isLoadingTransactions } = useTransactions();
     const { data: mentees = [] } = useFinanceMentees();
     const createTransaction = useCreateTransactionBatch();
+    const updateStatus = useUpdateTransactionStatus();
 
     const [selectedDate, setSelectedDate] = useState(new Date());
 
@@ -368,11 +370,28 @@ export const MentorshipFinance: React.FC = () => {
                                         </span>
                                     </div>
                                 </div>
-                                <div style={{ textAlign: 'right' }}>
+                                <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
                                     <div className="transaction-amount">
                                         {formatCurrency(transaction.amount)}
                                     </div>
-                                    <div style={{ marginTop: 4 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                        {(transaction.status === 'PENDING' || transaction.status === 'OVERDUE') && (
+                                            <button
+                                                className="mark-paid-btn"
+                                                title="Marcar como Pago"
+                                                disabled={updateStatus.isPending}
+                                                onClick={e => {
+                                                    e.stopPropagation();
+                                                    updateStatus.mutate(
+                                                        { transactionId: transaction.id, status: 'PAID' },
+                                                        { onSuccess: () => toast.success(`${transaction.menteeName} marcado como pago!`) }
+                                                    );
+                                                }}
+                                            >
+                                                <CheckCircle2 size={14} />
+                                                Marcar como Pago
+                                            </button>
+                                        )}
                                         {getStatusBadge(transaction.status)}
                                     </div>
                                 </div>

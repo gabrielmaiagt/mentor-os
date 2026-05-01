@@ -9,8 +9,8 @@ import {
     Settings,
     TrendingUp
 } from 'lucide-react';
-import { collection, query, onSnapshot, getDocs } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
+import { collection, query, onSnapshot, getDocs, where } from 'firebase/firestore';
+import { db, auth } from '../../lib/firebase';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 import { Card, Badge, Button, Skeleton } from '../../components/ui';
@@ -28,6 +28,12 @@ export const DashboardPage: React.FC = () => {
     const [finance, setFinance] = React.useState<FinanceSnapshot>({
         today: 0, week: 0, month: 0, total: 0,
         openDeals: 0, pendingPayments: 0, blockedMentees: 0
+    });
+    const [trafficRevenue, setTrafficRevenue] = React.useState({
+        month: 0, total: 0,
+        monthSpend: 0, totalSpend: 0,
+        monthProfit: 0, totalProfit: 0,
+        monthRoas: 0, totalRoas: 0
     });
     const [chartData, setChartData] = React.useState<{ name: string; value: number }[]>([]);
     const [miningOverview, setMiningOverview] = React.useState<any[]>([]);
@@ -102,6 +108,43 @@ export const DashboardPage: React.FC = () => {
                 setMiningOverview(miningStats);
                 stopLoading();
             });
+
+            // 4. Traffic Offers Revenue (one-time fetch)
+            const userId = auth.currentUser?.uid;
+            if (userId) {
+                try {
+                    const offersSnap = await getDocs(query(
+                        collection(db, 'offer_trackers'),
+                        where('userId', '==', userId)
+                    ));
+                    const offerIds = offersSnap.docs.map(d => d.id);
+                    if (offerIds.length > 0) {
+                        const statsSnap = await getDocs(query(
+                            collection(db, 'daily_stats'),
+                            where('offerId', 'in', offerIds.slice(0, 30))
+                        ));
+                        const tStats = statsSnap.docs.map(d => d.data()) as any[];
+                        const now = new Date();
+                        const monthAgoStr = format(subDays(now, 30), 'yyyy-MM-dd');
+
+                        const monthRev   = tStats.filter(s => s.date >= monthAgoStr).reduce((sum, s) => sum + (s.revenue || 0), 0);
+                        const totalRev   = tStats.reduce((sum, s) => sum + (s.revenue || 0), 0);
+                        const monthSpend = tStats.filter(s => s.date >= monthAgoStr).reduce((sum, s) => sum + (s.spend || 0), 0);
+                        const totalSpend = tStats.reduce((sum, s) => sum + (s.spend || 0), 0);
+
+                        setTrafficRevenue({
+                            month: monthRev,
+                            total: totalRev,
+                            monthSpend,
+                            totalSpend,
+                            monthProfit: monthRev - monthSpend,
+                            totalProfit: totalRev - totalSpend,
+                            monthRoas: monthSpend > 0 ? monthRev / monthSpend : 0,
+                            totalRoas: totalSpend > 0 ? totalRev / totalSpend : 0
+                        });
+                    }
+                } catch (_) { /* silently fail if no traffic data */ }
+            }
 
             return () => {
                 unsubFinance();
@@ -192,6 +235,44 @@ export const DashboardPage: React.FC = () => {
                             <span className="finance-hero-value-large">{formatCurrency(finance.total)}</span>
                         </div>
                     </Card>
+                </div>
+
+                {/* Traffic Revenue Breakdown */}
+                <div className="traffic-revenue-card">
+                    <div className="trc-header">
+                        <span className="trc-icon">🎯</span>
+                        <div>
+                            <span className="trc-title">Tráfego &amp; Ofertas</span>
+                            <span className="trc-subtitle">30 dias • Total</span>
+                        </div>
+                    </div>
+                    <div className="trc-metrics">
+                        <div className="trc-metric">
+                            <span className="trc-metric-label">Faturamento</span>
+                            <span className="trc-metric-main">{formatCurrency(trafficRevenue.month)}</span>
+                            <span className="trc-metric-sub">Total: {formatCurrency(trafficRevenue.total)}</span>
+                        </div>
+                        <div className="trc-divider" />
+                        <div className="trc-metric">
+                            <span className="trc-metric-label">Gasto (Ads)</span>
+                            <span className="trc-metric-main spend">{formatCurrency(trafficRevenue.monthSpend)}</span>
+                            <span className="trc-metric-sub">Total: {formatCurrency(trafficRevenue.totalSpend)}</span>
+                        </div>
+                        <div className="trc-divider" />
+                        <div className="trc-metric">
+                            <span className="trc-metric-label">Lucro</span>
+                            <span className={`trc-metric-main ${trafficRevenue.monthProfit >= 0 ? 'profit' : 'loss'}`}>
+                                {formatCurrency(trafficRevenue.monthProfit)}
+                            </span>
+                            <span className="trc-metric-sub">Total: {formatCurrency(trafficRevenue.totalProfit)}</span>
+                        </div>
+                        <div className="trc-divider" />
+                        <div className="trc-metric">
+                            <span className="trc-metric-label">ROAS</span>
+                            <span className="trc-metric-main roas">{trafficRevenue.monthRoas.toFixed(2)}x</span>
+                            <span className="trc-metric-sub">Total: {trafficRevenue.totalRoas.toFixed(2)}x</span>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Gradient Chart */}

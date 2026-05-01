@@ -27,7 +27,8 @@ const DEFAULT_FLAGS: FeatureFlags = {
     mentorEnableResources: true,
     mentorEnableOnboarding: true,
     mentorEnableOfferLab: true,
-    mentorEnableStrategyBoard: true
+    mentorEnableStrategyBoard: true,
+    mentorEnableDailyPulse: true
 };
 
 export function useFeatureFlags() {

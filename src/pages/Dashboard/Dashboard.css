@@ -135,6 +135,93 @@
     height: 180px;
 }
 
+/* ========== TRAFFIC REVENUE CARD ========== */
+.traffic-revenue-card {
+    display: flex;
+    align-items: center;
+    gap: var(--space-6);
+    padding: var(--space-4) var(--space-6);
+    margin-bottom: var(--space-4);
+    border-radius: var(--radius-xl);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.08) 0%, var(--bg-card) 60%);
+}
+
+.trc-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    flex-shrink: 0;
+    min-width: 160px;
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+    padding-right: var(--space-6);
+}
+
+.trc-icon {
+    font-size: 26px;
+    line-height: 1;
+}
+
+.trc-title {
+    display: block;
+    font-size: var(--text-sm);
+    font-weight: var(--font-semibold);
+    color: var(--text-primary);
+}
+
+.trc-subtitle {
+    display: block;
+    font-size: 10px;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 2px;
+}
+
+.trc-metrics {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    flex: 1;
+}
+
+.trc-metric {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+}
+
+.trc-metric-label {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.trc-metric-main {
+    font-size: var(--text-lg);
+    font-weight: var(--font-bold);
+    color: var(--text-primary);
+}
+
+.trc-metric-main.spend   { color: #f87171; }
+.trc-metric-main.profit  { color: #22c55e; }
+.trc-metric-main.loss    { color: #f87171; }
+.trc-metric-main.roas    { color: #a78bfa; }
+
+.trc-metric-sub {
+    font-size: 11px;
+    color: var(--text-tertiary);
+}
+
+.trc-divider {
+    width: 1px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.06);
+    flex-shrink: 0;
+}
+
 /* ========== MINING ========== */
 .mining-overview-grid {
     display: grid;

@@ -514,6 +514,7 @@ export interface FeatureFlags {
     mentorEnableOnboarding?: boolean;
     mentorEnableOfferLab?: boolean;
     mentorEnableStrategyBoard?: boolean;
+    mentorEnableDailyPulse?: boolean;
 }
 
 // Assets
@@ -578,3 +579,33 @@ export interface DespesaPessoal extends FirestoreTimestamps {
     essencial: boolean; // Checkbox "Essencial?"
     data: Date;
 }
+
+// ============================================
+// DAILY PULSE (PRODUTIVIDADE)
+// ============================================
+
+export type PulseActionStatus = 'none' | 'done' | 'strong';
+
+export interface PulseActions {
+    traffic: PulseActionStatus;
+    creative: PulseActionStatus;
+    stories: PulseActionStatus;
+    reels: PulseActionStatus;
+    youtube: PulseActionStatus;
+    lesson: PulseActionStatus;
+    offer: PulseActionStatus;
+    saas: PulseActionStatus;
+    pitch: PulseActionStatus;
+    metrics: PulseActionStatus;
+}
+
+export interface DailyPulse {
+    id: string; // yyyy-mm-dd
+    userId: string;
+    date: string;
+    actions: PulseActions;
+    note?: string;
+    createdAt?: any;
+    updatedAt?: any;
+}
+
