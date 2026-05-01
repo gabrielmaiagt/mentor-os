@@ -2,11 +2,11 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { format, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { 
-    Zap, Palette, Play, Video, Youtube, BookOpen, Tag, Layers, Target, BarChart3, Star, Flame, CheckCircle2, Calendar, Send, Mic
+    Zap, Palette, Play, Video, Youtube, BookOpen, Tag, Layers, Target, BarChart3, Star
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDailyPulse, useUpdateDailyPulse, useMonthlyPulse } from '../../hooks/queries/useDailyPulse';
-import type { PulseActionStatus, PulseActions } from '../../types';
+import type { PulseActionStatus } from '../../types';
 
 const CATEGORIES = [
     { key: 'traffic', label: 'Tráfego', icon: <Zap size={32} /> },
