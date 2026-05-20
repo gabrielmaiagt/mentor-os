@@ -43,6 +43,7 @@ const mentorNavItems: NavItem[] = [
     { path: '/mentees', label: 'Mentorados', icon: <Users size={20} /> },
     { path: '/calendar', label: 'Calendário', icon: <Calendar size={20} /> },
     { path: '/finance', label: 'Financeiro', icon: <DollarSign size={20} /> },
+    { path: '/tiktok', label: 'Central TikTok', icon: <TrendingUp size={20} /> },
     { path: '/academy/manage', label: 'Academy', icon: <GraduationCap size={20} /> },
     { path: '/templates', label: 'Templates', icon: <FileText size={20} /> },
     { path: '/swipe-file', label: 'Swipe File', icon: <Layers size={20} /> },
@@ -98,6 +99,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => 
             if (item.path === '/mentees' && features.mentorEnableMentees === false) return false;
             if (item.path === '/calendar' && features.mentorEnableCalendar === false) return false;
             if (item.path === '/finance' && features.mentorEnableFinance === false) return false;
+            if (item.path === '/tiktok' && features.mentorEnableTikTokOps === false) return false;
             if (item.path === '/academy/manage' && features.mentorEnableAcademy === false) return false;
             if (item.path === '/templates' && features.mentorEnableTemplates === false) return false;
             if (item.path === '/swipe-file' && features.mentorEnableSwipeFile === false) return false;

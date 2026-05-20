@@ -1,0 +1,230 @@
+/* Custom Theme Variables for TikTok Ops */
+:root {
+  --tk-purple: #8b5cf6;
+  --tk-purple-hover: #a78bfa;
+  --tk-purple-glow: rgba(139, 92, 246, 0.3);
+  --tk-purple-light: rgba(139, 92, 246, 0.08);
+  --tk-purple-border: rgba(139, 92, 246, 0.2);
+
+  --tk-green: #10b981;
+  --tk-green-light: rgba(16, 185, 129, 0.1);
+  --tk-red: #ef4444;
+  --tk-red-light: rgba(239, 68, 68, 0.1);
+  --tk-yellow: #f59e0b;
+  --tk-yellow-light: rgba(245, 158, 11, 0.1);
+  --tk-blue: #3b82f6;
+  --tk-blue-light: rgba(59, 130, 246, 0.1);
+  --tk-gray: #6b7280;
+  --tk-gray-light: rgba(107, 114, 128, 0.1);
+}
+
+.tiktok-ops-page {
+  padding: 24px;
+  background-color: #0b0b0e;
+  min-height: 100vh;
+  color: #f3f4f6;
+}
+
+/* Page Header */
+.tiktok-ops-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.tiktok-header-titles h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.5px;
+  margin-bottom: 4px;
+  background: linear-gradient(135deg, #fff 0%, #a78bfa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.tiktok-header-titles p {
+  color: #9ca3af;
+  font-size: 14px;
+}
+
+.tiktok-header-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Premium Buttons */
+.tk-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  border: 1px solid transparent;
+}
+
+.tk-btn-primary {
+  background: linear-gradient(135deg, var(--tk-purple) 0%, #7c3aed 100%);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(139, 92, 246, 0.4);
+}
+
+.tk-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.6);
+  background: linear-gradient(135deg, var(--tk-purple-hover) 0%, #8b5cf6 100%);
+}
+
+.tk-btn-secondary {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #e5e7eb;
+}
+
+.tk-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+/* Tabs Bar */
+.tiktok-nav-tabs {
+  margin-bottom: 24px;
+}
+
+/* Badges for status operational */
+.tk-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.tk-badge-green { background-color: var(--tk-green-light); color: var(--tk-green); }
+.tk-badge-red { background-color: var(--tk-red-light); color: var(--tk-red); }
+.tk-badge-yellow { background-color: var(--tk-yellow-light); color: var(--tk-yellow); }
+.tk-badge-blue { background-color: var(--tk-blue-light); color: var(--tk-blue); }
+.tk-badge-purple { background-color: var(--tk-purple-light); color: var(--tk-purple); }
+.tk-badge-gray { background-color: var(--tk-gray-light); color: var(--tk-gray); }
+
+/* Tables standard styles */
+.tk-table-container {
+  background: rgba(18, 18, 22, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.tk-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.tk-table th {
+  padding: 16px 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #9ca3af;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tk-table td {
+  padding: 16px 20px;
+  font-size: 13px;
+  color: #e5e7eb;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.tk-table tr:hover {
+  background: rgba(255, 255, 255, 0.01);
+}
+
+/* Modals & Forms styles */
+.tk-form {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.tk-form-full {
+  grid-column: span 2;
+}
+
+.tk-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tk-form-group label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #e5e7eb;
+}
+
+.tk-input, .tk-select, .tk-textarea {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  color: #fff;
+  padding: 10px 14px;
+  font-size: 14px;
+  transition: all 0.2s ease-in-out;
+}
+
+.tk-input:focus, .tk-select:focus, .tk-textarea:focus {
+  outline: none;
+  border-color: var(--tk-purple);
+  box-shadow: 0 0 0 2px var(--tk-purple-glow);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.tk-select option {
+  background-color: #121216;
+  color: #fff;
+}
+
+/* Floating operational alert banner */
+.tk-alert-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid transparent;
+}
+
+.tk-alert-success { background: var(--tk-green-light); border-color: rgba(16, 185, 129, 0.2); color: var(--tk-green); }
+.tk-alert-error { background: var(--tk-red-light); border-color: rgba(239, 68, 68, 0.2); color: var(--tk-red); }
+.tk-alert-warning { background: var(--tk-yellow-light); border-color: rgba(245, 158, 11, 0.2); color: var(--tk-yellow); }
+.tk-alert-info { background: var(--tk-blue-light); border-color: rgba(59, 130, 246, 0.2); color: var(--tk-blue); }
+
+/* responsive */
+@media (max-width: 768px) {
+  .tk-form {
+    grid-template-columns: 1fr;
+  }
+  .tk-form-full {
+    grid-column: span 1;
+  }
+}

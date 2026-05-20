@@ -40,6 +40,7 @@ import { MenteeLogin } from './pages/Login/MenteeLogin';
 
 import { StrategyBoard } from './pages/Strategy/StrategyBoard';
 import MenteeFinancePage from './pages/MenteeFinance';
+import TikTokOpsLayout from './pages/TikTokOps/TikTokOpsLayout';
 
 function App() {
   return (
@@ -82,6 +83,7 @@ function App() {
 
                   <Route path="/strategy" element={<StrategyBoard />} />
                   <Route path="/settings" element={<SettingsPage />} />
+                  <Route path="/tiktok" element={<TikTokOpsLayout />} />
                 </Route>
 
                 {/* Protected mentee routes */}

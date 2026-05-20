@@ -515,10 +515,14 @@ export interface FeatureFlags {
     mentorEnableOfferLab?: boolean;
     mentorEnableStrategyBoard?: boolean;
     mentorEnableDailyPulse?: boolean;
+    mentorEnableTikTokOps?: boolean;
 }
 
 // Assets
 export * from './assets';
+
+// TikTok Ops
+export * from './tiktok';
 
 // ============================================
 // FINANCE & TRACKING
