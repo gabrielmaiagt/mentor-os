@@ -7,11 +7,9 @@ import {
   query,
   where,
   orderBy,
-  getDocs,
   onSnapshot,
   Timestamp,
-  serverTimestamp,
-  getDoc
+  serverTimestamp
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import type { TikTokLaunch, TikTokCost, TikTokStructure, CreateTikTokLaunch, CreateTikTokCost, CreateTikTokStructure } from '../types/tiktok';

@@ -2,32 +2,23 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../components/ui/Toast';
 import {
-  TrendingUp,
   LayoutDashboard,
   Calendar,
   Layers,
   DollarSign,
   Plus,
-  HelpCircle,
-  AlertCircle
+  HelpCircle
 } from 'lucide-react';
 import {
   subscribeLaunches,
   subscribeCosts,
   subscribeStructures,
-  addLaunch,
-  updateLaunch,
   deleteLaunch,
-  addCost,
-  updateCost,
   deleteCost,
-  addStructure,
-  updateStructure,
   deleteStructure
 } from '../../services/tiktokService';
 import type { TikTokLaunch, TikTokCost, TikTokStructure } from '../../types/tiktok';
 import { format } from 'date-fns';
-import { Button } from '../../components/ui';
 
 // Subcomponents
 import TikTokDashboard from './Dashboard/TikTokDashboard';

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import type { TikTokLaunch, TikTokStructure, TikTokOperationalStatus, TikTokReusable, TikTokDayResult, TikTokDomainOrigin } from '../../../types/tiktok';
 import { addLaunch, updateLaunch, addStructure } from '../../../services/tiktokService';
 import { useToast } from '../../../components/ui/Toast';
-import { Edit2, Copy, Trash2, Calendar, DollarSign, Target, TrendingUp, AlertTriangle } from 'lucide-react';
+import { Edit2, Copy, Trash2, Calendar } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 
 interface TikTokLaunchesProps {
@@ -18,7 +18,8 @@ const formatCurrency = (val: number) =>
 
 export const TikTokLaunches: React.FC<TikTokLaunchesProps> & {
   LaunchFormModal: React.FC<any>;
-} = ({ launches, structures, onEdit, onDuplicate, onDelete }) => {
+} = (props) => {
+  const { launches, onEdit, onDuplicate, onDelete } = props;
   // Status badges color map
   const renderStatusBadge = (status: TikTokOperationalStatus) => {
     let cls = 'tk-badge-gray';

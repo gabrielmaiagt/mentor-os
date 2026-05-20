@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import type { TikTokCost, TikTokCostType, TikTokPaidBy, TikTokPaymentMethod } from '../../../types/tiktok';
 import { addCost, updateCost } from '../../../services/tiktokService';
 import { useToast } from '../../../components/ui/Toast';
-import { Edit2, Trash2, Calendar, DollarSign } from 'lucide-react';
+import { Edit2, Trash2, Calendar } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 
 interface TikTokCostsProps {

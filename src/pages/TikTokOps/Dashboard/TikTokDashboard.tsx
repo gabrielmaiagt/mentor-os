@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import type { TikTokLaunch, TikTokCost, TikTokStructure, TikTokOperationalStatus, TikTokDayResult, TikTokDomainOrigin } from '../../../types/tiktok';
+import type { TikTokLaunch, TikTokCost, TikTokStructure } from '../../../types/tiktok';
 import {
   format,
   subDays,
@@ -16,13 +16,6 @@ import {
   Percent,
   ShoppingCart,
   Activity,
-  Layers,
-  Shield,
-  FileText,
-  AlertCircle,
-  CheckCircle,
-  HelpCircle,
-  X,
   Target
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
@@ -31,9 +24,9 @@ interface TikTokDashboardProps {
   launches: TikTokLaunch[];
   costs: TikTokCost[];
   structures: TikTokStructure[];
-  onNewLaunch: () => void;
-  onNewCost: () => void;
-  onNewStructure: () => void;
+  onNewLaunch?: () => void;
+  onNewCost?: () => void;
+  onNewStructure?: () => void;
 }
 
 type PeriodFilter = 'TODAY' | 'YESTERDAY' | 'WEEK' | 'MONTH' | 'YEAR' | 'TOTAL';
@@ -50,14 +43,8 @@ const PERIOD_LABELS: Record<PeriodFilter, string> = {
 const formatCurrency = (val: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
-export const TikTokDashboard: React.FC<TikTokDashboardProps> = ({
-  launches,
-  costs,
-  structures,
-  onNewLaunch,
-  onNewCost,
-  onNewStructure
-}) => {
+export const TikTokDashboard: React.FC<TikTokDashboardProps> = (props) => {
+  const { launches, costs, structures } = props;
   // Period filter
   const [period, setPeriod] = useState<PeriodFilter>('MONTH');
 

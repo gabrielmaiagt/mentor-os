@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import type { TikTokStructure, TikTokStructureType } from '../../../types/tiktok';
 import { addStructure, updateStructure } from '../../../services/tiktokService';
 import { useToast } from '../../../components/ui/Toast';
-import { Plus, Edit2, Trash2, Layers, AlertCircle, CheckCircle } from 'lucide-react';
+import { Edit2, Trash2 } from 'lucide-react';
 
 interface TikTokStructuresProps {
   structures: TikTokStructure[];
