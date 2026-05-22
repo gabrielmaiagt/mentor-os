@@ -1,7 +1,7 @@
 import React from 'react';
 import { useFeatureFlags } from '../../hooks/useFeatureFlags';
 import { Card } from '../../components/ui';
-import { Shield, Hammer, BookOpen, Layers, Trophy, FolderOpen } from 'lucide-react';
+import { Shield, Hammer, BookOpen, Layers, Trophy, FolderOpen, Search } from 'lucide-react';
 import './Settings.css';
 
 // Simple Toggle Component with inline styles
@@ -49,13 +49,13 @@ export const SettingsPage: React.FC = () => {
         { key: 'enableSwipeFile', label: 'Swipe File', icon: <Layers />, desc: 'Biblioteca de ofertas' },
         { key: 'enableRanking', label: 'Ranking', icon: <Trophy />, desc: 'Ranking de gamificação' },
         { key: 'enableResources', label: 'Materiais', icon: <FolderOpen />, desc: 'Área de downloads e links' },
-        { key: 'enableRanking', label: 'Ranking', icon: <Trophy />, desc: 'Ranking de gamificação' },
-        { key: 'enableResources', label: 'Materiais', icon: <FolderOpen />, desc: 'Área de downloads e links' },
+        { key: 'enableAdLibrary', label: 'Biblioteca de Ads', icon: <Search />, desc: 'Busca automática na Biblioteca de Anúncios da Meta' },
     ];
 
     const mentorFeatureList = [
         { key: 'mentorEnableDashboard', label: 'Dashboard' },
         { key: 'mentorEnableExecution', label: 'Execução' },
+        { key: 'mentorEnableDailyPulse', label: 'Pulso Diário' },
         { key: 'mentorEnableTasks', label: 'Missões' },
         { key: 'mentorEnableCRM', label: 'CRM' },
         { key: 'mentorEnableMentees', label: 'Mentorados' },
@@ -70,6 +70,8 @@ export const SettingsPage: React.FC = () => {
         { key: 'mentorEnableOnboarding', label: 'Editor Onboarding' },
         { key: 'mentorEnableOfferLab', label: 'Laboratório de Ofertas' },
         { key: 'mentorEnableStrategyBoard', label: 'Lousa Estratégica' },
+        { key: 'mentorEnableTikTokOps', label: 'Central TikTok' },
+        { key: 'mentorEnableAdLibrary', label: 'Biblioteca de Ads' },
     ];
 
     if (loading) {

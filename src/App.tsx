@@ -30,6 +30,7 @@ import AcademyPage from './pages/Academy/Academy';
 import ManageAcademyPage from './pages/Academy/ManageAcademy';
 import WarmingPage from './pages/Warming/Warming';
 import MiningPage from './pages/Mining/Mining';
+import AdLibraryMinerPage from './pages/AdLibrary/AdLibraryMiner';
 import HowItWorksPage from './pages/HowItWorks/HowItWorks';
 import { SwipeFileLib } from './pages/SwipeFile/SwipeFileLib';
 import { AssetsManager } from './pages/Contingency/AssetsManager';
@@ -41,6 +42,7 @@ import { MenteeLogin } from './pages/Login/MenteeLogin';
 import { StrategyBoard } from './pages/Strategy/StrategyBoard';
 import MenteeFinancePage from './pages/MenteeFinance';
 import TikTokOpsLayout from './pages/TikTokOps/TikTokOpsLayout';
+import MediaHubPage from './pages/MediaHub/MediaHub';
 
 function App() {
   return (
@@ -84,6 +86,8 @@ function App() {
                   <Route path="/strategy" element={<StrategyBoard />} />
                   <Route path="/settings" element={<SettingsPage />} />
                   <Route path="/tiktok" element={<TikTokOpsLayout />} />
+                  <Route path="/ad-library" element={<AdLibraryMinerPage />} />
+                  <Route path="/media-hub" element={<MediaHubPage />} />
                 </Route>
 
                 {/* Protected mentee routes */}
@@ -94,6 +98,7 @@ function App() {
                   <Route path="/me/resources" element={<ResourcesPage />} />
                   <Route path="/me/academy" element={<AcademyPage />} />
                   <Route path="/me/mining" element={<MiningPage />} />
+                  <Route path="/me/ad-library" element={<AdLibraryMinerPage />} />
                   <Route path="/me/warming" element={<WarmingPage />} />
                   <Route path="/warming" element={<WarmingPage />} />
                   <Route path="/me/how-it-works" element={<HowItWorksPage />} />

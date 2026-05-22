@@ -21,7 +21,9 @@ import {
     Settings,
     CheckSquare,
     Presentation,
-    Activity
+    Activity,
+    Search,
+    CloudUpload
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useFeatureFlags } from '../../hooks/useFeatureFlags';
@@ -43,11 +45,13 @@ const mentorNavItems: NavItem[] = [
     { path: '/mentees', label: 'Mentorados', icon: <Users size={20} /> },
     { path: '/calendar', label: 'Calendário', icon: <Calendar size={20} /> },
     { path: '/finance', label: 'Financeiro', icon: <DollarSign size={20} /> },
+    { path: '/ad-library', label: 'Biblioteca de Ads', icon: <Search size={20} /> },
     { path: '/tiktok', label: 'Central TikTok', icon: <TrendingUp size={20} /> },
     { path: '/academy/manage', label: 'Academy', icon: <GraduationCap size={20} /> },
     { path: '/templates', label: 'Templates', icon: <FileText size={20} /> },
     { path: '/swipe-file', label: 'Swipe File', icon: <Layers size={20} /> },
     { path: '/assets', label: 'Ativos', icon: <Shield size={20} /> },
+    { path: '/media-hub', label: 'Media Hub', icon: <CloudUpload size={20} /> },
     { path: '/warming', label: 'Aquecimento X1', icon: <Flame size={20} /> },
     { path: '/resources', label: 'Recursos', icon: <FolderOpen size={20} /> },
     { path: '/onboarding-editor', label: 'Onboarding', icon: <UserCircle size={20} /> },
@@ -59,6 +63,7 @@ const mentorNavItems: NavItem[] = [
 const menteeNavItems: NavItem[] = [
     { path: '/me', label: 'Minha Jornada', icon: <Home size={20} /> },
     { path: '/me/mining', label: 'Mineração', icon: <Pickaxe size={20} /> },
+    { path: '/me/ad-library', label: 'Biblioteca de Ads', icon: <Search size={20} /> },
     { path: '/me/finance', label: 'Financeiro', icon: <TrendingUp size={20} /> },
     { path: '/me/academy', label: 'Academy', icon: <GraduationCap size={20} /> },
     { path: '/me/swipe-file', label: 'Swipe File', icon: <Layers size={20} /> },
@@ -80,6 +85,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => 
     const filterNavItems = (items: NavItem[]) => {
         return items.filter(item => {
             if (item.path.includes('mining') && !features.enableMining) return false;
+            if (item.path.includes('ad-library') && !features.enableAdLibrary) return false;
             if (item.path.includes('warming') && !features.enableWarming) return false;
             if (item.path.includes('academy') && !features.enableAcademy) return false;
             if (item.path.includes('swipe-file') && !features.enableSwipeFile) return false; // Swipe file nav logic if meant to be here
@@ -99,6 +105,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => 
             if (item.path === '/mentees' && features.mentorEnableMentees === false) return false;
             if (item.path === '/calendar' && features.mentorEnableCalendar === false) return false;
             if (item.path === '/finance' && features.mentorEnableFinance === false) return false;
+            if (item.path === '/ad-library' && features.mentorEnableAdLibrary === false) return false;
             if (item.path === '/tiktok' && features.mentorEnableTikTokOps === false) return false;
             if (item.path === '/academy/manage' && features.mentorEnableAcademy === false) return false;
             if (item.path === '/templates' && features.mentorEnableTemplates === false) return false;

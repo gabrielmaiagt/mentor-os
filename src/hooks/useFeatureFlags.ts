@@ -10,6 +10,7 @@ const DEFAULT_FLAGS: FeatureFlags = {
     enableSwipeFile: true,
     enableRanking: true,
     enableResources: true,
+    enableAdLibrary: true,
 
     // Mentor Defaults
     mentorEnableDashboard: true,
@@ -29,7 +30,8 @@ const DEFAULT_FLAGS: FeatureFlags = {
     mentorEnableOfferLab: true,
     mentorEnableStrategyBoard: true,
     mentorEnableDailyPulse: true,
-    mentorEnableTikTokOps: true
+    mentorEnableTikTokOps: true,
+    mentorEnableAdLibrary: true
 };
 
 export function useFeatureFlags() {

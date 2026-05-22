@@ -382,6 +382,9 @@ export * from './mining';
 import type { OfferMined } from './mining';
 export type Offer = OfferMined;
 
+// Re-export adlibrary types
+export * from './adlibrary';
+
 // Re-export onboarding types
 export * from './onboarding';
 
@@ -496,6 +499,7 @@ export interface FeatureFlags {
     enableSwipeFile: boolean;
     enableRanking: boolean;
     enableResources: boolean;
+    enableAdLibrary: boolean;
 
     // Mentor Visibility Flags
     mentorEnableDashboard?: boolean;
@@ -516,6 +520,7 @@ export interface FeatureFlags {
     mentorEnableStrategyBoard?: boolean;
     mentorEnableDailyPulse?: boolean;
     mentorEnableTikTokOps?: boolean;
+    mentorEnableAdLibrary?: boolean;
 }
 
 // Assets

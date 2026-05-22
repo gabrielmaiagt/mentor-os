@@ -18,7 +18,8 @@ import {
     FolderOpen,
     Settings,
     Layers,
-    Shield
+    Shield,
+    CloudUpload
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import './MobileNav.css';
@@ -53,6 +54,7 @@ const mentorMoreItems: NavItem[] = [
     { path: '/swipe-file', label: 'Swipe File', icon: <Layers size={20} /> },
     { path: '/warming', label: 'Aquecimento', icon: <Flame size={20} /> },
     { path: '/assets', label: 'Ativos', icon: <Shield size={20} /> },
+    { path: '/media-hub', label: 'Media Hub', icon: <CloudUpload size={20} /> },
     { path: '/resources', label: 'Recursos', icon: <FolderOpen size={20} /> },
     { path: '/settings', label: 'Configurações', icon: <Settings size={20} /> },
 ];

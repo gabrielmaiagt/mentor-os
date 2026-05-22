@@ -1,0 +1,41 @@
+.adlibrary-miner-container {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+  min-height: 100vh;
+}
+
+.input-field {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: var(--accent-primary) !important;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25) !important;
+}
+
+/* Custom styles for live logs console */
+.font-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive adjustment for columns */
+@media (max-width: 768px) {
+  .adlibrary-miner-container {
+    padding: 16px;
+  }
+}
