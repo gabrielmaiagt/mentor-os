@@ -42,16 +42,26 @@ export function useFeatureFlags() {
 
     useEffect(() => {
         // Subscribe to global config
-        const unsubscribe = onSnapshot(doc(db, 'config', 'global'), (docSnap) => {
-            if (docSnap.exists()) {
-                setFeatures({ ...DEFAULT_FLAGS, ...docSnap.data() } as FeatureFlags);
-            } else {
-                // Create default if doesn't exist
-                setDoc(doc(db, 'config', 'global'), DEFAULT_FLAGS);
+        const unsubscribe = onSnapshot(
+            doc(db, 'config', 'global'),
+            (docSnap) => {
+                if (docSnap.exists()) {
+                    setFeatures({ ...DEFAULT_FLAGS, ...docSnap.data() } as FeatureFlags);
+                } else {
+                    // Create default document if it doesn't exist yet
+                    setDoc(doc(db, 'config', 'global'), DEFAULT_FLAGS).catch(() => {
+                        // Silently ignore if user doesn't have write permissions yet
+                    });
+                    setFeatures(DEFAULT_FLAGS);
+                }
+                setLoading(false);
+            },
+            (_error) => {
+                // Permission denied or network error — fall back to local defaults silently
                 setFeatures(DEFAULT_FLAGS);
+                setLoading(false);
             }
-            setLoading(false);
-        });
+        );
 
         return () => unsubscribe();
     }, []);

@@ -1,44 +1,15 @@
-/* PDF Builder Page Styles */
-
-.pdf-builder-container {
-  min-height: calc(100vh - 120px);
+/* PdfBuilder page — styles moved to inline/Tailwind in component */
+/* Custom scrollbar for pages list */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
 }
-
-.pdf-builder-container label {
-  user-select: none;
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
 }
-
-/* Scrollbar adjustment for pages list */
-.pdf-builder-container ::-webkit-scrollbar {
-  width: 6px;
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.3);
+  border-radius: 2px;
 }
-
-.pdf-builder-container ::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.01);
-  border-radius: 4px;
-}
-
-.pdf-builder-container ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-}
-
-.pdf-builder-container ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-/* Quick animation for AI generation */
-@keyframes wandPulse {
-  0%, 100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.7;
-    transform: scale(1.05);
-  }
-}
-
-.animate-wand {
-  animation: wandPulse 2s infinite ease-in-out;
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 92, 246, 0.6);
 }
