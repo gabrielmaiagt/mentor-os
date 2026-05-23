@@ -43,6 +43,7 @@ import { StrategyBoard } from './pages/Strategy/StrategyBoard';
 import MenteeFinancePage from './pages/MenteeFinance';
 import TikTokOpsLayout from './pages/TikTokOps/TikTokOpsLayout';
 import MediaHubPage from './pages/MediaHub/MediaHub';
+import { PdfBuilderPage } from './pages/PdfBuilder/PdfBuilder';
 
 function App() {
   return (
@@ -88,6 +89,7 @@ function App() {
                   <Route path="/tiktok" element={<TikTokOpsLayout />} />
                   <Route path="/ad-library" element={<AdLibraryMinerPage />} />
                   <Route path="/media-hub" element={<MediaHubPage />} />
+                  <Route path="/pdf-builder" element={<PdfBuilderPage />} />
                 </Route>
 
                 {/* Protected mentee routes */}
@@ -99,6 +101,7 @@ function App() {
                   <Route path="/me/academy" element={<AcademyPage />} />
                   <Route path="/me/mining" element={<MiningPage />} />
                   <Route path="/me/ad-library" element={<AdLibraryMinerPage />} />
+                  <Route path="/me/pdf-builder" element={<PdfBuilderPage />} />
                   <Route path="/me/warming" element={<WarmingPage />} />
                   <Route path="/warming" element={<WarmingPage />} />
                   <Route path="/me/how-it-works" element={<HowItWorksPage />} />

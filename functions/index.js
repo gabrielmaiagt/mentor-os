@@ -193,3 +193,59 @@ exports.checkDueTasks = functions.pubsub.schedule("every 15 minutes")
             return null;
         }
     });
+
+/**
+ * Cloud Function to render HTML templates and generate PDF using Puppeteer.
+ * Deployed at /api/generate-pdf via rewrite rules.
+ */
+exports.generatePdf = functions.runWith({ memory: "2GB", timeoutSeconds: 60 }).https.onRequest(async (req, res) => {
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Headers', 'Content-Type');
+    res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    
+    if (req.method === 'OPTIONS') {
+        res.status(204).send('');
+        return;
+    }
+
+    if (req.method !== 'POST') {
+        res.status(405).json({ error: "Only POST method is allowed." });
+        return;
+    }
+
+    try {
+        const { html } = req.body;
+        if (!html) {
+            res.status(400).json({ error: "HTML content is required in the body." });
+            return;
+        }
+
+        const puppeteer = require("puppeteer");
+        const browser = await puppeteer.launch({
+            args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"]
+        });
+        
+        const page = await browser.newPage();
+        await page.setContent(html, { waitUntil: "networkidle0" });
+        
+        const pdfBuffer = await page.pdf({
+            format: "A4",
+            printBackground: true,
+            margin: {
+                top: "0px",
+                bottom: "0px",
+                left: "0px",
+                right: "0px"
+            }
+        });
+        
+        await browser.close();
+        
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader("Content-Disposition", "attachment; filename=entregavel.pdf");
+        res.status(200).send(pdfBuffer);
+    } catch (error) {
+        console.error("Error generating PDF in Cloud Function:", error);
+        res.status(500).json({ error: error.message || "Internal server error generating PDF." });
+    }
+});

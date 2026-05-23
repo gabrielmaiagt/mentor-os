@@ -11,6 +11,7 @@ const DEFAULT_FLAGS: FeatureFlags = {
     enableRanking: true,
     enableResources: true,
     enableAdLibrary: true,
+    enablePdfBuilder: true,
 
     // Mentor Defaults
     mentorEnableDashboard: true,
@@ -31,7 +32,8 @@ const DEFAULT_FLAGS: FeatureFlags = {
     mentorEnableStrategyBoard: true,
     mentorEnableDailyPulse: true,
     mentorEnableTikTokOps: true,
-    mentorEnableAdLibrary: true
+    mentorEnableAdLibrary: true,
+    mentorEnablePdfBuilder: true
 };
 
 export function useFeatureFlags() {

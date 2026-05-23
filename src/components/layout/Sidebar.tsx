@@ -52,6 +52,7 @@ const mentorNavItems: NavItem[] = [
     { path: '/swipe-file', label: 'Swipe File', icon: <Layers size={20} /> },
     { path: '/assets', label: 'Ativos', icon: <Shield size={20} /> },
     { path: '/media-hub', label: 'Media Hub', icon: <CloudUpload size={20} /> },
+    { path: '/pdf-builder', label: 'Gerador de PDFs', icon: <FileText size={20} /> },
     { path: '/warming', label: 'Aquecimento X1', icon: <Flame size={20} /> },
     { path: '/resources', label: 'Recursos', icon: <FolderOpen size={20} /> },
     { path: '/onboarding-editor', label: 'Onboarding', icon: <UserCircle size={20} /> },
@@ -67,6 +68,7 @@ const menteeNavItems: NavItem[] = [
     { path: '/me/finance', label: 'Financeiro', icon: <TrendingUp size={20} /> },
     { path: '/me/academy', label: 'Academy', icon: <GraduationCap size={20} /> },
     { path: '/me/swipe-file', label: 'Swipe File', icon: <Layers size={20} /> },
+    { path: '/me/pdf-builder', label: 'Gerador de PDFs', icon: <FileText size={20} /> },
     { path: '/me/warming', label: 'Aquecimento X1', icon: <Flame size={20} /> },
     { path: '/me/calls', label: 'Minhas Calls', icon: <Calendar size={20} /> },
     { path: '/me/resources', label: 'Recursos', icon: <FolderOpen size={20} /> },
@@ -91,6 +93,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => 
             if (item.path.includes('swipe-file') && !features.enableSwipeFile) return false; // Swipe file nav logic if meant to be here
             if (item.path.includes('ranking') && !features.enableRanking) return false; // Usually inside profile but good to have safeguard
             if (item.path.includes('resources') && !features.enableResources) return false;
+            if (item.path.includes('pdf-builder') && !features.enablePdfBuilder) return false;
             return true;
         });
     };
@@ -114,6 +117,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => 
             if (item.path === '/warming' && features.mentorEnableWarming === false) return false;
             if (item.path === '/resources' && features.mentorEnableResources === false) return false;
             if (item.path === '/onboarding-editor' && features.mentorEnableOnboarding === false) return false;
+            if (item.path === '/pdf-builder' && features.mentorEnablePdfBuilder === false) return false;
 
             if (item.path === '/strategy' && features.mentorEnableStrategyBoard === false) return false;
             return true;

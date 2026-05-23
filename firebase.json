@@ -12,6 +12,10 @@
         ],
         "rewrites": [
             {
+                "source": "/api/generate-pdf",
+                "function": "generatePdf"
+            },
+            {
                 "source": "**",
                 "destination": "/index.html"
             }

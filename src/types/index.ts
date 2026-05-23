@@ -385,6 +385,9 @@ export type Offer = OfferMined;
 // Re-export adlibrary types
 export * from './adlibrary';
 
+// Re-export pdfbuilder types
+export * from './pdfbuilder';
+
 // Re-export onboarding types
 export * from './onboarding';
 
@@ -500,6 +503,7 @@ export interface FeatureFlags {
     enableRanking: boolean;
     enableResources: boolean;
     enableAdLibrary: boolean;
+    enablePdfBuilder: boolean;
 
     // Mentor Visibility Flags
     mentorEnableDashboard?: boolean;
@@ -521,6 +525,7 @@ export interface FeatureFlags {
     mentorEnableDailyPulse?: boolean;
     mentorEnableTikTokOps?: boolean;
     mentorEnableAdLibrary?: boolean;
+    mentorEnablePdfBuilder?: boolean;
 }
 
 // Assets

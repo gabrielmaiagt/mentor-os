@@ -1,7 +1,7 @@
 import React from 'react';
 import { useFeatureFlags } from '../../hooks/useFeatureFlags';
 import { Card } from '../../components/ui';
-import { Shield, Hammer, BookOpen, Layers, Trophy, FolderOpen, Search } from 'lucide-react';
+import { Shield, Hammer, BookOpen, Layers, Trophy, FolderOpen, Search, FileText } from 'lucide-react';
 import './Settings.css';
 
 // Simple Toggle Component with inline styles
@@ -50,6 +50,7 @@ export const SettingsPage: React.FC = () => {
         { key: 'enableRanking', label: 'Ranking', icon: <Trophy />, desc: 'Ranking de gamificação' },
         { key: 'enableResources', label: 'Materiais', icon: <FolderOpen />, desc: 'Área de downloads e links' },
         { key: 'enableAdLibrary', label: 'Biblioteca de Ads', icon: <Search />, desc: 'Busca automática na Biblioteca de Anúncios da Meta' },
+        { key: 'enablePdfBuilder', label: 'PDF Premium Builder', icon: <FileText />, desc: 'Criação automatizada de PDFs e e-books premium via IA' },
     ];
 
     const mentorFeatureList = [
@@ -72,6 +73,7 @@ export const SettingsPage: React.FC = () => {
         { key: 'mentorEnableStrategyBoard', label: 'Lousa Estratégica' },
         { key: 'mentorEnableTikTokOps', label: 'Central TikTok' },
         { key: 'mentorEnableAdLibrary', label: 'Biblioteca de Ads' },
+        { key: 'mentorEnablePdfBuilder', label: 'PDF Premium Builder' },
     ];
 
     if (loading) {
@@ -127,9 +129,79 @@ export const SettingsPage: React.FC = () => {
                     </div>
                 </Card>
 
+                <GeminiConfigCard />
+
                 <NotificationTester />
             </div>
         </div>
+    );
+};
+
+const GeminiConfigCard = () => {
+    const [apiKey, setApiKey] = React.useState(localStorage.getItem('gemini_api_key') || '');
+    const [isValidating, setIsValidating] = React.useState(false);
+    const [statusMsg, setStatusMsg] = React.useState('');
+
+    const handleSave = async () => {
+        if (!apiKey.trim()) {
+            localStorage.removeItem('gemini_api_key');
+            setStatusMsg('Chave removida.');
+            return;
+        }
+
+        setIsValidating(true);
+        setStatusMsg('');
+        try {
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash?key=${apiKey}`);
+            if (res.ok) {
+                localStorage.setItem('gemini_api_key', apiKey);
+                setStatusMsg('✅ Chave do Gemini salva e validada com sucesso!');
+            } else {
+                setStatusMsg('❌ Chave inválida. Verifique o código digitado.');
+            }
+        } catch (error) {
+            setStatusMsg('❌ Erro de conexão ao testar a chave.');
+        } finally {
+            setIsValidating(false);
+        }
+    };
+
+    return (
+        <Card className="p-6">
+            <h2 className="text-lg font-bold text-white mb-2 border-b border-white/10 pb-2">Configurar IA (Gemini API)</h2>
+            <p className="text-secondary mb-4 text-sm">
+                A chave do Gemini é usada para o <strong>PDF Premium Builder</strong> refinar as suas ideias brutas e sugerir seções estruturadas automaticamente.
+            </p>
+            <div className="flex flex-col gap-4">
+                <div>
+                    <label className="block text-sm text-secondary mb-1">Gemini API Key</label>
+                    <div className="flex gap-2">
+                        <input
+                            type="password"
+                            placeholder="Cole sua API Key do Google AI Studio (AIzaSy...)"
+                            value={apiKey}
+                            onChange={e => setApiKey(e.target.value)}
+                            className="flex-1 bg-white/5 border border-white/10 rounded px-3 py-2 text-white focus:outline-none focus:border-white/30"
+                        />
+                        <button
+                            onClick={handleSave}
+                            disabled={isValidating}
+                            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:bg-emerald-800 text-white rounded font-medium transition-colors"
+                        >
+                            {isValidating ? 'Validando...' : 'Salvar'}
+                        </button>
+                    </div>
+                    {statusMsg && (
+                        <p className={`text-xs mt-2 ${statusMsg.includes('✅') ? 'text-green-400' : 'text-red-400'}`}>
+                            {statusMsg}
+                        </p>
+                    )}
+                </div>
+                <p className="text-[11px] text-secondary">
+                    Obtenha sua chave gratuita em <a href="https://aistudio.google.com/" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">Google AI Studio</a>. Sua chave é guardada localmente no seu navegador de forma segura.
+                </p>
+            </div>
+        </Card>
     );
 };
 
