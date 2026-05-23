@@ -119,12 +119,14 @@ service cloud.firestore {
 
     // Config collection - global app settings (feature flags, API keys, etc.)
     match /config/{document} {
-      allow read, write: if isMentor();
+      allow read: if isAuthenticated();
+      allow write: if isMentor();
     }
 
     // Also allow nested documents inside config (e.g. config/global/*)
     match /config/{document}/{rest=**} {
-      allow read, write: if isMentor();
+      allow read: if isAuthenticated();
+      allow write: if isMentor();
     }
   }
 }
