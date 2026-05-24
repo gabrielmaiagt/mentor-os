@@ -249,17 +249,29 @@ export const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({
                             {isExpanded && status !== 'LOCKED' && (
                                 <div className="onboarding-step-content">
                                     <p className="onboarding-step-description">{step.description}</p>
-
                                     {viewingVideoStep === step.id && step.contentType === 'VIDEO' && step.contentUrl && (
                                         <div className="video-embed-container mb-4">
-                                            <iframe
-                                                src={step.contentUrl.replace('watch?v=', 'embed/').replace('loom.com/share', 'loom.com/embed')}
-                                                title={step.title}
-                                                frameBorder="0"
-                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                                allowFullScreen
-                                                style={{ width: '100%', height: '300px', borderRadius: '8px' }}
-                                            ></iframe>
+                                            {(step.contentUrl.toLowerCase().includes('.mp4') ||
+                                              step.contentUrl.toLowerCase().includes('.webm') ||
+                                              step.contentUrl.toLowerCase().includes('.mov') ||
+                                              step.contentUrl.toLowerCase().includes('.ogg') ||
+                                              step.contentUrl.includes('firebasestorage.googleapis.com')) ? (
+                                                <video
+                                                    src={step.contentUrl}
+                                                    controls
+                                                    playsInline
+                                                    style={{ width: '100%', height: '300px', borderRadius: '8px', backgroundColor: '#000', objectFit: 'contain' }}
+                                                />
+                                            ) : (
+                                                <iframe
+                                                    src={step.contentUrl.replace('watch?v=', 'embed/').replace('loom.com/share', 'loom.com/embed')}
+                                                    title={step.title}
+                                                    frameBorder="0"
+                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                    allowFullScreen
+                                                    style={{ width: '100%', height: '300px', borderRadius: '8px' }}
+                                                ></iframe>
+                                            )}
                                             <Button
                                                 variant="primary"
                                                 fullWidth

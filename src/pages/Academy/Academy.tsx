@@ -204,8 +204,20 @@ export const AcademyPage: React.FC = () => {
                                     title={activeLesson.title}
                                     allowFullScreen
                                 />
+                            ) : (activeLesson.videoUrl.toLowerCase().includes('.mp4') ||
+                                 activeLesson.videoUrl.toLowerCase().includes('.webm') ||
+                                 activeLesson.videoUrl.toLowerCase().includes('.mov') ||
+                                 activeLesson.videoUrl.toLowerCase().includes('.ogg') ||
+                                 activeLesson.videoUrl.includes('firebasestorage.googleapis.com')) ? (
+                                <video
+                                    className="video-iframe"
+                                    src={activeLesson.videoUrl}
+                                    controls
+                                    playsInline
+                                    style={{ width: '100%', height: '100%', backgroundColor: '#000', objectFit: 'contain' }}
+                                />
                             ) : (
-                                <div className="flex items-center justify-center h-full bg-black text-white">
+                                <div className="flex items-center justify-center h-full bg-black text-white p-4 text-center">
                                     <p>Player não suportado para esta URL. <a href={activeLesson.videoUrl} target="_blank" rel="noreferrer" className="text-primary underline">Abrir link externo</a></p>
                                 </div>
                             )}
