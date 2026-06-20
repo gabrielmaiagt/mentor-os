@@ -62,6 +62,14 @@ export default function MediaHub() {
     const [filterCategory, setFilterCategory] = useState<string>('all');
     const [search, setSearch] = useState('');
 
+    // Date filter state
+    const [startDate, setStartDate] = useState<string>('');
+    const [endDate, setEndDate] = useState<string>('');
+
+    // Selection state
+    const [isSelectionMode, setIsSelectionMode] = useState(false);
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
     // Upload state
     const [uploadCategory, setUploadCategory] = useState<MediaCategory>('geral');
     const [uploadQueue, setUploadQueue] = useState<UploadItem[]>([]);
@@ -95,6 +103,17 @@ export default function MediaHub() {
         if (filterType !== 'all' && f.type !== filterType) return false;
         if (filterCategory !== 'all' && f.category !== filterCategory) return false;
         if (search && !f.name.toLowerCase().includes(search.toLowerCase())) return false;
+        
+        // Date filter
+        if (startDate) {
+            const start = new Date(startDate + 'T00:00:00');
+            if (f.createdAt < start) return false;
+        }
+        if (endDate) {
+            const end = new Date(endDate + 'T23:59:59');
+            if (f.createdAt > end) return false;
+        }
+
         return true;
     });
 
@@ -102,6 +121,51 @@ export default function MediaHub() {
     const totalSize = files.reduce((acc, f) => acc + f.size, 0);
     const imageCount = files.filter((f) => f.type === 'image').length;
     const videoCount = files.filter((f) => f.type === 'video').length;
+
+    // Selection helper methods
+    const toggleSelectFile = (id: string, e?: React.MouseEvent) => {
+        if (e) e.stopPropagation();
+        setSelectedIds((prev) =>
+            prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+        );
+    };
+
+    const handleSelectAll = () => {
+        setSelectedIds(filtered.map((f) => f.id));
+    };
+
+    const handleClearSelection = () => {
+        setSelectedIds([]);
+    };
+
+    const handleCopySelectedLinks = async () => {
+        const selectedFiles = files.filter((f) => selectedIds.includes(f.id));
+        const links = selectedFiles.map((f) => f.url).join('\n');
+        if (!links) {
+            toast.error('Nenhum arquivo selecionado');
+            return;
+        }
+        try {
+            await navigator.clipboard.writeText(links);
+            toast.success(`${selectedFiles.length} link(s) copiado(s) com sucesso!`);
+        } catch {
+            toast.error('Não foi possível copiar os links');
+        }
+    };
+
+    const handleCopyAllFilteredLinks = async () => {
+        const links = filtered.map((f) => f.url).join('\n');
+        if (!links) {
+            toast.error('Nenhum link para copiar');
+            return;
+        }
+        try {
+            await navigator.clipboard.writeText(links);
+            toast.success(`Todos os ${filtered.length} links filtrados foram copiados!`);
+        } catch {
+            toast.error('Não foi possível copiar os links');
+        }
+    };
 
     // File validation
     function validateFile(file: File): string | null {
@@ -385,6 +449,88 @@ export default function MediaHub() {
                         <option key={c.value} value={c.value}>{c.label}</option>
                     ))}
                 </select>
+
+                {/* Date Filters */}
+                <div className="gallery-date-filter">
+                    <span className="date-filter-label">De:</span>
+                    <input
+                        type="date"
+                        className="gallery-date-input"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                    />
+                </div>
+
+                <div className="gallery-date-filter">
+                    <span className="date-filter-label">Até:</span>
+                    <input
+                        type="date"
+                        className="gallery-date-input"
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                    />
+                </div>
+
+                {(startDate || endDate) && (
+                    <button
+                        onClick={() => { setStartDate(''); setEndDate(''); }}
+                        className="clear-dates-btn"
+                        title="Limpar datas"
+                    >
+                        <X size={14} />
+                    </button>
+                )}
+            </div>
+
+            {/* Selection & Bulk Action Bar */}
+            <div className="selection-action-bar">
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => {
+                            setIsSelectionMode(!isSelectionMode);
+                            if (isSelectionMode) setSelectedIds([]);
+                        }}
+                        className={`action-bar-btn toggle ${isSelectionMode ? 'active' : ''}`}
+                    >
+                        {isSelectionMode ? 'Cancelar Seleção' : 'Selecionar Vários'}
+                    </button>
+
+                    {isSelectionMode && (
+                        <>
+                            <button onClick={handleSelectAll} className="action-bar-btn secondary">
+                                Selecionar Todos ({filtered.length})
+                            </button>
+                            {selectedIds.length > 0 && (
+                                <button onClick={handleClearSelection} className="action-bar-btn secondary">
+                                    Desmarcar Todos
+                                </button>
+                            )}
+                        </>
+                    )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                    {/* Copy All Filtered Links */}
+                    {!isSelectionMode && filtered.length > 0 && (
+                        <button
+                            onClick={handleCopyAllFilteredLinks}
+                            className="action-bar-btn copy-all"
+                            title="Copiar links de todos os arquivos exibidos atualmente"
+                        >
+                            <Copy size={14} /> Copiar Todos os Links ({filtered.length})
+                        </button>
+                    )}
+
+                    {/* Copy Selected Links */}
+                    {isSelectionMode && selectedIds.length > 0 && (
+                        <button
+                            onClick={handleCopySelectedLinks}
+                            className="action-bar-btn copy-selected"
+                        >
+                            <Copy size={14} /> Copiar Selecionados ({selectedIds.length})
+                        </button>
+                    )}
+                </div>
             </div>
 
             {/* Gallery Grid */}
@@ -412,10 +558,20 @@ export default function MediaHub() {
                     filtered.map((file) => (
                         <div
                             key={file.id}
-                            className="media-card"
-                            onClick={() => setSelectedFile(file)}
+                            className={`media-card ${selectedIds.includes(file.id) ? 'selected' : ''}`}
+                            onClick={() => isSelectionMode ? toggleSelectFile(file.id) : setSelectedFile(file)}
                         >
                             <div className="media-card-preview">
+                                {isSelectionMode && (
+                                    <div 
+                                        className="media-card-checkbox"
+                                        onClick={(e) => toggleSelectFile(file.id, e)}
+                                    >
+                                        <div className={`checkbox-box ${selectedIds.includes(file.id) ? 'checked' : ''}`}>
+                                            {selectedIds.includes(file.id) && <Check size={12} className="text-white" />}
+                                        </div>
+                                    </div>
+                                )}
                                 {file.type === 'image' ? (
                                     <img src={file.url} alt={file.name} loading="lazy" />
                                 ) : (

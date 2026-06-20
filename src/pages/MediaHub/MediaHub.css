@@ -764,3 +764,149 @@
     .media-hub-stats { grid-template-columns: 1fr; }
     .media-gallery { grid-template-columns: 1fr 1fr; }
 }
+
+/* ── Selection Action Bar ── */
+.selection-action-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: var(--space-3) var(--space-4);
+    margin-bottom: var(--space-6);
+    flex-wrap: wrap;
+    gap: var(--space-3);
+}
+
+.action-bar-btn {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    font-size: var(--text-sm);
+    font-weight: var(--font-semibold);
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    box-sizing: border-box;
+}
+
+.action-bar-btn:hover {
+    background: var(--bg-card-hover);
+    color: var(--text-primary);
+    border-color: var(--border-medium);
+}
+
+.action-bar-btn.toggle.active {
+    background: var(--accent-primary);
+    color: #fff;
+    border-color: var(--accent-primary);
+}
+
+.action-bar-btn.copy-all,
+.action-bar-btn.copy-selected {
+    background: var(--accent-primary);
+    color: #fff;
+    border-color: var(--accent-primary);
+}
+
+.action-bar-btn.copy-all:hover,
+.action-bar-btn.copy-selected:hover {
+    background: var(--accent-primary-hover);
+}
+
+.action-bar-btn.secondary {
+    font-size: var(--text-xs);
+    padding: var(--space-1.5) var(--space-3);
+}
+
+/* ── Date Filters ── */
+.gallery-date-filter {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.date-filter-label {
+    font-size: var(--text-xs);
+    color: var(--text-secondary);
+    font-weight: var(--font-semibold);
+    text-transform: uppercase;
+}
+
+.gallery-date-input {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: var(--text-sm);
+    padding: var(--space-2) var(--space-3);
+    outline: none;
+    transition: border-color var(--transition-fast);
+    cursor: pointer;
+}
+
+.gallery-date-input:focus {
+    border-color: var(--accent-primary);
+}
+
+.clear-dates-btn {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    border-radius: var(--radius-md);
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.clear-dates-btn:hover {
+    background: var(--bg-card-hover);
+    color: var(--text-primary);
+    border-color: var(--border-medium);
+}
+
+/* ── Checkbox inside card ── */
+.media-card.selected {
+    border-color: var(--accent-primary) !important;
+    box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+}
+
+.media-card-checkbox {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 10;
+    cursor: pointer;
+}
+
+.checkbox-box {
+    width: 20px;
+    height: 20px;
+    border-radius: var(--radius-sm);
+    border: 2px solid rgba(255, 255, 255, 0.6);
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+}
+
+.checkbox-box:hover {
+    border-color: #fff;
+    background: rgba(0, 0, 0, 0.6);
+}
+
+.checkbox-box.checked {
+    border-color: var(--accent-primary);
+    background: var(--accent-primary);
+}
