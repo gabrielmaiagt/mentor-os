@@ -394,6 +394,9 @@ export * from './onboarding';
 // Re-export finance types
 export * from './finance';
 
+// Re-export optimization types
+export * from './optimization';
+
 // Resources
 export type ResourceCategory = 'GENERAL' | 'CONTRACTS' | 'X1' | 'SPREADSHEET';
 export type ResourceType = 'PDF' | 'DOC' | 'SHEET' | 'LINK' | 'VIDEO' | 'IMAGE';

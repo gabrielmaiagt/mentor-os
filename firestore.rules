@@ -196,5 +196,15 @@ service cloud.firestore {
     match /strategyDrawings/{drawingId} {
       allow read, write: if isAuthenticated();
     }
+
+    // Otimizações Diárias (Public Read)
+    match /optimization_days/{dayId} {
+      allow read: if true;
+      allow write: if isMentor();
+    }
+    match /optimizations/{optId} {
+      allow read: if true;
+      allow write: if isMentor();
+    }
   }
 }

@@ -44,6 +44,9 @@ import MenteeFinancePage from './pages/MenteeFinance';
 import TikTokOpsLayout from './pages/TikTokOps/TikTokOpsLayout';
 import MediaHubPage from './pages/MediaHub/MediaHub';
 import { PdfBuilderPage } from './pages/PdfBuilder/PdfBuilder';
+import ManageOptimizationsPage from './pages/Optimizations/ManageOptimizations';
+import PublicOptimizationsPage from './pages/Optimizations/PublicOptimizations';
+import PublicDayOptimizationsPage from './pages/Optimizations/PublicDayOptimizations';
 
 function App() {
   return (
@@ -57,6 +60,8 @@ function App() {
                 <Route path="/login" element={<RoleSelector />} />
                 <Route path="/mentor/login" element={<MentorLogin />} />
                 <Route path="/mentee/login" element={<MenteeLogin />} />
+                <Route path="/otimizacoes" element={<PublicOptimizationsPage />} />
+                <Route path="/otimizacoes/:slug" element={<PublicDayOptimizationsPage />} />
 
                 {/* Protected universal routes (Mentor & Mentee) */}
                 <Route element={<Shell requireAuth allowedRoles={['mentor', 'mentee']} />}>
@@ -90,6 +95,7 @@ function App() {
                   <Route path="/ad-library" element={<AdLibraryMinerPage />} />
                   <Route path="/media-hub" element={<MediaHubPage />} />
                   <Route path="/pdf-builder" element={<PdfBuilderPage />} />
+                  <Route path="/otimizacoes/manage" element={<ManageOptimizationsPage />} />
                 </Route>
 
                 {/* Protected mentee routes */}

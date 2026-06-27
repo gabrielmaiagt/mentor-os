@@ -48,6 +48,7 @@ const mentorNavItems: NavItem[] = [
     { path: '/ad-library', label: 'Biblioteca de Ads', icon: <Search size={20} /> },
     { path: '/tiktok', label: 'Central TikTok', icon: <TrendingUp size={20} /> },
     { path: '/academy/manage', label: 'Academy', icon: <GraduationCap size={20} /> },
+    { path: '/otimizacoes/manage', label: 'Otimizações', icon: <Zap size={20} /> },
     { path: '/templates', label: 'Templates', icon: <FileText size={20} /> },
     { path: '/swipe-file', label: 'Swipe File', icon: <Layers size={20} /> },
     { path: '/assets', label: 'Ativos', icon: <Shield size={20} /> },
